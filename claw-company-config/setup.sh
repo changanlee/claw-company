@@ -59,19 +59,26 @@ echo ""
 # --------------------------------------------
 # Model Detection / 模型偵測
 # --------------------------------------------
-# Detect existing OpenClaw model configuration
-DETECTED_PRIMARY=""
-DETECTED_FALLBACK=""
-EXISTING_AUTH=""
+RECOMMENDED_PRIMARY="anthropic/claude-sonnet-4-6"
+RECOMMENDED_LIGHT="anthropic/claude-haiku-4-5-20251001"
 
-# 1. Check existing openclaw.json for model config
+DETECTED_PRIMARY=""
+DETECTED_LIGHT=""
+
+# 1. Detect existing models from openclaw.json
 if [ -f "$OPENCLAW_DIR/openclaw.json" ]; then
-    # Extract the first model found in agent list (most likely the primary)
-    DETECTED_PRIMARY=$(grep -o '"model"[[:space:]]*:[[:space:]]*"[^"]*"' "$OPENCLAW_DIR/openclaw.json" 2>/dev/null \
-        | head -1 | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/')
+    ALL_MODELS=$(grep -o '"model"[[:space:]]*:[[:space:]]*"[^"]*"' "$OPENCLAW_DIR/openclaw.json" 2>/dev/null \
+        | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' | sort | uniq -c | sort -rn)
+    # Most frequently used model = primary
+    DETECTED_PRIMARY=$(echo "$ALL_MODELS" | head -1 | awk '{print $2}')
+    # Second most frequent = light (fallback to primary if only one)
+    DETECTED_LIGHT=$(echo "$ALL_MODELS" | sed -n '2p' | awk '{print $2}')
+    if [ -z "$DETECTED_LIGHT" ]; then
+        DETECTED_LIGHT="$DETECTED_PRIMARY"
+    fi
 fi
 
-# 2. Check existing agents for auth profiles
+# 2. Detect existing auth profiles
 EXISTING_AUTH_FILE=""
 for AUTH_FILE in "$OPENCLAW_DIR/agents/"*/agent/auth-profiles.json; do
     if [ -f "$AUTH_FILE" ]; then
@@ -79,12 +86,11 @@ for AUTH_FILE in "$OPENCLAW_DIR/agents/"*/agent/auth-profiles.json; do
         break
     fi
 done
-
-# 3. Check for main/default agent auth
 if [ -z "$EXISTING_AUTH_FILE" ] && [ -f "$OPENCLAW_DIR/auth-profiles.json" ]; then
     EXISTING_AUTH_FILE="$OPENCLAW_DIR/auth-profiles.json"
 fi
 
+# 3. Show detection results and prompt
 echo "=========================================="
 if [ "$LANG_DIR" = "zh" ]; then
     echo "  模型配置"
@@ -94,107 +100,112 @@ fi
 echo "=========================================="
 echo ""
 
-# Show detected config
 if [ -n "$DETECTED_PRIMARY" ]; then
+    # --- Existing config found ---
     if [ "$LANG_DIR" = "zh" ]; then
-        echo "[INFO] 偵測到現有模型配置：$DETECTED_PRIMARY"
-    else
-        echo "[INFO] Detected existing model config: $DETECTED_PRIMARY"
-    fi
-fi
-
-if [ -n "$EXISTING_AUTH_FILE" ]; then
-    DETECTED_PROVIDER=$(grep -o '"[^"]*"[[:space:]]*:' "$EXISTING_AUTH_FILE" 2>/dev/null \
-        | head -1 | tr -d '": ')
-    if [ "$LANG_DIR" = "zh" ]; then
-        echo "[INFO] 偵測到現有 auth 配置（provider: ${DETECTED_PROVIDER:-unknown}）"
-    else
-        echo "[INFO] Detected existing auth config (provider: ${DETECTED_PROVIDER:-unknown})"
-    fi
-fi
-
-echo ""
-
-if [ "$LANG_DIR" = "zh" ]; then
-    echo "請選擇模型配置方式："
-    echo ""
-    if [ -n "$DETECTED_PRIMARY" ]; then
-        echo "  1) 使用現有配置：$DETECTED_PRIMARY"
-    fi
-    echo "  2) Anthropic Claude（推薦）"
-    echo "  3) OpenAI GPT"
-    echo "  4) Google Gemini"
-    echo "  5) MiniMax"
-    echo "  6) 自訂（手動輸入 model ID）"
-    echo ""
-    read -r -p "請選擇: " MODEL_CHOICE
-else
-    echo "Select model configuration:"
-    echo ""
-    if [ -n "$DETECTED_PRIMARY" ]; then
-        echo "  1) Use existing config: $DETECTED_PRIMARY"
-    fi
-    echo "  2) Anthropic Claude (recommended)"
-    echo "  3) OpenAI GPT"
-    echo "  4) Google Gemini"
-    echo "  5) MiniMax"
-    echo "  6) Custom (enter model ID manually)"
-    echo ""
-    read -r -p "Select: " MODEL_CHOICE
-fi
-
-# Set model based on choice
-case "$MODEL_CHOICE" in
-    1)
-        if [ -n "$DETECTED_PRIMARY" ]; then
-            MODEL_PRIMARY="$DETECTED_PRIMARY"
-            MODEL_LIGHT="$DETECTED_PRIMARY"
-            # Try to detect if there's a lighter model in use
-            SECOND_MODEL=$(grep -o '"model"[[:space:]]*:[[:space:]]*"[^"]*"' "$OPENCLAW_DIR/openclaw.json" 2>/dev/null \
-                | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' | sort -u | grep -v "$MODEL_PRIMARY" | head -1)
-            if [ -n "$SECOND_MODEL" ]; then
-                MODEL_LIGHT="$SECOND_MODEL"
-            fi
-        else
-            echo "[WARN] No existing config found, defaulting to Anthropic Claude"
-            MODEL_PRIMARY="anthropic/claude-sonnet-4-6"
-            MODEL_LIGHT="anthropic/claude-haiku-4-5-20251001"
-        fi
-        ;;
-    2)
-        MODEL_PRIMARY="anthropic/claude-sonnet-4-6"
-        MODEL_LIGHT="anthropic/claude-haiku-4-5-20251001"
-        ;;
-    3)
-        MODEL_PRIMARY="openai/gpt-4o"
-        MODEL_LIGHT="openai/gpt-4o-mini"
-        ;;
-    4)
-        MODEL_PRIMARY="google/gemini-2.5-pro"
-        MODEL_LIGHT="google/gemini-2.5-flash"
-        ;;
-    5)
-        MODEL_PRIMARY="minimax/minimax-m1"
-        MODEL_LIGHT="minimax/minimax-m1"
-        ;;
-    6)
+        echo "[INFO] 偵測到你目前的 OpenClaw 模型配置："
         echo ""
-        if [ "$LANG_DIR" = "zh" ]; then
-            read -r -p "請輸入主要模型 ID（用於 CEO/CFO/CIO/CTO/CAO）: " MODEL_PRIMARY
-            read -r -p "請輸入輕量模型 ID（用於 COO/CHRO，留空則與主要模型相同）: " MODEL_LIGHT
+        echo "       主要模型：$DETECTED_PRIMARY"
+        echo "       輕量模型：$DETECTED_LIGHT"
+        echo ""
+        echo "  claw-company 推薦配置："
+        echo ""
+        echo "       主要模型：$RECOMMENDED_PRIMARY（CEO/CFO/CIO/CTO/CAO）"
+        echo "       輕量模型：$RECOMMENDED_LIGHT（COO/CHRO）"
+        echo ""
+        if [ "$DETECTED_PRIMARY" = "$RECOMMENDED_PRIMARY" ] && [ "$DETECTED_LIGHT" = "$RECOMMENDED_LIGHT" ]; then
+            echo "  ✓ 你目前的配置已經是推薦配置！"
+            echo ""
+            MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
+            MODEL_LIGHT="$RECOMMENDED_LIGHT"
         else
-            read -r -p "Enter primary model ID (for CEO/CFO/CIO/CTO/CAO): " MODEL_PRIMARY
-            read -r -p "Enter light model ID (for COO/CHRO, leave empty to use primary): " MODEL_LIGHT
+            echo "  1) 使用推薦配置（Anthropic Claude 最新版）"
+            echo "  2) 保持現有配置（$DETECTED_PRIMARY）"
+            echo ""
+            while true; do
+                read -r -p "請選擇 1 或 2: " MODEL_CHOICE
+                case "$MODEL_CHOICE" in
+                    1)
+                        MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
+                        MODEL_LIGHT="$RECOMMENDED_LIGHT"
+                        echo ""
+                        echo "[INFO] 將使用推薦配置"
+                        break
+                        ;;
+                    2)
+                        MODEL_PRIMARY="$DETECTED_PRIMARY"
+                        MODEL_LIGHT="$DETECTED_LIGHT"
+                        echo ""
+                        echo "[INFO] 將保持你現有的模型配置"
+                        break
+                        ;;
+                    *)
+                        echo "無效輸入，請輸入 1 或 2。"
+                        ;;
+                esac
+            done
         fi
-        if [ -z "$MODEL_LIGHT" ]; then
-            MODEL_LIGHT="$MODEL_PRIMARY"
+    else
+        echo "[INFO] Detected your current OpenClaw model configuration:"
+        echo ""
+        echo "       Primary model: $DETECTED_PRIMARY"
+        echo "       Light model:   $DETECTED_LIGHT"
+        echo ""
+        echo "  claw-company recommended configuration:"
+        echo ""
+        echo "       Primary model: $RECOMMENDED_PRIMARY (CEO/CFO/CIO/CTO/CAO)"
+        echo "       Light model:   $RECOMMENDED_LIGHT (COO/CHRO)"
+        echo ""
+        if [ "$DETECTED_PRIMARY" = "$RECOMMENDED_PRIMARY" ] && [ "$DETECTED_LIGHT" = "$RECOMMENDED_LIGHT" ]; then
+            echo "  ✓ Your current config already matches the recommended setup!"
+            echo ""
+            MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
+            MODEL_LIGHT="$RECOMMENDED_LIGHT"
+        else
+            echo "  1) Use recommended config (latest Anthropic Claude)"
+            echo "  2) Keep current config ($DETECTED_PRIMARY)"
+            echo ""
+            while true; do
+                read -r -p "Select 1 or 2: " MODEL_CHOICE
+                case "$MODEL_CHOICE" in
+                    1)
+                        MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
+                        MODEL_LIGHT="$RECOMMENDED_LIGHT"
+                        echo ""
+                        echo "[INFO] Using recommended configuration"
+                        break
+                        ;;
+                    2)
+                        MODEL_PRIMARY="$DETECTED_PRIMARY"
+                        MODEL_LIGHT="$DETECTED_LIGHT"
+                        echo ""
+                        echo "[INFO] Keeping your current model configuration"
+                        break
+                        ;;
+                    *)
+                        echo "Invalid input. Please enter 1 or 2."
+                        ;;
+                esac
+            done
         fi
-        ;;
-    *)
-        MODEL_PRIMARY="anthropic/claude-sonnet-4-6"
-        MODEL_LIGHT="anthropic/claude-haiku-4-5-20251001"
-        ;;
-esac
+    fi
+else
+    # --- No existing config (fresh install) ---
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "[INFO] 未偵測到現有 OpenClaw 配置，將使用推薦配置："
+        echo ""
+        echo "       主要模型：$RECOMMENDED_PRIMARY（CEO/CFO/CIO/CTO/CAO）"
+        echo "       輕量模型：$RECOMMENDED_LIGHT（COO/CHRO）"
+    else
+        echo "[INFO] No existing OpenClaw config detected. Using recommended configuration:"
+        echo ""
+        echo "       Primary model: $RECOMMENDED_PRIMARY (CEO/CFO/CIO/CTO/CAO)"
+        echo "       Light model:   $RECOMMENDED_LIGHT (COO/CHRO)"
+    fi
+    echo ""
+    MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
+    MODEL_LIGHT="$RECOMMENDED_LIGHT"
+fi
 
 # Extract provider name from model ID (e.g., "anthropic/claude-sonnet-4-6" → "anthropic")
 MODEL_PROVIDER="${MODEL_PRIMARY%%/*}"
@@ -205,7 +216,7 @@ if [ "$LANG_DIR" = "zh" ]; then
     echo "[INFO] 輕量模型：$MODEL_LIGHT"
 else
     echo "[INFO] Primary model: $MODEL_PRIMARY"
-    echo "[INFO] Light model: $MODEL_LIGHT"
+    echo "[INFO] Light model:   $MODEL_LIGHT"
 fi
 echo ""
 
