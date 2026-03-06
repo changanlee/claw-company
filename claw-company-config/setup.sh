@@ -1,8 +1,9 @@
 #!/bin/bash
 # ============================================
-# Chairman一人公司 — OpenClaw 多代理人架構部署腳本
-# 版本：v0.1 草創期
-# 日期：2026-03-06
+# One-Person Company — OpenClaw Multi-Agent Deployment Script
+# 一人公司 — OpenClaw 多代理人架構部署腳本
+# Version: v0.2
+# Date: 2026-03-06
 # ============================================
 
 set -e
@@ -10,92 +11,223 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 OPENCLAW_DIR="$HOME/.openclaw"
 
+# --------------------------------------------
+# Language Selection / 語言選擇
+# --------------------------------------------
+echo ""
 echo "=========================================="
-echo "  Chairman一人公司 — OpenClaw 部署"
+echo "  OpenClaw One-Person Company Setup"
+echo "  OpenClaw 一人公司部署"
 echo "=========================================="
 echo ""
+echo "Please select your language / 請選擇語言："
+echo ""
+echo "  1) English"
+echo "  2) 繁體中文"
+echo ""
 
-# --------------------------------------------
-# 0. 前置檢查
-# --------------------------------------------
-if ! command -v openclaw &> /dev/null; then
-    echo "[ERROR] 找不到 openclaw 指令，請先安裝 OpenClaw"
-    echo "  參考: https://github.com/openclaw/openclaw"
+while true; do
+    read -r -p "Enter 1 or 2 / 輸入 1 或 2: " LANG_CHOICE
+    case "$LANG_CHOICE" in
+        1)
+            LANG_DIR="en"
+            echo ""
+            echo "[INFO] Selected: English"
+            break
+            ;;
+        2)
+            LANG_DIR="zh"
+            echo ""
+            echo "[INFO] 已選擇：繁體中文"
+            break
+            ;;
+        *)
+            echo "Invalid input. Please enter 1 or 2. / 無效輸入，請輸入 1 或 2。"
+            ;;
+    esac
+done
+
+SOURCE_DIR="$SCRIPT_DIR/$LANG_DIR"
+
+if [ ! -d "$SOURCE_DIR" ]; then
+    echo "[ERROR] Language directory not found: $SOURCE_DIR"
     exit 1
 fi
 
-echo "[INFO] OpenClaw 已安裝"
 echo ""
 
 # --------------------------------------------
-# 1. 備份現有配置
+# Messages based on language
+# --------------------------------------------
+if [ "$LANG_DIR" = "zh" ]; then
+    MSG_DEPLOY="Chairman一人公司 — OpenClaw 部署"
+    MSG_NOT_FOUND="[ERROR] 找不到 openclaw 指令，請先安裝 OpenClaw"
+    MSG_INSTALLED="[INFO] OpenClaw 已安裝"
+    MSG_BACKUP="[INFO] 備份現有 openclaw.json →"
+    MSG_DEPLOY_JSON="[INFO] 部署 openclaw.json..."
+    MSG_DEPLOY_POLICIES="[INFO] 部署共用 policies →"
+    MSG_DEPLOY_WS="[INFO] 部署 %s workspace →"
+    MSG_WS_DONE="[INFO] 所有 workspace 部署完成"
+    MSG_REGISTER="[INFO] 註冊 Agent..."
+    MSG_MANUAL="  以下指令需要手動執行（openclaw agents add 可能需要互動）："
+    MSG_DONE="  部署完成！"
+    MSG_NEXT="下一步："
+    MSG_NEXT_1="  1. 編輯 ~/.openclaw/openclaw.json，填入真實的 Bot Token"
+    MSG_NEXT_2="  2. 手動執行上述 'openclaw agents add' 指令註冊 Agent"
+    MSG_NEXT_3="  3. 手動執行上述 'openclaw cron add' 指令設定排程"
+    MSG_NEXT_4="  4. 執行 'openclaw gateway start' 啟動服務"
+    MSG_NEXT_5="  5. 透過 Telegram 向 CEO Bot 發送第一條訊息測試"
+    MSG_CRON_MORNING="晨間會報：每天 06:30，CEO 匯整各部門狀態後推送董事長"
+    MSG_CRON_INVEST="投資監控：每天開盤時間每小時檢查（週一至週五 09:00-16:00）"
+    MSG_CRON_MEMORY="記憶清理：每月 1 日 03:00"
+    MSG_CRON_ORG="CHRO 週度審核：每週一 08:00"
+    MSG_CRON_SECURITY="CAO 安全掃描：每週三 02:00"
+    TASK_MORNING="執行晨間會報：向 CFO 取得財務摘要、向 CIO 取得投資組合狀態、向 COO 取得今日行程、向 CAO 取得開放稽核議題。精煉後產生簡潔的每日報告，推送給董事長。"
+    TASK_INVEST="檢查投資組合持倉的市場狀態，如有重大波動（單日漲跌超過設定閾值），通知 CEO。"
+    TASK_MEMORY="審視所有 Agent 的 MEMORY.md 健康度：檢查行數是否接近 200 行上限、是否有過時條目、是否有重複。產出審視報告給 CEO。"
+    TASK_ORG="執行週度組織健康審核：審視各 Agent 本週的表現摘要、能力缺口、政策遵循情況。產出週報給 CEO。"
+    TASK_SECURITY="執行週度安全掃描：檢查開放稽核議題進度、審視各 Agent 的 MEMORY.md 是否有敏感資訊外洩風險、檢查 policies 是否被未授權修改。產出安全報告。"
+else
+    MSG_DEPLOY="One-Person Company — OpenClaw Deployment"
+    MSG_NOT_FOUND="[ERROR] openclaw command not found. Please install OpenClaw first."
+    MSG_INSTALLED="[INFO] OpenClaw is installed"
+    MSG_BACKUP="[INFO] Backing up existing openclaw.json →"
+    MSG_DEPLOY_JSON="[INFO] Deploying openclaw.json..."
+    MSG_DEPLOY_POLICIES="[INFO] Deploying shared policies →"
+    MSG_DEPLOY_WS="[INFO] Deploying %s workspace →"
+    MSG_WS_DONE="[INFO] All workspaces deployed"
+    MSG_REGISTER="[INFO] Registering Agents..."
+    MSG_MANUAL="  The following commands need to be run manually (openclaw agents add may require interaction):"
+    MSG_DONE="  Deployment complete!"
+    MSG_NEXT="Next steps:"
+    MSG_NEXT_1="  1. Edit ~/.openclaw/openclaw.json and fill in your real Bot Tokens"
+    MSG_NEXT_2="  2. Manually run the 'openclaw agents add' commands above to register Agents"
+    MSG_NEXT_3="  3. Manually run the 'openclaw cron add' commands above to set up schedules"
+    MSG_NEXT_4="  4. Run 'openclaw gateway start' to start the service"
+    MSG_NEXT_5="  5. Send a test message to the CEO Bot via Telegram"
+    MSG_CRON_MORNING="Morning briefing: Daily at 06:30, CEO aggregates all department status and pushes to Chairman"
+    MSG_CRON_INVEST="Investment monitor: Hourly during market hours (Mon-Fri 09:00-16:00)"
+    MSG_CRON_MEMORY="Memory cleanup: 1st of each month at 03:00"
+    MSG_CRON_ORG="CHRO weekly review: Every Monday at 08:00"
+    MSG_CRON_SECURITY="CAO security scan: Every Wednesday at 02:00"
+    TASK_MORNING="Execute morning briefing: Get financial summary from CFO, portfolio status from CIO, today's schedule from COO, and open audit issues from CAO. Refine into a concise daily report and push to Chairman."
+    TASK_INVEST="Check market status of portfolio holdings. If significant volatility detected (daily change exceeds threshold), notify CEO."
+    TASK_MEMORY="Review MEMORY.md health for all Agents: check if line count approaches 200-line limit, check for outdated entries, check for duplicates. Produce review report for CEO."
+    TASK_ORG="Execute weekly organizational health review: review each Agent's performance summary, capability gaps, and policy compliance. Produce weekly report for CEO."
+    TASK_SECURITY="Execute weekly security scan: check open audit issue progress, review each Agent's MEMORY.md for sensitive information leak risks, check if policies have been modified without authorization. Produce security report."
+fi
+
+echo "=========================================="
+echo "  $MSG_DEPLOY"
+echo "=========================================="
+echo ""
+
+# --------------------------------------------
+# 0. Prerequisites check
+# --------------------------------------------
+if ! command -v openclaw &> /dev/null; then
+    echo "$MSG_NOT_FOUND"
+    echo "  https://github.com/openclaw/openclaw"
+    exit 1
+fi
+
+echo "$MSG_INSTALLED"
+echo ""
+
+# --------------------------------------------
+# 1. Backup existing config
 # --------------------------------------------
 if [ -f "$OPENCLAW_DIR/openclaw.json" ]; then
     BACKUP="$OPENCLAW_DIR/openclaw.json.backup.$(date +%Y%m%d%H%M%S)"
-    echo "[INFO] 備份現有 openclaw.json → $BACKUP"
+    echo "$MSG_BACKUP $BACKUP"
     cp "$OPENCLAW_DIR/openclaw.json" "$BACKUP"
 fi
 
 # --------------------------------------------
-# 2. 複製主配置
+# 2. Deploy main config
 # --------------------------------------------
-echo "[INFO] 部署 openclaw.json..."
-cp "$SCRIPT_DIR/openclaw.json" "$OPENCLAW_DIR/openclaw.json"
+echo "$MSG_DEPLOY_JSON"
+cp "$SOURCE_DIR/openclaw.json" "$OPENCLAW_DIR/openclaw.json"
 
 # --------------------------------------------
-# 3. 建立共用 policies 目錄
+# 3. Deploy shared policies
 # --------------------------------------------
 SHARED_POLICIES="$OPENCLAW_DIR/shared/policies"
-echo "[INFO] 部署共用 policies → $SHARED_POLICIES"
+echo "$MSG_DEPLOY_POLICIES $SHARED_POLICIES"
 mkdir -p "$SHARED_POLICIES"
-cp "$SCRIPT_DIR/shared/AGENTS.md" "$OPENCLAW_DIR/shared/AGENTS.md"
-cp "$SCRIPT_DIR/shared/USER.md" "$OPENCLAW_DIR/shared/USER.md"
-cp "$SCRIPT_DIR/shared/policies/"*.md "$SHARED_POLICIES/"
+cp "$SOURCE_DIR/shared/AGENTS.md" "$OPENCLAW_DIR/shared/AGENTS.md"
+cp "$SOURCE_DIR/shared/USER.md" "$OPENCLAW_DIR/shared/USER.md"
+cp "$SOURCE_DIR/shared/policies/"*.md "$SHARED_POLICIES/"
+
+# Deploy setup guides if they exist
+if [ -d "$SOURCE_DIR/shared/setup-guides" ]; then
+    SETUP_GUIDES="$OPENCLAW_DIR/shared/setup-guides"
+    mkdir -p "$SETUP_GUIDES"
+    cp "$SOURCE_DIR/shared/setup-guides/"*.md "$SETUP_GUIDES/"
+fi
 
 # --------------------------------------------
-# 4. 部署各 Agent Workspace
+# 4. Deploy Agent Workspaces
 # --------------------------------------------
 AGENTS=("ceo" "cfo" "cio" "coo" "cto" "chro" "cao")
 
 for AGENT in "${AGENTS[@]}"; do
     WS="$OPENCLAW_DIR/workspace-$AGENT"
-    echo "[INFO] 部署 $AGENT workspace → $WS"
+    printf "$MSG_DEPLOY_WS\n" "$AGENT" "$WS"
     mkdir -p "$WS/memory" "$WS/policies"
 
-    # 複製 Agent 專屬文件
-    cp "$SCRIPT_DIR/workspace-$AGENT/SOUL.md" "$WS/SOUL.md"
-    cp "$SCRIPT_DIR/workspace-$AGENT/MEMORY.md" "$WS/MEMORY.md"
+    # Copy Agent-specific files
+    cp "$SOURCE_DIR/workspace-$AGENT/SOUL.md" "$WS/SOUL.md"
+    cp "$SOURCE_DIR/workspace-$AGENT/MEMORY.md" "$WS/MEMORY.md"
 
-    # 複製 HEARTBEAT.md（如果存在）
-    if [ -f "$SCRIPT_DIR/workspace-$AGENT/HEARTBEAT.md" ]; then
-        cp "$SCRIPT_DIR/workspace-$AGENT/HEARTBEAT.md" "$WS/HEARTBEAT.md"
+    # Copy HEARTBEAT.md if exists
+    if [ -f "$SOURCE_DIR/workspace-$AGENT/HEARTBEAT.md" ]; then
+        cp "$SOURCE_DIR/workspace-$AGENT/HEARTBEAT.md" "$WS/HEARTBEAT.md"
     fi
 
-    # 軟連結共用文件到各 workspace
+    # Copy additional agent-specific files
+    for EXTRA in briefing-template.md status.md issues.md; do
+        if [ -f "$SOURCE_DIR/workspace-$AGENT/$EXTRA" ]; then
+            cp "$SOURCE_DIR/workspace-$AGENT/$EXTRA" "$WS/$EXTRA"
+        fi
+    done
+
+    # Symlink shared files into each workspace
     ln -sf "$OPENCLAW_DIR/shared/AGENTS.md" "$WS/AGENTS.md"
     ln -sf "$OPENCLAW_DIR/shared/USER.md" "$WS/USER.md"
 
-    # 軟連結 policies 目錄
+    # Symlink policies
     for POLICY in "$SHARED_POLICIES/"*.md; do
         POLICY_NAME="$(basename "$POLICY")"
         ln -sf "$POLICY" "$WS/policies/$POLICY_NAME"
     done
 done
 
+# Deploy skills if they exist
+if [ -d "$SOURCE_DIR/skills" ]; then
+    SKILLS_DIR="$OPENCLAW_DIR/skills"
+    mkdir -p "$SKILLS_DIR"
+    for SKILL_DIR in "$SOURCE_DIR/skills/"*/; do
+        SKILL_NAME="$(basename "$SKILL_DIR")"
+        mkdir -p "$SKILLS_DIR/$SKILL_NAME"
+        cp "$SKILL_DIR"*.md "$SKILLS_DIR/$SKILL_NAME/" 2>/dev/null || true
+    done
+fi
+
 echo ""
-echo "[INFO] 所有 workspace 部署完成"
+echo "$MSG_WS_DONE"
 
 # --------------------------------------------
-# 5. 新增 Agent（使用 openclaw CLI）
+# 5. Register Agents (manual commands)
 # --------------------------------------------
 echo ""
-echo "[INFO] 註冊 Agent..."
+echo "$MSG_REGISTER"
 echo ""
-echo "  以下指令需要手動執行（openclaw agents add 可能需要互動）："
+echo "$MSG_MANUAL"
 echo ""
 
 cat << 'COMMANDS'
-# ---- 註冊 7 個 Full Agent ----
+# ---- Register 7 Full Agents ----
 
 openclaw agents add ceo \
   --workspace ~/.openclaw/workspace-ceo \
@@ -129,56 +261,68 @@ openclaw agents add cao \
 COMMANDS
 
 # --------------------------------------------
-# 6. 設定 Cron 排程
+# 6. Cron schedules
 # --------------------------------------------
 echo ""
-echo "# ---- Cron 排程 ----"
+echo "# ---- Cron ----"
 echo ""
 
-cat << 'CRON_COMMANDS'
-# 晨間會報：每天 06:30，CEO 匯整各部門狀態後推送董事長
-openclaw cron add morning-briefing \
-  --agent ceo \
-  --at "06:30" \
-  --task "執行晨間會報：向 CFO 取得財務摘要、向 CIO 取得投資組合狀態、向 COO 取得今日行程、向 CAO 取得開放稽核議題。精煉後產生簡潔的每日報告，推送給董事長。" \
+echo "# $MSG_CRON_MORNING"
+cat << CRON1
+openclaw cron add morning-briefing \\
+  --agent ceo \\
+  --at "06:30" \\
+  --task "$TASK_MORNING" \\
   --deliver telegram:default
 
-# 投資監控：每天開盤時間每小時檢查（週一至週五 09:00-16:00）
-openclaw cron add investment-monitor \
-  --agent cio \
-  --cron "0 9-16 * * 1-5" \
-  --task "檢查投資組合持倉的市場狀態，如有重大波動（單日漲跌超過設定閾值），通知 CEO。"
+CRON1
 
-# 記憶清理：每月 1 日 03:00
-openclaw cron add memory-cleanup \
-  --agent chro \
-  --at "03:00" \
-  --cron "0 3 1 * *" \
-  --task "審視所有 Agent 的 MEMORY.md 健康度：檢查行數是否接近 200 行上限、是否有過時條目、是否有重複。產出審視報告給 CEO。"
+echo "# $MSG_CRON_INVEST"
+cat << CRON2
+openclaw cron add investment-monitor \\
+  --agent cio \\
+  --cron "0 9-16 * * 1-5" \\
+  --task "$TASK_INVEST"
 
-# CHRO 週度審核：每週一 08:00
-openclaw cron add weekly-org-review \
-  --agent chro \
-  --cron "0 8 * * 1" \
-  --task "執行週度組織健康審核：審視各 Agent 本週的表現摘要、能力缺口、政策遵循情況。產出週報給 CEO。"
+CRON2
 
-# CAO 安全掃描：每週三 02:00
-openclaw cron add security-scan \
-  --agent cao \
-  --cron "0 2 * * 3" \
-  --task "執行週度安全掃描：檢查開放稽核議題進度、審視各 Agent 的 MEMORY.md 是否有敏感資訊外洩風險、檢查 policies 是否被未授權修改。產出安全報告。"
+echo "# $MSG_CRON_MEMORY"
+cat << CRON3
+openclaw cron add memory-cleanup \\
+  --agent chro \\
+  --at "03:00" \\
+  --cron "0 3 1 * *" \\
+  --task "$TASK_MEMORY"
 
-CRON_COMMANDS
+CRON3
+
+echo "# $MSG_CRON_ORG"
+cat << CRON4
+openclaw cron add weekly-org-review \\
+  --agent chro \\
+  --cron "0 8 * * 1" \\
+  --task "$TASK_ORG"
+
+CRON4
+
+echo "# $MSG_CRON_SECURITY"
+cat << CRON5
+openclaw cron add security-scan \\
+  --agent cao \\
+  --cron "0 2 * * 3" \\
+  --task "$TASK_SECURITY"
+
+CRON5
 
 echo ""
 echo "=========================================="
-echo "  部署完成！"
+echo "  $MSG_DONE"
 echo "=========================================="
 echo ""
-echo "下一步："
-echo "  1. 編輯 ~/.openclaw/openclaw.json，填入真實的 Bot Token"
-echo "  2. 手動執行上述 'openclaw agents add' 指令註冊 Agent"
-echo "  3. 手動執行上述 'openclaw cron add' 指令設定排程"
-echo "  4. 執行 'openclaw gateway start' 啟動服務"
-echo "  5. 透過 Telegram 向 CEO Bot 發送第一條訊息測試"
+echo "$MSG_NEXT"
+echo "$MSG_NEXT_1"
+echo "$MSG_NEXT_2"
+echo "$MSG_NEXT_3"
+echo "$MSG_NEXT_4"
+echo "$MSG_NEXT_5"
 echo ""

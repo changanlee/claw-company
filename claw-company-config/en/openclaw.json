@@ -1,0 +1,208 @@
+{
+  // ============================================
+  // OpenClaw One-Person Company — Multi-Agent Architecture Config
+  // Version: v0.1 Skeleton Phase
+  // Date: 2026-03-06
+  // ============================================
+
+  "agents": {
+    "defaults": {
+      "subagents": {
+        "maxSpawnDepth": 2,
+        "maxChildrenPerAgent": 5,
+        "maxConcurrent": 8,
+        "runTimeoutSeconds": 900
+      },
+      "heartbeat": {
+        "every": "30m",
+        "activeHours": { "start": "06:00", "end": "23:00" }
+      },
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-6",
+        "fallbacks": ["anthropic/claude-haiku-4-5-20251001"]
+      }
+    },
+    "list": [
+      // ---- Layer 1: CEO ----
+      {
+        "id": "ceo",
+        "default": true,
+        "workspace": "~/.openclaw/workspace-ceo",
+        "agentDir": "~/.openclaw/agents/ceo/agent",
+        "model": "anthropic/claude-sonnet-4-6",
+        "identity": {
+          "name": "CEO",
+          "emoji": "👔"
+        },
+        "subagents": {
+          "allowAgents": ["cfo", "cio", "coo", "cto", "chro"]
+        }
+      },
+
+      // ---- Layer 2: C-Suite Executives ----
+      {
+        "id": "cfo",
+        "workspace": "~/.openclaw/workspace-cfo",
+        "agentDir": "~/.openclaw/agents/cfo/agent",
+        "model": "anthropic/claude-sonnet-4-6",
+        "identity": {
+          "name": "CFO",
+          "emoji": "💰"
+        }
+      },
+      {
+        "id": "cio",
+        "workspace": "~/.openclaw/workspace-cio",
+        "agentDir": "~/.openclaw/agents/cio/agent",
+        "model": "anthropic/claude-sonnet-4-6",
+        "identity": {
+          "name": "CIO",
+          "emoji": "📈"
+        }
+      },
+      {
+        "id": "coo",
+        "workspace": "~/.openclaw/workspace-coo",
+        "agentDir": "~/.openclaw/agents/coo/agent",
+        "model": "anthropic/claude-haiku-4-5-20251001",
+        "identity": {
+          "name": "COO",
+          "emoji": "🏠"
+        }
+      },
+      {
+        "id": "cto",
+        "workspace": "~/.openclaw/workspace-cto",
+        "agentDir": "~/.openclaw/agents/cto/agent",
+        "model": "anthropic/claude-sonnet-4-6",
+        "identity": {
+          "name": "CTO",
+          "emoji": "⚙️"
+        },
+        "subagents": {
+          "allowAgents": ["*"],
+          "model": "anthropic/claude-haiku-4-5-20251001"
+        }
+      },
+      {
+        "id": "chro",
+        "workspace": "~/.openclaw/workspace-chro",
+        "agentDir": "~/.openclaw/agents/chro/agent",
+        "model": "anthropic/claude-haiku-4-5-20251001",
+        "identity": {
+          "name": "CHRO",
+          "emoji": "🧬"
+        }
+      },
+
+      // ---- Independent Oversight: CAO (Chief Audit Officer) ----
+      {
+        "id": "cao",
+        "workspace": "~/.openclaw/workspace-cao",
+        "agentDir": "~/.openclaw/agents/cao/agent",
+        "model": "anthropic/claude-sonnet-4-6",
+        "identity": {
+          "name": "CAO",
+          "emoji": "🛡️"
+        }
+      }
+    ]
+  },
+
+  // ============================================
+  // Inter-Agent Communication
+  // ============================================
+  "tools": {
+    "agentToAgent": {
+      "enabled": true,
+      "allow": ["ceo", "cfo", "cio", "coo", "cto", "chro", "cao"]
+    },
+    "loopDetection": {
+      "enabled": true,
+      "historySize": 30,
+      "warningThreshold": 10,
+      "criticalThreshold": 20
+    }
+  },
+
+  // ============================================
+  // Channel Bindings
+  // ============================================
+  "channels": {
+    "telegram": {
+      "accounts": {
+        "default": {
+          "botToken": "YOUR_CEO_BOT_TOKEN",
+          "dmPolicy": "pairing"
+        },
+        "audit": {
+          "botToken": "YOUR_CAO_BOT_TOKEN",
+          "dmPolicy": "allowlist",
+          "allowFrom": ["YOUR_TELEGRAM_ID"]
+        }
+      }
+    },
+    "whatsapp": {
+      "dmPolicy": "pairing",
+      "textChunkLimit": 4000,
+      "sendReadReceipts": true,
+      "groups": { "*": { "requireMention": true } }
+    },
+    "discord": {
+      "enabled": true,
+      "token": "YOUR_DISCORD_BOT_TOKEN",
+      "dmPolicy": "pairing"
+    }
+  },
+
+  // ============================================
+  // Channel-to-Agent Route Bindings
+  // ============================================
+  "bindings": [
+    // All channels default to CEO
+    { "agentId": "ceo", "match": { "channel": "telegram", "accountId": "default" } },
+    { "agentId": "ceo", "match": { "channel": "whatsapp" } },
+    { "agentId": "ceo", "match": { "channel": "discord" } },
+    // CAO has independent Telegram bot
+    { "agentId": "cao", "match": { "channel": "telegram", "accountId": "audit" } }
+  ],
+
+  // ============================================
+  // Session Management
+  // ============================================
+  "session": {
+    "scope": "per-sender",
+    "reset": {
+      "mode": "daily",
+      "atHour": 4,
+      "idleMinutes": 60
+    },
+    "maintenance": {
+      "mode": "warn",
+      "pruneAfter": "30d",
+      "maxEntries": 500
+    }
+  },
+
+  // ============================================
+  // Cron Scheduling
+  // ============================================
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 2,
+    "sessionRetention": "24h"
+  },
+
+  // ============================================
+  // Gateway Settings
+  // ============================================
+  "gateway": {
+    "mode": "local",
+    "port": 18789,
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "YOUR_GATEWAY_TOKEN"
+    }
+  }
+}
