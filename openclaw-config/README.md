@@ -1,9 +1,9 @@
-# 長安一人公司 — OpenClaw 多代理人架構
+# Chairman一人公司 — OpenClaw 多代理人架構
 
 ## 架構總覽
 
 ```
-董事長（長安）
+董事長（Chairman）
   ↕ Telegram / WhatsApp / Discord
 CEO（總經理）— 統籌、分派、精煉回報
   ├── CFO（財務長）— 記帳、預算、成本審計
