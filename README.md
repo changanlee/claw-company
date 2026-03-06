@@ -30,19 +30,18 @@ CAO (Auditor) — Independent oversight, reports directly to Chairman
 ```
 claw-company/
 ├── openclaw-config/       # OpenClaw deployment configuration
-│   ├── openclaw.json      # Main config (JSON5)
-│   ├── setup.sh           # Deployment script
-│   ├── shared/            # Shared policies & rules across agents
+│   ├── openclaw.json      # Main config (JSON5) — agent definitions, channels, cron
+│   ├── setup.sh           # One-click deployment script
+│   ├── shared/            # Shared policies & rules across all agents
+│   │   ├── AGENTS.md      # Company-wide operating rules
+│   │   ├── USER.md        # Chairman profile (customize for yourself)
+│   │   └── policies/      # Approval matrix, security, memory, audit policies
 │   └── workspace-{agent}/ # Per-agent workspace templates
-├── _bmad/                 # BMAD Method modules (planning & dev framework)
-│   ├── core/              # Core agents & workflows
-│   ├── bmm/               # Business method modules
-│   ├── cis/               # Creative & innovation strategies
-│   ├── tea/               # Test engineering & automation
-│   └── bmb/               # Module builder tools
-├── _bmad-output/          # Generated artifacts from BMAD workflows
-├── docs/                  # Project documentation
-└── LICENSE                # MIT License
+│       ├── SOUL.md        # Role definition, responsibilities, boundaries
+│       ├── MEMORY.md      # Hot memory (≤200 lines)
+│       └── HEARTBEAT.md   # Heartbeat task definitions
+├── README.md
+└── LICENSE                # MIT
 ```
 
 ### Design Principles
@@ -58,13 +57,74 @@ claw-company/
 
 ### Getting Started
 
-1. Install [OpenClaw](https://github.com/openclaw/openclaw)
-2. Clone this repository
-3. Configure tokens in `openclaw-config/openclaw.json`
-4. Run `./openclaw-config/setup.sh`
-5. Start the gateway: `openclaw gateway start`
+#### Prerequisites
 
-See [`openclaw-config/README.md`](openclaw-config/README.md) for detailed setup instructions.
+- [OpenClaw](https://github.com/openclaw/openclaw) installed
+- Anthropic API Key (for Claude models)
+- At least one Telegram Bot Token (for CEO agent)
+
+#### Step 1 — Clone
+
+```bash
+git clone https://github.com/changanlee/claw-company.git
+cd claw-company
+```
+
+#### Step 2 — Configure Tokens
+
+Edit `openclaw-config/openclaw.json` and replace the placeholders:
+
+| Placeholder | Description |
+|-------------|-------------|
+| `YOUR_CEO_BOT_TOKEN` | Telegram Bot Token for CEO |
+| `YOUR_CAO_BOT_TOKEN` | Telegram Bot Token for CAO (optional, for independent audit channel) |
+| `YOUR_TELEGRAM_ID` | Your Telegram User ID |
+| `YOUR_DISCORD_BOT_TOKEN` | Discord Bot Token (optional) |
+| `YOUR_GATEWAY_TOKEN` | A secure string you create for gateway auth |
+
+#### Step 3 — Customize Your Profile
+
+Edit `openclaw-config/shared/USER.md` — replace the default Chairman profile with your own preferences (language, communication style, notification rules).
+
+#### Step 4 — Deploy
+
+```bash
+cd openclaw-config
+chmod +x setup.sh
+./setup.sh
+```
+
+The script will:
+- Copy `openclaw.json` to `~/.openclaw/`
+- Create all 7 agent workspaces under `~/.openclaw/`
+- Set up symlinks for shared policies
+- Print the `openclaw agents add` and `openclaw cron add` commands
+
+#### Step 5 — Register Agents & Cron
+
+Copy and run the commands printed by `setup.sh` to register the 7 agents and 5 cron jobs.
+
+#### Step 6 — Start
+
+```bash
+openclaw gateway start
+```
+
+#### Step 7 — Test
+
+Send a message to your CEO Telegram Bot, e.g., "Hello, please introduce yourself."
+
+### Agent Models
+
+| Agent | Model | Reason |
+|-------|-------|--------|
+| CEO | claude-sonnet-4-6 | Core coordinator, needs strong reasoning |
+| CFO | claude-sonnet-4-6 | Financial accuracy matters |
+| CIO | claude-sonnet-4-6 | Investment analysis needs depth |
+| COO | claude-haiku-4-5 | Life tasks are frequent but simple |
+| CTO | claude-sonnet-4-6 | Technical decisions need precision |
+| CHRO | claude-haiku-4-5 | Policy tasks are periodic, not complex |
+| CAO | claude-sonnet-4-6 | Audit requires independent strong reasoning |
 
 ### License
 
@@ -98,18 +158,17 @@ CAO（稽核長）— 獨立監督，直接向董事長報告
 ```
 claw-company/
 ├── openclaw-config/       # OpenClaw 部署配置
-│   ├── openclaw.json      # 主配置檔（JSON5）
-│   ├── setup.sh           # 部署腳本
+│   ├── openclaw.json      # 主配置檔（JSON5）— Agent 定義、通道、排程
+│   ├── setup.sh           # 一鍵部署腳本
 │   ├── shared/            # 跨 Agent 共用政策與規範
+│   │   ├── AGENTS.md      # 全公司營運規範
+│   │   ├── USER.md        # 董事長資訊（請自行修改為你的偏好）
+│   │   └── policies/      # 核決權限、安全、記憶、稽核政策
 │   └── workspace-{agent}/ # 各 Agent 的 workspace 模板
-├── _bmad/                 # BMAD Method 模組（規劃與開發框架）
-│   ├── core/              # 核心 Agent 與工作流程
-│   ├── bmm/               # 商業方法模組
-│   ├── cis/               # 創意與創新策略
-│   ├── tea/               # 測試工程與自動化
-│   └── bmb/               # 模組建構工具
-├── _bmad-output/          # BMAD 工作流程產出物
-├── docs/                  # 專案文件
+│       ├── SOUL.md        # 角色定義、職責、邊界
+│       ├── MEMORY.md      # 熱記憶（≤200 行）
+│       └── HEARTBEAT.md   # 心跳任務定義
+├── README.md
 └── LICENSE                # MIT 授權
 ```
 
@@ -126,13 +185,74 @@ claw-company/
 
 ### 快速開始
 
-1. 安裝 [OpenClaw](https://github.com/openclaw/openclaw)
-2. Clone 此倉庫
-3. 在 `openclaw-config/openclaw.json` 中配置各項 Token
-4. 執行 `./openclaw-config/setup.sh`
-5. 啟動 Gateway：`openclaw gateway start`
+#### 前置條件
 
-詳細部署說明請參考 [`openclaw-config/README.md`](openclaw-config/README.md)。
+- 已安裝 [OpenClaw](https://github.com/openclaw/openclaw)
+- Anthropic API Key（用於 Claude 模型）
+- 至少一個 Telegram Bot Token（給 CEO Agent）
+
+#### 步驟一 — Clone
+
+```bash
+git clone https://github.com/changanlee/claw-company.git
+cd claw-company
+```
+
+#### 步驟二 — 配置 Token
+
+編輯 `openclaw-config/openclaw.json`，替換以下佔位符：
+
+| 佔位符 | 說明 |
+|--------|------|
+| `YOUR_CEO_BOT_TOKEN` | CEO 的 Telegram Bot Token |
+| `YOUR_CAO_BOT_TOKEN` | CAO 的 Telegram Bot Token（可選，稽核獨立通道） |
+| `YOUR_TELEGRAM_ID` | 你的 Telegram User ID |
+| `YOUR_DISCORD_BOT_TOKEN` | Discord Bot Token（可選） |
+| `YOUR_GATEWAY_TOKEN` | 自行設定一個安全字串，用於 Gateway 認證 |
+
+#### 步驟三 — 自訂你的身份
+
+編輯 `openclaw-config/shared/USER.md` — 把預設的董事長資訊改成你自己的偏好（語言、溝通風格、通知規則）。
+
+#### 步驟四 — 部署
+
+```bash
+cd openclaw-config
+chmod +x setup.sh
+./setup.sh
+```
+
+腳本會自動：
+- 把 `openclaw.json` 複製到 `~/.openclaw/`
+- 建立 7 個 Agent workspace 到 `~/.openclaw/`
+- 設定共用政策的軟連結
+- 印出 `openclaw agents add` 和 `openclaw cron add` 指令
+
+#### 步驟五 — 註冊 Agent 與排程
+
+複製 `setup.sh` 輸出的指令，逐一執行，註冊 7 個 Agent 和 5 個 Cron 排程。
+
+#### 步驟六 — 啟動
+
+```bash
+openclaw gateway start
+```
+
+#### 步驟七 — 測試
+
+透過 Telegram 向 CEO Bot 發送訊息，例如：「你好，請自我介紹。」
+
+### Agent 模型配置
+
+| Agent | 模型 | 原因 |
+|-------|------|------|
+| CEO | claude-sonnet-4-6 | 核心協調者，需要強推理能力 |
+| CFO | claude-sonnet-4-6 | 財務準確性重要 |
+| CIO | claude-sonnet-4-6 | 投資分析需要深度 |
+| COO | claude-haiku-4-5 | 生活任務頻繁但簡單 |
+| CTO | claude-sonnet-4-6 | 技術決策需要精確 |
+| CHRO | claude-haiku-4-5 | 政策任務是週期性的，不複雜 |
+| CAO | claude-sonnet-4-6 | 稽核需要獨立的強推理能力 |
 
 ### 授權
 
