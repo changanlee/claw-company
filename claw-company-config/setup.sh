@@ -59,12 +59,8 @@ echo ""
 # --------------------------------------------
 # Model Detection / 模型偵測
 # --------------------------------------------
-# Hardcoded fallback (only used if API fetch fails and no existing config)
-FALLBACK_PRIMARY="anthropic/claude-sonnet-4-6"
-FALLBACK_LIGHT="anthropic/claude-haiku-4-5-20251001"
-
 # --------------------------------------------
-# Fetch latest Anthropic models from API
+# Fetch latest recommended models
 # --------------------------------------------
 RECOMMENDED_PRIMARY=""
 RECOMMENDED_LIGHT=""
@@ -127,14 +123,19 @@ if [ -z "$RECOMMENDED_PRIMARY" ]; then
             echo "[WARN] Could not fetch latest models, will use your existing config"
         fi
     else
-        # No network, no existing config → hardcoded fallback
-        RECOMMENDED_PRIMARY="$FALLBACK_PRIMARY"
-        RECOMMENDED_LIGHT="$FALLBACK_LIGHT"
+        # No network, no existing config → cannot proceed
         if [ "$LANG_DIR" = "zh" ]; then
-            echo "[WARN] 無法取得最新模型資訊且無現有配置，使用內建預設"
+            echo "[ERROR] 無法取得最新模型資訊，且未偵測到現有 OpenClaw 配置。"
+            echo ""
+            echo "  首次安裝需要網路連線來取得推薦模型配置。"
+            echo "  請確認網路連線後重新執行 ./setup.sh"
         else
-            echo "[WARN] Could not fetch latest models and no existing config found, using built-in defaults"
+            echo "[ERROR] Could not fetch latest model info and no existing OpenClaw config found."
+            echo ""
+            echo "  A network connection is required for first-time installation to fetch recommended models."
+            echo "  Please check your network connection and re-run ./setup.sh"
         fi
+        exit 1
     fi
 else
     if [ "$LANG_DIR" = "zh" ]; then
