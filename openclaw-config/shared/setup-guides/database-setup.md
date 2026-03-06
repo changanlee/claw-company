@@ -61,21 +61,71 @@
    );
    ```
 
-3. **為各 Agent 建立 Skill**
-   - CFO Skill：封裝 Supabase API，提供記帳、查詢、報表功能
-   - CIO Skill：封裝投資組合 CRUD + 損益計算
-   - COO Skill：封裝行程 CRUD + 衝突檢測
+3. **安裝 Supabase Skill**
+   ```bash
+   openclaw add @stopmoclay/supabase
+   ```
 
-4. **設定環境變數**
-   - `SUPABASE_URL` 和 `SUPABASE_KEY` 加入 OpenClaw 環境配置
-   - 確保金鑰不寫入任何 Markdown 檔案
+4. **安裝 Agent 專屬 Skill**
+   - CFO：`skills/cfo-finance/SKILL.md` — 記帳、查詢、月報、Token 審計
+   - CIO：`skills/cio-portfolio/SKILL.md` — 投資組合 CRUD + 損益計算
+   - COO：`skills/coo-schedule/SKILL.md` — 行程 CRUD + 衝突檢測
 
-5. **遷移既有資料**
+5. **設定環境變數與 openclaw.json**
+   - 詳見 `shared/setup-guides/supabase-setup.md`（完整安裝指南）
+
+6. **設定 Row Level Security**
+   - 詳見 `shared/policies/supabase-rls.md`（各 Agent 存取權限）
+   - 詳見 `shared/policies/data-access-policy.md`（資料治理規則）
+
+7. **遷移既有資料**
    - CFO 將 memory/ 中的歷史帳務匯入 transactions 表
    - CIO 將 MEMORY.md 中的持倉資料匯入 portfolio 表
 
+### 額外資料表（營運監控）
+
+```sql
+-- CFO 預算追蹤
+CREATE TABLE budgets (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  month TEXT NOT NULL,
+  category TEXT NOT NULL,
+  budget_amount DECIMAL(10,2) NOT NULL,
+  spent_amount DECIMAL(10,2) DEFAULT 0,
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(month, category)
+);
+
+-- CFO Token 用量追蹤
+CREATE TABLE token_usage (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  date DATE NOT NULL,
+  agent_id TEXT NOT NULL,
+  model TEXT,
+  input_tokens INTEGER DEFAULT 0,
+  output_tokens INTEGER DEFAULT 0,
+  cost_usd DECIMAL(10,6) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- CAO 稽核日誌
+CREATE TABLE audit_log (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  issue_id TEXT,
+  severity TEXT NOT NULL,
+  agent_id TEXT NOT NULL,
+  finding TEXT NOT NULL,
+  status TEXT DEFAULT 'open',
+  resolution TEXT,
+  created_by TEXT DEFAULT 'cao',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  resolved_at TIMESTAMPTZ
+);
+```
+
 ### 核決等級
 - 建置 Supabase：紅燈（需董事長核決，涉及外部服務與成本）
+- 安裝 Skill / 設定 RLS：黃燈（CTO 提案 + CEO 審批）
 - 日常讀寫操作：綠燈（自動執行）
 
 ---
