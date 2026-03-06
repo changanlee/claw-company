@@ -27,6 +27,7 @@ venv/
 # IDE
 .vscode/
 .idea/
+.cursor/
 
 # BMAD framework & outputs
 _bmad/
