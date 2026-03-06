@@ -2,7 +2,7 @@
 # ============================================
 # One-Person Company — OpenClaw Multi-Agent Deployment Script
 # 一人公司 — OpenClaw 多代理人架構部署腳本
-# Version: v0.4
+# Version: v0.6
 # ============================================
 
 set -e
@@ -168,39 +168,95 @@ if ! command -v openclaw &> /dev/null; then
 fi
 
 # --------------------------------------------
-# Fetch latest recommended models
+# Detect available models from existing OpenClaw config
 # --------------------------------------------
-RECOMMENDED_PRIMARY=""
-RECOMMENDED_LIGHT=""
 
-if [ "$LANG_DIR" = "zh" ]; then
-    echo "[INFO] 正在查詢最新推薦模型..."
-else
-    echo "[INFO] Fetching latest recommended models..."
+# Determine which openclaw.json to read models from:
+# If reinstalling (symlink exists pointing to claw-company), read from backup or resolve the real source.
+# Otherwise read from the original file.
+OPENCLAW_CONFIG_SOURCE=""
+if [ -L "$OPENCLAW_DIR/openclaw.json" ]; then
+    LINK_TARGET=$(readlink "$OPENCLAW_DIR/openclaw.json")
+    if echo "$LINK_TARGET" | grep -q "claw-company"; then
+        # It's our symlink — check if target still exists (may have been wiped by clean reinstall)
+        if [ -f "$LINK_TARGET" ]; then
+            OPENCLAW_CONFIG_SOURCE="$LINK_TARGET"
+        fi
+        # Also check for a backup
+        if [ -z "$OPENCLAW_CONFIG_SOURCE" ]; then
+            LATEST_BACKUP=$(ls -t "$OPENCLAW_DIR"/openclaw.json.backup.* 2>/dev/null | head -1)
+            if [ -n "$LATEST_BACKUP" ]; then
+                OPENCLAW_CONFIG_SOURCE="$LATEST_BACKUP"
+            fi
+        fi
+    else
+        OPENCLAW_CONFIG_SOURCE="$OPENCLAW_DIR/openclaw.json"
+    fi
+elif [ -f "$OPENCLAW_DIR/openclaw.json" ]; then
+    OPENCLAW_CONFIG_SOURCE="$OPENCLAW_DIR/openclaw.json"
 fi
 
-if command -v curl &> /dev/null; then
-    LATEST_MODELS=$(curl -sf --max-time 10 \
-        "https://raw.githubusercontent.com/changanlee/claw-company/main/claw-company-config/recommended-models.json" 2>/dev/null)
-
-    if [ -n "$LATEST_MODELS" ]; then
-        RECOMMENDED_PRIMARY=$(echo "$LATEST_MODELS" | grep -o '"primary"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/')
-        RECOMMENDED_LIGHT=$(echo "$LATEST_MODELS" | grep -o '"light"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/')
+if [ -z "$OPENCLAW_CONFIG_SOURCE" ]; then
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "[ERROR] 找不到 $OPENCLAW_DIR/openclaw.json"
+        echo ""
+        echo "  請先完成 OpenClaw 的初始設定（包括模型配置）："
+        echo "  openclaw onboard"
+    else
+        echo "[ERROR] $OPENCLAW_DIR/openclaw.json not found."
+        echo ""
+        echo "  Please complete OpenClaw's initial setup (including model configuration) first:"
+        echo "  openclaw onboard"
     fi
+    exit 1
 fi
 
-# Detect existing OpenClaw config
-DETECTED_PRIMARY=""
-DETECTED_LIGHT=""
+AVAILABLE_MODELS=()
 
-if [ -f "$OPENCLAW_DIR/openclaw.json" ]; then
-    ALL_MODELS=$(grep -o '"model"[[:space:]]*:[[:space:]]*"[^"]*"' "$OPENCLAW_DIR/openclaw.json" 2>/dev/null \
-        | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' | sort | uniq -c | sort -rn)
-    DETECTED_PRIMARY=$(echo "$ALL_MODELS" | head -1 | awk '{print $2}')
-    DETECTED_LIGHT=$(echo "$ALL_MODELS" | sed -n '2p' | awk '{print $2}')
-    if [ -z "$DETECTED_LIGHT" ]; then
-        DETECTED_LIGHT="$DETECTED_PRIMARY"
+# Extract model IDs from "model": "provider/name" fields
+while IFS= read -r m; do
+    [ -n "$m" ] && AVAILABLE_MODELS+=("$m")
+done < <(grep -o '"model"[[:space:]]*:[[:space:]]*"[^"]*"' "$OPENCLAW_CONFIG_SOURCE" 2>/dev/null \
+    | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' \
+    | grep '/' | sort -u)
+
+# Extract from "primary": "provider/name" and fallbacks array values
+while IFS= read -r m; do
+    [ -n "$m" ] && AVAILABLE_MODELS+=("$m")
+done < <(grep -oE '"(primary)"[[:space:]]*:[[:space:]]*"[^"]*"' "$OPENCLAW_CONFIG_SOURCE" 2>/dev/null \
+    | sed 's/.*:[[:space:]]*"\([^"]*\)"/\1/' \
+    | grep '/' | sort -u)
+
+# Extract from models.allowlist — match lines with both "id" and a provider/model pattern
+while IFS= read -r m; do
+    [ -n "$m" ] && AVAILABLE_MODELS+=("$m")
+done < <(grep '"alias"' "$OPENCLAW_CONFIG_SOURCE" 2>/dev/null \
+    | grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' \
+    | sed 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' \
+    | grep '/' | sort -u)
+
+# Deduplicate
+if [ ${#AVAILABLE_MODELS[@]} -gt 0 ]; then
+    AVAILABLE_MODELS=($(printf '%s\n' "${AVAILABLE_MODELS[@]}" | sort -u))
+fi
+
+if [ ${#AVAILABLE_MODELS[@]} -eq 0 ]; then
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "[ERROR] 在 $OPENCLAW_DIR/openclaw.json 中找不到任何模型配置。"
+        echo ""
+        echo "  請先在 OpenClaw 中設定至少一個模型："
+        echo "  openclaw models set <model-id>"
+        echo ""
+        echo "  設定完成後再重新執行 ./setup.sh"
+    else
+        echo "[ERROR] No models found in $OPENCLAW_DIR/openclaw.json"
+        echo ""
+        echo "  Please configure at least one model in OpenClaw first:"
+        echo "  openclaw models set <model-id>"
+        echo ""
+        echo "  Then re-run ./setup.sh"
     fi
+    exit 1
 fi
 
 # Detect existing auth profiles
@@ -213,40 +269,6 @@ for AUTH_FILE in "$OPENCLAW_DIR/agents/"*/agent/auth-profiles.json "$INSTALL_DIR
 done
 if [ -z "$EXISTING_AUTH_FILE" ] && [ -f "$OPENCLAW_DIR/auth-profiles.json" ]; then
     EXISTING_AUTH_FILE="$OPENCLAW_DIR/auth-profiles.json"
-fi
-
-# Fallback logic
-FETCH_FAILED=false
-if [ -z "$RECOMMENDED_PRIMARY" ]; then
-    FETCH_FAILED=true
-    if [ -n "$DETECTED_PRIMARY" ]; then
-        RECOMMENDED_PRIMARY="$DETECTED_PRIMARY"
-        RECOMMENDED_LIGHT="$DETECTED_LIGHT"
-        if [ "$LANG_DIR" = "zh" ]; then
-            echo "[WARN] 無法取得最新模型資訊，將使用你現有的模型配置"
-        else
-            echo "[WARN] Could not fetch latest models, will use your existing config"
-        fi
-    else
-        if [ "$LANG_DIR" = "zh" ]; then
-            echo "[ERROR] 無法取得最新模型資訊，且未偵測到現有 OpenClaw 配置。"
-            echo ""
-            echo "  首次安裝需要網路連線來取得推薦模型配置。"
-            echo "  請確認網路連線後重新執行 ./setup.sh"
-        else
-            echo "[ERROR] Could not fetch latest model info and no existing OpenClaw config found."
-            echo ""
-            echo "  A network connection is required for first-time installation."
-            echo "  Please check your network connection and re-run ./setup.sh"
-        fi
-        exit 1
-    fi
-else
-    if [ "$LANG_DIR" = "zh" ]; then
-        echo "[INFO] 已取得最新推薦模型"
-    else
-        echo "[INFO] Latest recommended models fetched"
-    fi
 fi
 
 # --------------------------------------------
@@ -262,91 +284,226 @@ fi
 echo "=========================================="
 echo ""
 
-if [ -n "$DETECTED_PRIMARY" ] && [ "$FETCH_FAILED" = true ]; then
-    MODEL_PRIMARY="$DETECTED_PRIMARY"
-    MODEL_LIGHT="$DETECTED_LIGHT"
-    if [ "$LANG_DIR" = "zh" ]; then
-        echo "  將使用你現有的模型配置："
-        echo "       主要模型：$MODEL_PRIMARY"
-        echo "       輕量模型：$MODEL_LIGHT"
-    else
-        echo "  Using your existing model configuration:"
-        echo "       Primary: $MODEL_PRIMARY"
-        echo "       Light:   $MODEL_LIGHT"
-    fi
-
-elif [ -n "$DETECTED_PRIMARY" ]; then
-    if [ "$DETECTED_PRIMARY" = "$RECOMMENDED_PRIMARY" ] && [ "$DETECTED_LIGHT" = "$RECOMMENDED_LIGHT" ]; then
-        MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
-        MODEL_LIGHT="$RECOMMENDED_LIGHT"
-        if [ "$LANG_DIR" = "zh" ]; then
-            echo "  ✓ 你目前的配置已經是最新推薦配置！"
-        else
-            echo "  ✓ Your current config matches the latest recommendation!"
-        fi
-    else
-        if [ "$LANG_DIR" = "zh" ]; then
-            echo "  你目前的配置："
-            echo "       主要模型：$DETECTED_PRIMARY"
-            echo "       輕量模型：$DETECTED_LIGHT"
-            echo ""
-            echo "  claw-company 推薦配置（最新）："
-            echo "       主要模型：$RECOMMENDED_PRIMARY（CEO/CFO/CIO/CTO/CAO）"
-            echo "       輕量模型：$RECOMMENDED_LIGHT（COO/CHRO）"
-            echo ""
-            echo "  1) 使用推薦配置（最新版）"
-            echo "  2) 保持現有配置（$DETECTED_PRIMARY）"
-            echo ""
-            while true; do
-                read -r -p "請選擇 1 或 2: " MODEL_CHOICE
-                case "$MODEL_CHOICE" in
-                    1) MODEL_PRIMARY="$RECOMMENDED_PRIMARY"; MODEL_LIGHT="$RECOMMENDED_LIGHT"; break ;;
-                    2) MODEL_PRIMARY="$DETECTED_PRIMARY"; MODEL_LIGHT="$DETECTED_LIGHT"; break ;;
-                    *) echo "無效輸入，請輸入 1 或 2。" ;;
-                esac
-            done
-        else
-            echo "  Your current config:"
-            echo "       Primary: $DETECTED_PRIMARY"
-            echo "       Light:   $DETECTED_LIGHT"
-            echo ""
-            echo "  claw-company recommended (latest):"
-            echo "       Primary: $RECOMMENDED_PRIMARY (CEO/CFO/CIO/CTO/CAO)"
-            echo "       Light:   $RECOMMENDED_LIGHT (COO/CHRO)"
-            echo ""
-            echo "  1) Use recommended config (latest)"
-            echo "  2) Keep current config ($DETECTED_PRIMARY)"
-            echo ""
-            while true; do
-                read -r -p "Select 1 or 2: " MODEL_CHOICE
-                case "$MODEL_CHOICE" in
-                    1) MODEL_PRIMARY="$RECOMMENDED_PRIMARY"; MODEL_LIGHT="$RECOMMENDED_LIGHT"; break ;;
-                    2) MODEL_PRIMARY="$DETECTED_PRIMARY"; MODEL_LIGHT="$DETECTED_LIGHT"; break ;;
-                    *) echo "Invalid input. Please enter 1 or 2." ;;
-                esac
-            done
-        fi
-    fi
+if [ "$LANG_DIR" = "zh" ]; then
+    echo "  偵測到你的 OpenClaw 中有以下模型："
 else
-    MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
-    MODEL_LIGHT="$RECOMMENDED_LIGHT"
-    if [ "$LANG_DIR" = "zh" ]; then
-        echo "  使用推薦配置："
-    else
-        echo "  Using recommended configuration:"
-    fi
+    echo "  Found the following models in your OpenClaw config:"
+fi
+echo ""
+for i in "${!AVAILABLE_MODELS[@]}"; do
+    echo "    $((i+1))) ${AVAILABLE_MODELS[$i]}"
+done
+echo ""
+
+if [ "$LANG_DIR" = "zh" ]; then
+    echo "  smart 和 fast 是兩個模型別名，分別分配給各角色。"
+    echo "  請從上面的模型中選擇。"
+    echo ""
+else
+    echo "  smart and fast are two model aliases assigned to each agent."
+    echo "  Please select from the models above."
+    echo ""
 fi
 
-MODEL_PROVIDER="${MODEL_PRIMARY%%/*}"
+# Helper: let user pick a model from the available list
+# All display output goes to stderr (&2), only the result goes to stdout
+pick_model() {
+    local ALIAS_NAME="$1"
+    local PICKED=""
+    local MODEL_COUNT=${#AVAILABLE_MODELS[@]}
+
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "  --- 選擇 $ALIAS_NAME 模型 ---" >&2
+    else
+        echo "  --- Select $ALIAS_NAME model ---" >&2
+    fi
+
+    while true; do
+        if [ "$LANG_DIR" = "zh" ]; then
+            read -r -p "  請輸入編號 (1-$MODEL_COUNT): " PICK </dev/tty
+        else
+            read -r -p "  Enter number (1-$MODEL_COUNT): " PICK </dev/tty
+        fi
+
+        if [ "$PICK" -ge 1 ] 2>/dev/null && [ "$PICK" -le "$MODEL_COUNT" ] 2>/dev/null; then
+            PICKED="${AVAILABLE_MODELS[$((PICK-1))]}"
+            break
+        fi
+
+        if [ "$LANG_DIR" = "zh" ]; then
+            echo "  無效輸入。" >&2
+        else
+            echo "  Invalid input." >&2
+        fi
+    done
+
+    echo "" >&2
+    echo "$PICKED"
+}
+
+# Run model selection
+MODEL_PRIMARY=$(pick_model "smart")
+MODEL_LIGHT=$(pick_model "fast")
 
 echo ""
 if [ "$LANG_DIR" = "zh" ]; then
-    echo "[INFO] 主要模型：$MODEL_PRIMARY"
-    echo "[INFO] 輕量模型：$MODEL_LIGHT"
+    echo "[INFO] 模型別名："
+    echo "       smart → $MODEL_PRIMARY"
+    echo "       fast  → $MODEL_LIGHT"
 else
-    echo "[INFO] Primary: $MODEL_PRIMARY"
-    echo "[INFO] Light:   $MODEL_LIGHT"
+    echo "[INFO] Model aliases:"
+    echo "       smart → $MODEL_PRIMARY"
+    echo "       fast  → $MODEL_LIGHT"
 fi
+if [ "$MODEL_PRIMARY" = "$MODEL_LIGHT" ]; then
+    echo ""
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "[WARN] smart 和 fast 指向同一個模型，所有角色將使用相同模型。"
+    else
+        echo "[WARN] smart and fast point to the same model. All agents will use the same model."
+    fi
+fi
+echo ""
+
+# --------------------------------------------
+# Per-agent tier selection
+# --------------------------------------------
+
+# Defaults: core agents = smart, auxiliary = fast
+TIER_CEO="smart"; TIER_CFO="smart"; TIER_CIO="smart"
+TIER_COO="fast";  TIER_CTO="smart"; TIER_CHRO="fast"; TIER_CAO="smart"
+TIER_CTO_SUB="fast"
+
+# Helper: set tier for a role without eval
+set_tier() {
+    local ROLE="$1" VAL="$2"
+    case "$ROLE" in
+        CEO)  TIER_CEO="$VAL" ;;
+        CFO)  TIER_CFO="$VAL" ;;
+        CIO)  TIER_CIO="$VAL" ;;
+        COO)  TIER_COO="$VAL" ;;
+        CTO)      TIER_CTO="$VAL" ;;
+        CTO_SUB)  TIER_CTO_SUB="$VAL" ;;
+        CHRO)     TIER_CHRO="$VAL" ;;
+        CAO)      TIER_CAO="$VAL" ;;
+    esac
+}
+
+get_tier() {
+    local ROLE="$1"
+    case "$ROLE" in
+        CEO)      echo "$TIER_CEO" ;;
+        CFO)      echo "$TIER_CFO" ;;
+        CIO)      echo "$TIER_CIO" ;;
+        COO)      echo "$TIER_COO" ;;
+        CTO)      echo "$TIER_CTO" ;;
+        CTO_SUB)  echo "$TIER_CTO_SUB" ;;
+        CHRO)     echo "$TIER_CHRO" ;;
+        CAO)      echo "$TIER_CAO" ;;
+    esac
+}
+
+pick_tier_zh() {
+    echo ""
+    echo "  對每個角色選擇 smart 或 fast："
+    echo "  （smart = 高能力模型，fast = 輕量快速模型）"
+    echo ""
+    for ROLE in CEO CFO CIO COO CTO CTO_SUB CHRO CAO; do
+        DEFAULT=$(get_tier "$ROLE")
+        while true; do
+            read -r -p "  $ROLE [$DEFAULT]: " INPUT
+            INPUT="${INPUT:-$DEFAULT}"
+            if [ "$INPUT" = "smart" ] || [ "$INPUT" = "fast" ]; then
+                set_tier "$ROLE" "$INPUT"
+                break
+            else
+                echo "    請輸入 smart 或 fast"
+            fi
+        done
+    done
+}
+
+pick_tier_en() {
+    echo ""
+    echo "  Choose smart or fast for each agent:"
+    echo "  (smart = high capability, fast = lightweight)"
+    echo ""
+    for ROLE in CEO CFO CIO COO CTO CTO_SUB CHRO CAO; do
+        DEFAULT=$(get_tier "$ROLE")
+        while true; do
+            read -r -p "  $ROLE [$DEFAULT]: " INPUT
+            INPUT="${INPUT:-$DEFAULT}"
+            if [ "$INPUT" = "smart" ] || [ "$INPUT" = "fast" ]; then
+                set_tier "$ROLE" "$INPUT"
+                break
+            else
+                echo "    Please enter smart or fast"
+            fi
+        done
+    done
+}
+
+echo "=========================================="
+if [ "$LANG_DIR" = "zh" ]; then
+    echo "  各角色模型等級配置"
+else
+    echo "  Per-Agent Model Tier"
+fi
+echo "=========================================="
+echo ""
+
+if [ "$LANG_DIR" = "zh" ]; then
+    echo "  預設配置："
+    echo "       CEO  = smart    CFO  = smart     CIO  = smart"
+    echo "       CTO  = smart    CTO_SUB = fast  CAO  = smart"
+    echo "       COO  = fast     CHRO = fast"
+    echo ""
+    echo "  1) 使用預設配置"
+    echo "  2) 自訂每個角色的模型等級"
+    echo ""
+    while true; do
+        read -r -p "請選擇 1 或 2: " TIER_CHOICE
+        case "$TIER_CHOICE" in
+            1) break ;;
+            2)
+                echo ""
+                echo "  對每個角色選擇 smart 或 fast："
+                echo "  （smart = 高能力模型，fast = 輕量快速模型）"
+                echo ""
+                pick_tier_zh
+                break ;;
+            *) echo "無效輸入，請輸入 1 或 2。" ;;
+        esac
+    done
+else
+    echo "  Default assignment:"
+    echo "       CEO  = smart    CFO  = smart     CIO  = smart"
+    echo "       CTO  = smart    CTO_SUB = fast  CAO  = smart"
+    echo "       COO  = fast     CHRO = fast"
+    echo ""
+    echo "  1) Use defaults"
+    echo "  2) Customize per-agent model tier"
+    echo ""
+    while true; do
+        read -r -p "Select 1 or 2: " TIER_CHOICE
+        case "$TIER_CHOICE" in
+            1) break ;;
+            2)
+                pick_tier_en
+                break ;;
+            *) echo "Invalid input. Please enter 1 or 2." ;;
+        esac
+    done
+fi
+
+echo ""
+if [ "$LANG_DIR" = "zh" ]; then
+    echo "[INFO] 各角色模型等級："
+else
+    echo "[INFO] Agent model tiers:"
+fi
+echo "       CEO=$TIER_CEO  CFO=$TIER_CFO  CIO=$TIER_CIO  COO=$TIER_COO"
+echo "       CTO=$TIER_CTO  CTO_SUB=$TIER_CTO_SUB  CHRO=$TIER_CHRO  CAO=$TIER_CAO"
 echo ""
 
 # ============================================
@@ -363,6 +520,14 @@ echo ""
 mkdir -p "$INSTALL_DIR"
 sed -e "s|{{MODEL_PRIMARY}}|$MODEL_PRIMARY|g" \
     -e "s|{{MODEL_LIGHT}}|$MODEL_LIGHT|g" \
+    -e "s|{{TIER_CEO}}|$TIER_CEO|g" \
+    -e "s|{{TIER_CFO}}|$TIER_CFO|g" \
+    -e "s|{{TIER_CIO}}|$TIER_CIO|g" \
+    -e "s|{{TIER_COO}}|$TIER_COO|g" \
+    -e "s|{{TIER_CTO}}|$TIER_CTO|g" \
+    -e "s|{{TIER_CTO_SUB}}|$TIER_CTO_SUB|g" \
+    -e "s|{{TIER_CHRO}}|$TIER_CHRO|g" \
+    -e "s|{{TIER_CAO}}|$TIER_CAO|g" \
     "$SOURCE_DIR/openclaw.json" > "$INSTALL_DIR/openclaw.json"
 
 # 2. Deploy shared
@@ -384,7 +549,10 @@ for AGENT in "${AGENTS[@]}"; do
     mkdir -p "$WS/memory" "$WS/policies"
 
     cp "$SOURCE_DIR/workspace-$AGENT/SOUL.md" "$WS/SOUL.md"
-    cp "$SOURCE_DIR/workspace-$AGENT/MEMORY.md" "$WS/MEMORY.md"
+    # Preserve user's accumulated memory on overwrite install
+    if [ ! -f "$WS/MEMORY.md" ]; then
+        cp "$SOURCE_DIR/workspace-$AGENT/MEMORY.md" "$WS/MEMORY.md"
+    fi
 
     if [ -f "$SOURCE_DIR/workspace-$AGENT/HEARTBEAT.md" ]; then
         cp "$SOURCE_DIR/workspace-$AGENT/HEARTBEAT.md" "$WS/HEARTBEAT.md"
@@ -431,7 +599,10 @@ if [ -n "$EXISTING_AUTH_FILE" ]; then
     for AGENT in "${AGENTS[@]}"; do
         AGENT_DIR="$INSTALL_DIR/agents/$AGENT/agent"
         mkdir -p "$AGENT_DIR"
-        cp "$EXISTING_AUTH_FILE" "$AGENT_DIR/auth-profiles.json"
+        # Don't overwrite if agent already has auth configured
+        if [ ! -f "$AGENT_DIR/auth-profiles.json" ]; then
+            cp "$EXISTING_AUTH_FILE" "$AGENT_DIR/auth-profiles.json"
+        fi
     done
 fi
 
@@ -494,31 +665,31 @@ echo ""
 cat << COMMANDS
 openclaw agents add ceo \\
   --workspace $INSTALL_DIR/workspace-ceo \\
-  --model $MODEL_PRIMARY --default
+  --model $TIER_CEO --default
 
 openclaw agents add cfo \\
   --workspace $INSTALL_DIR/workspace-cfo \\
-  --model $MODEL_PRIMARY
+  --model $TIER_CFO
 
 openclaw agents add cio \\
   --workspace $INSTALL_DIR/workspace-cio \\
-  --model $MODEL_PRIMARY
+  --model $TIER_CIO
 
 openclaw agents add coo \\
   --workspace $INSTALL_DIR/workspace-coo \\
-  --model $MODEL_LIGHT
+  --model $TIER_COO
 
 openclaw agents add cto \\
   --workspace $INSTALL_DIR/workspace-cto \\
-  --model $MODEL_PRIMARY
+  --model $TIER_CTO
 
 openclaw agents add chro \\
   --workspace $INSTALL_DIR/workspace-chro \\
-  --model $MODEL_LIGHT
+  --model $TIER_CHRO
 
 openclaw agents add cao \\
   --workspace $INSTALL_DIR/workspace-cao \\
-  --model $MODEL_PRIMARY
+  --model $TIER_CAO
 COMMANDS
 
 if [ "$LANG_DIR" = "zh" ]; then
@@ -539,27 +710,5 @@ else
     echo "  Reinstall: ./setup.sh"
 fi
 
-if [ -z "$EXISTING_AUTH_FILE" ]; then
-    echo ""
-    if [ "$LANG_DIR" = "zh" ]; then
-        echo "[WARN] 未偵測到 auth 配置，請先設定 API Key："
-        echo "  openclaw agents auth ceo --provider $MODEL_PROVIDER --api-key YOUR_API_KEY"
-        echo ""
-        echo "  設定完後，複製給所有 Agent："
-        echo "  for AGENT in cfo cio coo cto chro cao; do"
-        echo "    cp $INSTALL_DIR/agents/ceo/agent/auth-profiles.json \\"
-        echo "       $INSTALL_DIR/agents/\$AGENT/agent/auth-profiles.json"
-        echo "  done"
-    else
-        echo "[WARN] No auth config detected. Please set up your API key:"
-        echo "  openclaw agents auth ceo --provider $MODEL_PROVIDER --api-key YOUR_API_KEY"
-        echo ""
-        echo "  Then copy to all Agents:"
-        echo "  for AGENT in cfo cio coo cto chro cao; do"
-        echo "    cp $INSTALL_DIR/agents/ceo/agent/auth-profiles.json \\"
-        echo "       $INSTALL_DIR/agents/\$AGENT/agent/auth-profiles.json"
-        echo "  done"
-    fi
-fi
 
 echo ""

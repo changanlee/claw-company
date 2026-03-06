@@ -78,7 +78,7 @@ claw-company-config/
 ## Prerequisites / 前置條件
 
 - OpenClaw installed / 已安裝 OpenClaw（https://github.com/openclaw/openclaw）
-- At least one LLM API Key (Anthropic recommended) / 至少一組 LLM API Key（推薦 Anthropic）
+- At least one LLM API Key configured in OpenClaw / 至少一組已在 OpenClaw 中配置的 LLM API Key
 - A messaging platform Bot Token (Telegram recommended) / 一組通訊平台 Bot Token（推薦 Telegram）
 
 ## Setup Steps / 部署步驟
@@ -130,18 +130,25 @@ Send a message to the CEO Bot via Telegram.
 
 ## Agent Model Configuration / Agent 模型配置
 
-| Agent | Default Model / 預設模型 | Rationale / 理由 |
-|-------|----------|----------|
-| CEO | claude-sonnet-4-6 | Core coordinator, needs strong reasoning / 核心協調，需強推理 |
-| CFO | claude-sonnet-4-6 | Financial accuracy matters / 財務準確性重要 |
-| CIO | claude-sonnet-4-6 | Investment analysis needs depth / 投資分析需要深度 |
-| COO | claude-haiku-4-5 | Frequent but simple tasks, saves tokens / 頻繁但簡單，省 Token |
-| CTO | claude-sonnet-4-6 | Technical decisions need precision / 技術決策需要精確 |
-| CHRO | claude-haiku-4-5 | Periodic policy tasks, not complex / 週期性，不複雜 |
-| CAO | claude-sonnet-4-6 | Auditing needs independent strong reasoning / 稽核需要獨立強推理 |
+The setup script reads available models from your existing OpenClaw configuration and lets you assign them to two aliases:
+部署腳本會從你現有的 OpenClaw 配置中讀取可用模型，讓你指定兩個別名：
 
-You can replace these with any model supported by OpenClaw.
-你可以替換成任何 OpenClaw 支援的模型。
+- **smart** — High capability model for agents that need strong reasoning / 高能力模型，適合需要強推理的角色
+- **fast** — Lightweight model for frequent but simple tasks / 輕量模型，適合頻繁但簡單的任務
+
+You can then assign each agent to either `smart` or `fast`. Default assignment:
+你可以為每個角色選擇 `smart` 或 `fast`。預設配置：
+
+| Agent | Default Tier / 預設等級 | Rationale / 理由 |
+|-------|----------|----------|
+| CEO | smart | Core coordinator, needs strong reasoning / 核心協調，需強推理 |
+| CFO | smart | Financial accuracy matters / 財務準確性重要 |
+| CIO | smart | Investment analysis needs depth / 投資分析需要深度 |
+| COO | fast | Frequent but simple tasks, saves tokens / 頻繁但簡單，省 Token |
+| CTO | smart | Technical decisions need precision / 技術決策需要精確 |
+| CTO sub | fast | CTO's subagents for execution tasks / CTO 子代理執行任務 |
+| CHRO | fast | Periodic policy tasks, not complex / 週期性，不複雜 |
+| CAO | smart | Auditing needs independent strong reasoning / 稽核需要獨立強推理 |
 
 ## Cron Schedule / 排程總覽
 

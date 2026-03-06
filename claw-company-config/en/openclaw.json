@@ -5,6 +5,17 @@
   // Date: 2026-03-06
   // ============================================
 
+  // ============================================
+  // Model Allowlist — define once, reference by alias
+  // To swap models, only change this section
+  // ============================================
+  "models": {
+    "allowlist": [
+      { "id": "{{MODEL_PRIMARY}}", "alias": "smart" },
+      { "id": "{{MODEL_LIGHT}}", "alias": "fast" }
+    ]
+  },
+
   "agents": {
     "defaults": {
       "subagents": {
@@ -18,8 +29,8 @@
         "activeHours": { "start": "06:00", "end": "23:00" }
       },
       "model": {
-        "primary": "{{MODEL_PRIMARY}}",
-        "fallbacks": ["{{MODEL_LIGHT}}"]
+        "primary": "smart",
+        "fallbacks": ["fast"]
       }
     },
     "list": [
@@ -29,7 +40,7 @@
         "default": true,
         "workspace": "~/.openclaw/claw-company/workspace-ceo",
         "agentDir": "~/.openclaw/claw-company/agents/ceo/agent",
-        "model": "{{MODEL_PRIMARY}}",
+        "model": "{{TIER_CEO}}",
         "identity": {
           "name": "CEO",
           "emoji": "👔"
@@ -44,7 +55,7 @@
         "id": "cfo",
         "workspace": "~/.openclaw/claw-company/workspace-cfo",
         "agentDir": "~/.openclaw/claw-company/agents/cfo/agent",
-        "model": "{{MODEL_PRIMARY}}",
+        "model": "{{TIER_CFO}}",
         "identity": {
           "name": "CFO",
           "emoji": "💰"
@@ -54,7 +65,7 @@
         "id": "cio",
         "workspace": "~/.openclaw/claw-company/workspace-cio",
         "agentDir": "~/.openclaw/claw-company/agents/cio/agent",
-        "model": "{{MODEL_PRIMARY}}",
+        "model": "{{TIER_CIO}}",
         "identity": {
           "name": "CIO",
           "emoji": "📈"
@@ -64,7 +75,7 @@
         "id": "coo",
         "workspace": "~/.openclaw/claw-company/workspace-coo",
         "agentDir": "~/.openclaw/claw-company/agents/coo/agent",
-        "model": "{{MODEL_LIGHT}}",
+        "model": "{{TIER_COO}}",
         "identity": {
           "name": "COO",
           "emoji": "🏠"
@@ -74,21 +85,21 @@
         "id": "cto",
         "workspace": "~/.openclaw/claw-company/workspace-cto",
         "agentDir": "~/.openclaw/claw-company/agents/cto/agent",
-        "model": "{{MODEL_PRIMARY}}",
+        "model": "{{TIER_CTO}}",
         "identity": {
           "name": "CTO",
           "emoji": "⚙️"
         },
         "subagents": {
           "allowAgents": ["*"],
-          "model": "{{MODEL_LIGHT}}"
+          "model": "{{TIER_CTO_SUB}}"
         }
       },
       {
         "id": "chro",
         "workspace": "~/.openclaw/claw-company/workspace-chro",
         "agentDir": "~/.openclaw/claw-company/agents/chro/agent",
-        "model": "{{MODEL_LIGHT}}",
+        "model": "{{TIER_CHRO}}",
         "identity": {
           "name": "CHRO",
           "emoji": "🧬"
@@ -100,7 +111,7 @@
         "id": "cao",
         "workspace": "~/.openclaw/claw-company/workspace-cao",
         "agentDir": "~/.openclaw/claw-company/agents/cao/agent",
-        "model": "{{MODEL_PRIMARY}}",
+        "model": "{{TIER_CAO}}",
         "identity": {
           "name": "CAO",
           "emoji": "🛡️"
