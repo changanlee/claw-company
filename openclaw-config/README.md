@@ -47,8 +47,8 @@ openclaw-config/
 ### 1. 前置條件
 
 - 已安裝 OpenClaw（https://github.com/openclaw/openclaw）
-- 已有 Telegram Bot Token（至少一個給 CEO）
-- 已有 Anthropic API Key
+- 至少一組 LLM API Key（推薦 Anthropic；任何 OpenClaw 支援的模型皆可）
+- 一組通訊平台 Bot Token（推薦 Telegram；WhatsApp / Discord 也支援）
 
 ### 2. 配置 Token
 
@@ -85,6 +85,24 @@ openclaw gateway start
 ### 6. 測試
 
 透過 Telegram 向 CEO Bot 發送一條訊息，例如：「你好，請自我介紹」
+
+## Agent 模型配置
+
+每個 Agent 可獨立配置不同的 LLM 模型。在 `openclaw.json` 的各 Agent 區塊中修改 `"model"` 欄位即可。
+
+預設配置（以 Anthropic Claude 為例）：
+
+| Agent | 預設模型 | 選用理由 |
+|-------|----------|----------|
+| CEO | claude-sonnet-4-6 | 核心協調者，需要強推理能力 |
+| CFO | claude-sonnet-4-6 | 財務準確性重要 |
+| CIO | claude-sonnet-4-6 | 投資分析需要深度 |
+| COO | claude-haiku-4-5 | 生活任務頻繁但簡單，省 Token |
+| CTO | claude-sonnet-4-6 | 技術決策需要精確 |
+| CHRO | claude-haiku-4-5 | 政策任務週期性執行，不複雜 |
+| CAO | claude-sonnet-4-6 | 稽核需要獨立的強推理能力 |
+
+**自訂模型：** 你可以替換成任何 OpenClaw 支援的模型（如 OpenAI GPT、Google Gemini 等），只需修改 `openclaw.json` 中對應 Agent 的 `"model"` 值。建議核心決策角色（CEO、CFO、CIO、CTO、CAO）使用較強的模型，輔助角色（COO、CHRO）可使用較輕量的模型以節省成本。
 
 ## 設計原則
 
