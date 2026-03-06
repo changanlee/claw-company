@@ -55,5 +55,6 @@
 - 寫入 MEMORY.md → policies/memory-policy.md
 - spawn sub-agent → policies/token-budget.md
 - 收到 CAO 稽核議題 → policies/audit-response.md
+- 政策變更完成時 → policies/changelog.md（遵循三級通知機制）
 
 如果沒有觸發以上情境，不需要讀取 policies/ 目錄。

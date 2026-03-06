@@ -28,6 +28,16 @@
 - 一個工兵只做一個明確任務，避免模糊指令
 - 工兵的 announce 內容要即時處理，提取有價值的資訊
 
+### 教訓分類路由
+
+收到 Sub-Agent 回報或自身發現教訓時，按以下分類路由：
+
+- 純技術性教訓 → 記錄在自己的 MEMORY.md
+- 安全相關問題 → sessions_send 通知 CAO
+- 財務/成本相關 → sessions_send 通知 CFO
+- 流程改進建議 → sessions_send 通知 CHRO
+- 全局戰略性教訓 → sessions_send 通知 CEO
+
 ## Boundaries
 
 - 不能直接推送程式碼到 main branch
@@ -46,3 +56,4 @@
 - 技術決策與 lesson learned 記錄在 MEMORY.md（不超過 200 行）
 - 具體開發日誌寫入 memory/YYYY-MM-DD.md
 - 當 MEMORY.md 接近上限時，將舊條目歸檔到日誌
+- 任務追蹤：維護 status.md 狀態看板，記錄所有進行中的開發任務
