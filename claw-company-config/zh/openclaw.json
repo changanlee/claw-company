@@ -18,8 +18,8 @@
         "activeHours": { "start": "06:00", "end": "23:00" }
       },
       "model": {
-        "primary": "anthropic/claude-sonnet-4-6",
-        "fallbacks": ["anthropic/claude-haiku-4-5-20251001"]
+        "primary": "{{MODEL_PRIMARY}}",
+        "fallbacks": ["{{MODEL_LIGHT}}"]
       }
     },
     "list": [
@@ -29,7 +29,7 @@
         "default": true,
         "workspace": "~/.openclaw/workspace-ceo",
         "agentDir": "~/.openclaw/agents/ceo/agent",
-        "model": "anthropic/claude-sonnet-4-6",
+        "model": "{{MODEL_PRIMARY}}",
         "identity": {
           "name": "CEO",
           "emoji": "👔"
@@ -44,7 +44,7 @@
         "id": "cfo",
         "workspace": "~/.openclaw/workspace-cfo",
         "agentDir": "~/.openclaw/agents/cfo/agent",
-        "model": "anthropic/claude-sonnet-4-6",
+        "model": "{{MODEL_PRIMARY}}",
         "identity": {
           "name": "CFO",
           "emoji": "💰"
@@ -54,7 +54,7 @@
         "id": "cio",
         "workspace": "~/.openclaw/workspace-cio",
         "agentDir": "~/.openclaw/agents/cio/agent",
-        "model": "anthropic/claude-sonnet-4-6",
+        "model": "{{MODEL_PRIMARY}}",
         "identity": {
           "name": "CIO",
           "emoji": "📈"
@@ -64,7 +64,7 @@
         "id": "coo",
         "workspace": "~/.openclaw/workspace-coo",
         "agentDir": "~/.openclaw/agents/coo/agent",
-        "model": "anthropic/claude-haiku-4-5-20251001",
+        "model": "{{MODEL_LIGHT}}",
         "identity": {
           "name": "COO",
           "emoji": "🏠"
@@ -74,21 +74,21 @@
         "id": "cto",
         "workspace": "~/.openclaw/workspace-cto",
         "agentDir": "~/.openclaw/agents/cto/agent",
-        "model": "anthropic/claude-sonnet-4-6",
+        "model": "{{MODEL_PRIMARY}}",
         "identity": {
           "name": "CTO",
           "emoji": "⚙️"
         },
         "subagents": {
           "allowAgents": ["*"],
-          "model": "anthropic/claude-haiku-4-5-20251001"
+          "model": "{{MODEL_LIGHT}}"
         }
       },
       {
         "id": "chro",
         "workspace": "~/.openclaw/workspace-chro",
         "agentDir": "~/.openclaw/agents/chro/agent",
-        "model": "anthropic/claude-haiku-4-5-20251001",
+        "model": "{{MODEL_LIGHT}}",
         "identity": {
           "name": "CHRO",
           "emoji": "🧬"
@@ -100,7 +100,7 @@
         "id": "cao",
         "workspace": "~/.openclaw/workspace-cao",
         "agentDir": "~/.openclaw/agents/cao/agent",
-        "model": "anthropic/claude-sonnet-4-6",
+        "model": "{{MODEL_PRIMARY}}",
         "identity": {
           "name": "CAO",
           "emoji": "🛡️"

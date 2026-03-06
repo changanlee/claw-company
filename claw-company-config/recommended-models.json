@@ -1,0 +1,9 @@
+{
+  "updated": "2026-03-07",
+  "primary": "anthropic/claude-sonnet-4-6",
+  "light": "anthropic/claude-haiku-4-5-20251001",
+  "notes": {
+    "en": "Primary model for core agents (CEO/CFO/CIO/CTO/CAO), light model for auxiliary agents (COO/CHRO). Update this file when new models are released.",
+    "zh": "主要模型用於核心 Agent（CEO/CFO/CIO/CTO/CAO），輕量模型用於輔助 Agent（COO/CHRO）。新模型發布時更新此文件。"
+  }
+}

@@ -59,9 +59,56 @@ echo ""
 # --------------------------------------------
 # Model Detection / 模型偵測
 # --------------------------------------------
-RECOMMENDED_PRIMARY="anthropic/claude-sonnet-4-6"
-RECOMMENDED_LIGHT="anthropic/claude-haiku-4-5-20251001"
+# Hardcoded fallback (only used if API fetch fails and no existing config)
+FALLBACK_PRIMARY="anthropic/claude-sonnet-4-6"
+FALLBACK_LIGHT="anthropic/claude-haiku-4-5-20251001"
 
+# --------------------------------------------
+# Fetch latest Anthropic models from API
+# --------------------------------------------
+RECOMMENDED_PRIMARY=""
+RECOMMENDED_LIGHT=""
+
+if [ "$LANG_DIR" = "zh" ]; then
+    echo "[INFO] 正在查詢最新的 Anthropic 模型..."
+else
+    echo "[INFO] Fetching latest Anthropic models..."
+fi
+
+# Try to fetch latest models from Anthropic API
+if command -v curl &> /dev/null; then
+    # Fetch from claw-company's own model recommendation endpoint (GitHub raw)
+    LATEST_MODELS=$(curl -sf --max-time 10 \
+        "https://raw.githubusercontent.com/changanlee/claw-company/main/claw-company-config/recommended-models.json" 2>/dev/null)
+
+    if [ -n "$LATEST_MODELS" ]; then
+        RECOMMENDED_PRIMARY=$(echo "$LATEST_MODELS" | grep -o '"primary"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/')
+        RECOMMENDED_LIGHT=$(echo "$LATEST_MODELS" | grep -o '"light"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/')
+    fi
+fi
+
+# Fallback if fetch failed
+if [ -z "$RECOMMENDED_PRIMARY" ]; then
+    RECOMMENDED_PRIMARY="$FALLBACK_PRIMARY"
+    RECOMMENDED_LIGHT="$FALLBACK_LIGHT"
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "[WARN] 無法取得最新模型資訊，使用內建推薦配置"
+    else
+        echo "[WARN] Could not fetch latest models, using built-in recommendation"
+    fi
+else
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "[INFO] 已取得最新推薦模型"
+    else
+        echo "[INFO] Latest recommended models fetched"
+    fi
+fi
+
+echo ""
+
+# --------------------------------------------
+# Detect existing OpenClaw config
+# --------------------------------------------
 DETECTED_PRIMARY=""
 DETECTED_LIGHT=""
 
@@ -69,9 +116,7 @@ DETECTED_LIGHT=""
 if [ -f "$OPENCLAW_DIR/openclaw.json" ]; then
     ALL_MODELS=$(grep -o '"model"[[:space:]]*:[[:space:]]*"[^"]*"' "$OPENCLAW_DIR/openclaw.json" 2>/dev/null \
         | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' | sort | uniq -c | sort -rn)
-    # Most frequently used model = primary
     DETECTED_PRIMARY=$(echo "$ALL_MODELS" | head -1 | awk '{print $2}')
-    # Second most frequent = light (fallback to primary if only one)
     DETECTED_LIGHT=$(echo "$ALL_MODELS" | sed -n '2p' | awk '{print $2}')
     if [ -z "$DETECTED_LIGHT" ]; then
         DETECTED_LIGHT="$DETECTED_PRIMARY"
@@ -90,7 +135,9 @@ if [ -z "$EXISTING_AUTH_FILE" ] && [ -f "$OPENCLAW_DIR/auth-profiles.json" ]; th
     EXISTING_AUTH_FILE="$OPENCLAW_DIR/auth-profiles.json"
 fi
 
-# 3. Show detection results and prompt
+# --------------------------------------------
+# Model selection prompt
+# --------------------------------------------
 echo "=========================================="
 if [ "$LANG_DIR" = "zh" ]; then
     echo "  模型配置"
@@ -103,23 +150,21 @@ echo ""
 if [ -n "$DETECTED_PRIMARY" ]; then
     # --- Existing config found ---
     if [ "$LANG_DIR" = "zh" ]; then
-        echo "[INFO] 偵測到你目前的 OpenClaw 模型配置："
-        echo ""
+        echo "  你目前的配置："
         echo "       主要模型：$DETECTED_PRIMARY"
         echo "       輕量模型：$DETECTED_LIGHT"
         echo ""
-        echo "  claw-company 推薦配置："
-        echo ""
+        echo "  claw-company 推薦配置（最新）："
         echo "       主要模型：$RECOMMENDED_PRIMARY（CEO/CFO/CIO/CTO/CAO）"
         echo "       輕量模型：$RECOMMENDED_LIGHT（COO/CHRO）"
         echo ""
         if [ "$DETECTED_PRIMARY" = "$RECOMMENDED_PRIMARY" ] && [ "$DETECTED_LIGHT" = "$RECOMMENDED_LIGHT" ]; then
-            echo "  ✓ 你目前的配置已經是推薦配置！"
+            echo "  ✓ 你目前的配置已經是最新推薦配置！"
             echo ""
             MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
             MODEL_LIGHT="$RECOMMENDED_LIGHT"
         else
-            echo "  1) 使用推薦配置（Anthropic Claude 最新版）"
+            echo "  1) 使用推薦配置（最新版）"
             echo "  2) 保持現有配置（$DETECTED_PRIMARY）"
             echo ""
             while true; do
@@ -146,23 +191,21 @@ if [ -n "$DETECTED_PRIMARY" ]; then
             done
         fi
     else
-        echo "[INFO] Detected your current OpenClaw model configuration:"
-        echo ""
+        echo "  Your current config:"
         echo "       Primary model: $DETECTED_PRIMARY"
         echo "       Light model:   $DETECTED_LIGHT"
         echo ""
-        echo "  claw-company recommended configuration:"
-        echo ""
+        echo "  claw-company recommended (latest):"
         echo "       Primary model: $RECOMMENDED_PRIMARY (CEO/CFO/CIO/CTO/CAO)"
         echo "       Light model:   $RECOMMENDED_LIGHT (COO/CHRO)"
         echo ""
         if [ "$DETECTED_PRIMARY" = "$RECOMMENDED_PRIMARY" ] && [ "$DETECTED_LIGHT" = "$RECOMMENDED_LIGHT" ]; then
-            echo "  ✓ Your current config already matches the recommended setup!"
+            echo "  ✓ Your current config already matches the latest recommendation!"
             echo ""
             MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
             MODEL_LIGHT="$RECOMMENDED_LIGHT"
         else
-            echo "  1) Use recommended config (latest Anthropic Claude)"
+            echo "  1) Use recommended config (latest)"
             echo "  2) Keep current config ($DETECTED_PRIMARY)"
             echo ""
             while true; do
@@ -317,8 +360,8 @@ fi
 # 2. Deploy main config (with model substitution)
 # --------------------------------------------
 echo "$MSG_DEPLOY_JSON"
-sed -e "s|anthropic/claude-sonnet-4-6|$MODEL_PRIMARY|g" \
-    -e "s|anthropic/claude-haiku-4-5-20251001|$MODEL_LIGHT|g" \
+sed -e "s|{{MODEL_PRIMARY}}|$MODEL_PRIMARY|g" \
+    -e "s|{{MODEL_LIGHT}}|$MODEL_LIGHT|g" \
     "$SOURCE_DIR/openclaw.json" > "$OPENCLAW_DIR/openclaw.json"
 
 # --------------------------------------------
