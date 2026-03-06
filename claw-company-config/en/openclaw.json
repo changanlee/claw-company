@@ -27,8 +27,8 @@
       {
         "id": "ceo",
         "default": true,
-        "workspace": "~/.openclaw/workspace-ceo",
-        "agentDir": "~/.openclaw/agents/ceo/agent",
+        "workspace": "~/.openclaw/claw-company/workspace-ceo",
+        "agentDir": "~/.openclaw/claw-company/agents/ceo/agent",
         "model": "{{MODEL_PRIMARY}}",
         "identity": {
           "name": "CEO",
@@ -42,8 +42,8 @@
       // ---- Layer 2: C-Suite Executives ----
       {
         "id": "cfo",
-        "workspace": "~/.openclaw/workspace-cfo",
-        "agentDir": "~/.openclaw/agents/cfo/agent",
+        "workspace": "~/.openclaw/claw-company/workspace-cfo",
+        "agentDir": "~/.openclaw/claw-company/agents/cfo/agent",
         "model": "{{MODEL_PRIMARY}}",
         "identity": {
           "name": "CFO",
@@ -52,8 +52,8 @@
       },
       {
         "id": "cio",
-        "workspace": "~/.openclaw/workspace-cio",
-        "agentDir": "~/.openclaw/agents/cio/agent",
+        "workspace": "~/.openclaw/claw-company/workspace-cio",
+        "agentDir": "~/.openclaw/claw-company/agents/cio/agent",
         "model": "{{MODEL_PRIMARY}}",
         "identity": {
           "name": "CIO",
@@ -62,8 +62,8 @@
       },
       {
         "id": "coo",
-        "workspace": "~/.openclaw/workspace-coo",
-        "agentDir": "~/.openclaw/agents/coo/agent",
+        "workspace": "~/.openclaw/claw-company/workspace-coo",
+        "agentDir": "~/.openclaw/claw-company/agents/coo/agent",
         "model": "{{MODEL_LIGHT}}",
         "identity": {
           "name": "COO",
@@ -72,8 +72,8 @@
       },
       {
         "id": "cto",
-        "workspace": "~/.openclaw/workspace-cto",
-        "agentDir": "~/.openclaw/agents/cto/agent",
+        "workspace": "~/.openclaw/claw-company/workspace-cto",
+        "agentDir": "~/.openclaw/claw-company/agents/cto/agent",
         "model": "{{MODEL_PRIMARY}}",
         "identity": {
           "name": "CTO",
@@ -86,8 +86,8 @@
       },
       {
         "id": "chro",
-        "workspace": "~/.openclaw/workspace-chro",
-        "agentDir": "~/.openclaw/agents/chro/agent",
+        "workspace": "~/.openclaw/claw-company/workspace-chro",
+        "agentDir": "~/.openclaw/claw-company/agents/chro/agent",
         "model": "{{MODEL_LIGHT}}",
         "identity": {
           "name": "CHRO",
@@ -98,8 +98,8 @@
       // ---- Independent Oversight: CAO (Chief Audit Officer) ----
       {
         "id": "cao",
-        "workspace": "~/.openclaw/workspace-cao",
-        "agentDir": "~/.openclaw/agents/cao/agent",
+        "workspace": "~/.openclaw/claw-company/workspace-cao",
+        "agentDir": "~/.openclaw/claw-company/agents/cao/agent",
         "model": "{{MODEL_PRIMARY}}",
         "identity": {
           "name": "CAO",
