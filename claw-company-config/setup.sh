@@ -87,32 +87,10 @@ if command -v curl &> /dev/null; then
     fi
 fi
 
-# Fallback if fetch failed
-if [ -z "$RECOMMENDED_PRIMARY" ]; then
-    RECOMMENDED_PRIMARY="$FALLBACK_PRIMARY"
-    RECOMMENDED_LIGHT="$FALLBACK_LIGHT"
-    if [ "$LANG_DIR" = "zh" ]; then
-        echo "[WARN] 無法取得最新模型資訊，使用內建推薦配置"
-    else
-        echo "[WARN] Could not fetch latest models, using built-in recommendation"
-    fi
-else
-    if [ "$LANG_DIR" = "zh" ]; then
-        echo "[INFO] 已取得最新推薦模型"
-    else
-        echo "[INFO] Latest recommended models fetched"
-    fi
-fi
-
-echo ""
-
-# --------------------------------------------
-# Detect existing OpenClaw config
-# --------------------------------------------
+# Detect existing OpenClaw config first (needed for fallback logic)
 DETECTED_PRIMARY=""
 DETECTED_LIGHT=""
 
-# 1. Detect existing models from openclaw.json
 if [ -f "$OPENCLAW_DIR/openclaw.json" ]; then
     ALL_MODELS=$(grep -o '"model"[[:space:]]*:[[:space:]]*"[^"]*"' "$OPENCLAW_DIR/openclaw.json" 2>/dev/null \
         | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' | sort | uniq -c | sort -rn)
@@ -123,7 +101,7 @@ if [ -f "$OPENCLAW_DIR/openclaw.json" ]; then
     fi
 fi
 
-# 2. Detect existing auth profiles
+# Detect existing auth profiles
 EXISTING_AUTH_FILE=""
 for AUTH_FILE in "$OPENCLAW_DIR/agents/"*/agent/auth-profiles.json; do
     if [ -f "$AUTH_FILE" ]; then
@@ -133,6 +111,37 @@ for AUTH_FILE in "$OPENCLAW_DIR/agents/"*/agent/auth-profiles.json; do
 done
 if [ -z "$EXISTING_AUTH_FILE" ] && [ -f "$OPENCLAW_DIR/auth-profiles.json" ]; then
     EXISTING_AUTH_FILE="$OPENCLAW_DIR/auth-profiles.json"
+fi
+
+# Fallback logic: no network → use existing config → last resort use hardcoded
+FETCH_FAILED=false
+if [ -z "$RECOMMENDED_PRIMARY" ]; then
+    FETCH_FAILED=true
+    if [ -n "$DETECTED_PRIMARY" ]; then
+        # No network, but has existing config → use existing
+        RECOMMENDED_PRIMARY="$DETECTED_PRIMARY"
+        RECOMMENDED_LIGHT="$DETECTED_LIGHT"
+        if [ "$LANG_DIR" = "zh" ]; then
+            echo "[WARN] 無法取得最新模型資訊，將使用你現有的模型配置"
+        else
+            echo "[WARN] Could not fetch latest models, will use your existing config"
+        fi
+    else
+        # No network, no existing config → hardcoded fallback
+        RECOMMENDED_PRIMARY="$FALLBACK_PRIMARY"
+        RECOMMENDED_LIGHT="$FALLBACK_LIGHT"
+        if [ "$LANG_DIR" = "zh" ]; then
+            echo "[WARN] 無法取得最新模型資訊且無現有配置，使用內建預設"
+        else
+            echo "[WARN] Could not fetch latest models and no existing config found, using built-in defaults"
+        fi
+    fi
+else
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "[INFO] 已取得最新推薦模型"
+    else
+        echo "[INFO] Latest recommended models fetched"
+    fi
 fi
 
 # --------------------------------------------
@@ -147,23 +156,46 @@ fi
 echo "=========================================="
 echo ""
 
-if [ -n "$DETECTED_PRIMARY" ]; then
-    # --- Existing config found ---
+if [ -n "$DETECTED_PRIMARY" ] && [ "$FETCH_FAILED" = true ]; then
+    # --- No network, has existing config → use existing directly ---
+    MODEL_PRIMARY="$DETECTED_PRIMARY"
+    MODEL_LIGHT="$DETECTED_LIGHT"
     if [ "$LANG_DIR" = "zh" ]; then
-        echo "  你目前的配置："
-        echo "       主要模型：$DETECTED_PRIMARY"
-        echo "       輕量模型：$DETECTED_LIGHT"
-        echo ""
-        echo "  claw-company 推薦配置（最新）："
-        echo "       主要模型：$RECOMMENDED_PRIMARY（CEO/CFO/CIO/CTO/CAO）"
-        echo "       輕量模型：$RECOMMENDED_LIGHT（COO/CHRO）"
-        echo ""
-        if [ "$DETECTED_PRIMARY" = "$RECOMMENDED_PRIMARY" ] && [ "$DETECTED_LIGHT" = "$RECOMMENDED_LIGHT" ]; then
+        echo "  將使用你現有的模型配置："
+        echo "       主要模型：$MODEL_PRIMARY"
+        echo "       輕量模型：$MODEL_LIGHT"
+    else
+        echo "  Using your existing model configuration:"
+        echo "       Primary model: $MODEL_PRIMARY"
+        echo "       Light model:   $MODEL_LIGHT"
+    fi
+
+elif [ -n "$DETECTED_PRIMARY" ]; then
+    # --- Has network + has existing config → let user choose ---
+    if [ "$DETECTED_PRIMARY" = "$RECOMMENDED_PRIMARY" ] && [ "$DETECTED_LIGHT" = "$RECOMMENDED_LIGHT" ]; then
+        # Already up to date
+        MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
+        MODEL_LIGHT="$RECOMMENDED_LIGHT"
+        if [ "$LANG_DIR" = "zh" ]; then
             echo "  ✓ 你目前的配置已經是最新推薦配置！"
-            echo ""
-            MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
-            MODEL_LIGHT="$RECOMMENDED_LIGHT"
+            echo "       主要模型：$MODEL_PRIMARY"
+            echo "       輕量模型：$MODEL_LIGHT"
         else
+            echo "  ✓ Your current config already matches the latest recommendation!"
+            echo "       Primary model: $MODEL_PRIMARY"
+            echo "       Light model:   $MODEL_LIGHT"
+        fi
+    else
+        # Different → ask user
+        if [ "$LANG_DIR" = "zh" ]; then
+            echo "  你目前的配置："
+            echo "       主要模型：$DETECTED_PRIMARY"
+            echo "       輕量模型：$DETECTED_LIGHT"
+            echo ""
+            echo "  claw-company 推薦配置（最新）："
+            echo "       主要模型：$RECOMMENDED_PRIMARY（CEO/CFO/CIO/CTO/CAO）"
+            echo "       輕量模型：$RECOMMENDED_LIGHT（COO/CHRO）"
+            echo ""
             echo "  1) 使用推薦配置（最新版）"
             echo "  2) 保持現有配置（$DETECTED_PRIMARY）"
             echo ""
@@ -175,36 +207,25 @@ if [ -n "$DETECTED_PRIMARY" ]; then
                         MODEL_LIGHT="$RECOMMENDED_LIGHT"
                         echo ""
                         echo "[INFO] 將使用推薦配置"
-                        break
-                        ;;
+                        break ;;
                     2)
                         MODEL_PRIMARY="$DETECTED_PRIMARY"
                         MODEL_LIGHT="$DETECTED_LIGHT"
                         echo ""
                         echo "[INFO] 將保持你現有的模型配置"
-                        break
-                        ;;
-                    *)
-                        echo "無效輸入，請輸入 1 或 2。"
-                        ;;
+                        break ;;
+                    *) echo "無效輸入，請輸入 1 或 2。" ;;
                 esac
             done
-        fi
-    else
-        echo "  Your current config:"
-        echo "       Primary model: $DETECTED_PRIMARY"
-        echo "       Light model:   $DETECTED_LIGHT"
-        echo ""
-        echo "  claw-company recommended (latest):"
-        echo "       Primary model: $RECOMMENDED_PRIMARY (CEO/CFO/CIO/CTO/CAO)"
-        echo "       Light model:   $RECOMMENDED_LIGHT (COO/CHRO)"
-        echo ""
-        if [ "$DETECTED_PRIMARY" = "$RECOMMENDED_PRIMARY" ] && [ "$DETECTED_LIGHT" = "$RECOMMENDED_LIGHT" ]; then
-            echo "  ✓ Your current config already matches the latest recommendation!"
-            echo ""
-            MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
-            MODEL_LIGHT="$RECOMMENDED_LIGHT"
         else
+            echo "  Your current config:"
+            echo "       Primary model: $DETECTED_PRIMARY"
+            echo "       Light model:   $DETECTED_LIGHT"
+            echo ""
+            echo "  claw-company recommended (latest):"
+            echo "       Primary model: $RECOMMENDED_PRIMARY (CEO/CFO/CIO/CTO/CAO)"
+            echo "       Light model:   $RECOMMENDED_LIGHT (COO/CHRO)"
+            echo ""
             echo "  1) Use recommended config (latest)"
             echo "  2) Keep current config ($DETECTED_PRIMARY)"
             echo ""
@@ -216,38 +237,32 @@ if [ -n "$DETECTED_PRIMARY" ]; then
                         MODEL_LIGHT="$RECOMMENDED_LIGHT"
                         echo ""
                         echo "[INFO] Using recommended configuration"
-                        break
-                        ;;
+                        break ;;
                     2)
                         MODEL_PRIMARY="$DETECTED_PRIMARY"
                         MODEL_LIGHT="$DETECTED_LIGHT"
                         echo ""
                         echo "[INFO] Keeping your current model configuration"
-                        break
-                        ;;
-                    *)
-                        echo "Invalid input. Please enter 1 or 2."
-                        ;;
+                        break ;;
+                    *) echo "Invalid input. Please enter 1 or 2." ;;
                 esac
             done
         fi
     fi
+
 else
-    # --- No existing config (fresh install) ---
-    if [ "$LANG_DIR" = "zh" ]; then
-        echo "[INFO] 未偵測到現有 OpenClaw 配置，將使用推薦配置："
-        echo ""
-        echo "       主要模型：$RECOMMENDED_PRIMARY（CEO/CFO/CIO/CTO/CAO）"
-        echo "       輕量模型：$RECOMMENDED_LIGHT（COO/CHRO）"
-    else
-        echo "[INFO] No existing OpenClaw config detected. Using recommended configuration:"
-        echo ""
-        echo "       Primary model: $RECOMMENDED_PRIMARY (CEO/CFO/CIO/CTO/CAO)"
-        echo "       Light model:   $RECOMMENDED_LIGHT (COO/CHRO)"
-    fi
-    echo ""
+    # --- No existing config (fresh install) → use recommended ---
     MODEL_PRIMARY="$RECOMMENDED_PRIMARY"
     MODEL_LIGHT="$RECOMMENDED_LIGHT"
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "  未偵測到現有配置，將使用推薦配置："
+        echo "       主要模型：$MODEL_PRIMARY（CEO/CFO/CIO/CTO/CAO）"
+        echo "       輕量模型：$MODEL_LIGHT（COO/CHRO）"
+    else
+        echo "  No existing config detected. Using recommended configuration:"
+        echo "       Primary model: $MODEL_PRIMARY (CEO/CFO/CIO/CTO/CAO)"
+        echo "       Light model:   $MODEL_LIGHT (COO/CHRO)"
+    fi
 fi
 
 # Extract provider name from model ID (e.g., "anthropic/claude-sonnet-4-6" → "anthropic")
