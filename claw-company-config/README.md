@@ -18,7 +18,7 @@ CAO（稽核長）— 獨立監督，直接向董事長報告
 ## 文件結構
 
 ```
-openclaw-config/
+claw-company-config/
 ├── openclaw.json              # 主配置（JSON5）
 ├── setup.sh                   # 部署腳本
 ├── README.md                  # 本文件

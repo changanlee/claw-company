@@ -29,7 +29,7 @@ CAO (Auditor) — Independent oversight, reports directly to Chairman
 
 ```
 claw-company/
-├── openclaw-config/       # OpenClaw deployment configuration
+├── claw-company-config/   # OpenClaw deployment configuration
 │   ├── openclaw.json      # Main config (JSON5) — agent definitions, channels, cron
 │   ├── setup.sh           # One-click deployment script
 │   ├── shared/            # Shared policies & rules across all agents
@@ -77,7 +77,7 @@ cd claw-company
 
 #### Step 2 — Configure Tokens
 
-Edit `openclaw-config/openclaw.json` and replace the placeholders:
+Edit `claw-company-config/openclaw.json` and replace the placeholders:
 
 | Placeholder | Description |
 |-------------|-------------|
@@ -89,12 +89,12 @@ Edit `openclaw-config/openclaw.json` and replace the placeholders:
 
 #### Step 3 — Customize Your Profile
 
-Edit `openclaw-config/shared/USER.md` — replace the default Chairman profile with your own preferences (language, communication style, notification rules).
+Edit `claw-company-config/shared/USER.md` — replace the default Chairman profile with your own preferences (language, communication style, notification rules).
 
 #### Step 4 — Deploy
 
 ```bash
-cd openclaw-config
+cd claw-company-config
 chmod +x setup.sh
 ./setup.sh
 ```
@@ -162,7 +162,7 @@ CAO（稽核長）— 獨立監督，直接向董事長報告
 
 ```
 claw-company/
-├── openclaw-config/       # OpenClaw 部署配置
+├── claw-company-config/   # OpenClaw 部署配置
 │   ├── openclaw.json      # 主配置檔（JSON5）— Agent 定義、通道、排程
 │   ├── setup.sh           # 一鍵部署腳本
 │   ├── shared/            # 跨 Agent 共用政策與規範
@@ -210,7 +210,7 @@ cd claw-company
 
 #### 步驟二 — 配置 Token
 
-編輯 `openclaw-config/openclaw.json`，替換以下佔位符：
+編輯 `claw-company-config/openclaw.json`，替換以下佔位符：
 
 | 佔位符 | 說明 |
 |--------|------|
@@ -222,12 +222,12 @@ cd claw-company
 
 #### 步驟三 — 自訂你的身份
 
-編輯 `openclaw-config/shared/USER.md` — 把預設的董事長資訊改成你自己的偏好（語言、溝通風格、通知規則）。
+編輯 `claw-company-config/shared/USER.md` — 把預設的董事長資訊改成你自己的偏好（語言、溝通風格、通知規則）。
 
 #### 步驟四 — 部署
 
 ```bash
-cd openclaw-config
+cd claw-company-config
 chmod +x setup.sh
 ./setup.sh
 ```

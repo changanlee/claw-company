@@ -254,9 +254,9 @@ CREATE INDEX idx_audit_log_status ON audit_log(status);
 
 ```bash
 # 複製 CFO / CIO / COO 專屬 Skill
-cp -r openclaw-config/skills/cfo-finance ~/.openclaw/skills/cfo-finance
-cp -r openclaw-config/skills/cio-portfolio ~/.openclaw/skills/cio-portfolio
-cp -r openclaw-config/skills/coo-schedule ~/.openclaw/skills/coo-schedule
+cp -r claw-company-config/skills/cfo-finance ~/.openclaw/skills/cfo-finance
+cp -r claw-company-config/skills/cio-portfolio ~/.openclaw/skills/cio-portfolio
+cp -r claw-company-config/skills/coo-schedule ~/.openclaw/skills/coo-schedule
 ```
 
 這些 Skill 封裝了各 Agent 的專屬操作流程，比通用 Supabase Skill 更精確。
