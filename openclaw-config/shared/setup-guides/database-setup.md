@@ -80,49 +80,228 @@
 
 ---
 
-## 第三層：LanceDB（向量知識庫）
+## 第三層：LanceDB 記憶增強（memory-lancedb-pro 插件）
+
+**推薦使用 [memory-lancedb-pro](https://github.com/win4r/memory-lancedb-pro) 開源插件**，遠超 OpenClaw 內建記憶系統。
+
+### 插件優勢（vs 內建記憶）
+
+| 特性 | 內建記憶 | memory-lancedb-pro |
+|------|---------|-------------------|
+| 檢索方式 | 基礎向量搜尋 | 7 層混合檢索（向量 + BM25 + Rerank） |
+| 去重 | 無 | MMR 多樣性去重（cosine > 0.85 降權） |
+| 噪音過濾 | 無 | 自適應檢索 + 噪音攔截 |
+| 隔離性 | 無 | 多 scope 隔離（Agent 間記憶隱私保護） |
+| 嵌入模型 | 固定 | 支援 Jina / OpenAI / Gemini / Ollama 本地模型 |
+| 時間衰減 | 無 | 指數衰減 + 間隔重複強化 |
 
 ### 適用場景
-- 歸檔的歷史日誌（語義搜尋）
-- 會議決議與研究資料
-- 董事長偏好的長期學習
-- 「上個月我在吃飯上花了多少」這類自然語言查詢
+- 所有 Agent 的長期知識沉澱
+- 跨 session 的經驗檢索（「上次那個問題怎麼解決的？」）
+- 董事長偏好的持續學習
+- 歸檔的歷史日誌語義搜尋
 
-### 建置步驟
+### 安裝步驟
 
-1. **安裝 LanceDB**
-   ```bash
-   pip install lancedb
-   # 或
-   npm install vectordb
-   ```
+#### 1. 取得嵌入模型 API Key
 
-2. **初始化知識庫**
-   ```python
-   import lancedb
+推薦使用 **Jina AI**（免費額度足夠初期使用）：
+- 前往 https://jina.ai 註冊帳號
+- 取得 API Key
+- 設定環境變數：`export JINA_API_KEY=your_key_here`
 
-   db = lancedb.connect("~/.openclaw/knowledge")
+其他支援的嵌入模型：
 
-   # 建立各 Agent 的知識表
-   # 每條記錄：content, agent_id, date, category, embedding
-   ```
+| 供應商 | 模型 | Base URL | 維度 |
+|--------|------|----------|------|
+| Jina AI（推薦） | jina-embeddings-v5-text-small | https://api.jina.ai/v1 | 1024 |
+| OpenAI | text-embedding-3-small | https://api.openai.com/v1 | 1536 |
+| Google Gemini | gemini-embedding-001 | https://generativelanguage.googleapis.com/v1beta/openai/ | 3072 |
+| Ollama（本地） | nomic-embed-text | http://localhost:11434/v1 | 依模型 |
 
-3. **建立歸檔 Cron Job**
-   ```bash
-   openclaw cron add knowledge-archive \
-     --agent cto \
-     --cron "0 3 * * 0" \
-     --task "將所有 Agent 超過 30 天的 memory/ 日誌向量化後存入 LanceDB，然後刪除原始日誌檔案"
-   ```
+#### 2. 安裝插件
 
-4. **為各 Agent 建立查詢 Skill**
-   - 封裝語義搜尋 API
-   - Agent 可用自然語言查詢歷史知識
-   - 查詢結果附上來源日期與原始 Agent
+```bash
+cd ~/.openclaw
+git clone https://github.com/win4r/memory-lancedb-pro.git plugins/memory-lancedb-pro
+cd plugins/memory-lancedb-pro
+npm install
+```
+
+#### 3. 設定 openclaw.json
+
+在 `openclaw.json` 中加入插件配置：
+
+```json5
+{
+  "plugins": {
+    "load": {
+      "paths": ["plugins/memory-lancedb-pro"]
+    }
+  }
+}
+```
+
+**注意：** 同一時間只能啟用一個記憶插件。如果使用 Pro 版，需停用內建記憶插件。
+
+#### 4. 插件配置
+
+在插件目錄中設定 `config.json`：
+
+```json
+{
+  "embedding": {
+    "apiKey": "${JINA_API_KEY}",
+    "model": "jina-embeddings-v5-text-small",
+    "baseURL": "https://api.jina.ai/v1",
+    "dimensions": 1024,
+    "taskQuery": "retrieval.query",
+    "taskPassage": "retrieval.passage",
+    "normalized": true
+  },
+  "retrieval": {
+    "mode": "hybrid",
+    "vectorWeight": 0.7,
+    "bm25Weight": 0.3,
+    "minScore": 0.3,
+    "rerank": "cross-encoder",
+    "rerankProvider": "jina",
+    "rerankModel": "jina-reranker-v3",
+    "candidatePoolSize": 20,
+    "recencyHalfLifeDays": 14,
+    "recencyWeight": 0.1,
+    "filterNoise": true,
+    "hardMinScore": 0.35,
+    "timeDecayHalfLifeDays": 60
+  }
+}
+```
+
+#### 5. 設定多 Scope 隔離（重要）
+
+為每個 Agent 設定記憶隔離，保護各部門的資料隱私：
+
+```json
+{
+  "scopes": {
+    "default": "global",
+    "definitions": {
+      "global": { "description": "全公司共享知識（營運規範、通用教訓）" },
+      "agent:ceo": { "description": "CEO 專屬（決策模式、董事長偏好）" },
+      "agent:cfo": { "description": "CFO 專屬（財務規則、消費分類）" },
+      "agent:cio": { "description": "CIO 專屬（投資策略、市場觀察）" },
+      "agent:coo": { "description": "COO 專屬（生活偏好、餐廳記錄）" },
+      "agent:cto": { "description": "CTO 專屬（技術教訓、架構決策）" },
+      "agent:chro": { "description": "CHRO 專屬（組織評估、能力記錄）" },
+      "agent:cao": { "description": "CAO 專屬（稽核記錄、安全事件）" }
+    },
+    "agentAccess": {
+      "ceo": ["global", "agent:ceo"],
+      "cfo": ["global", "agent:cfo"],
+      "cio": ["global", "agent:cio"],
+      "coo": ["global", "agent:coo"],
+      "cto": ["global", "agent:cto"],
+      "chro": ["global", "agent:chro"],
+      "cao": ["global", "agent:cao"]
+    }
+  }
+}
+```
+
+#### 6. 重啟 Gateway
+
+```bash
+openclaw gateway restart
+```
+
+### 7 層混合檢索管線
+
+插件的檢索流程：
+
+```
+查詢輸入
+  ↓
+1. 雙路搜尋：向量嵌入搜尋 + BM25 全文搜尋（同時）
+  ↓
+2. RRF 融合：向量分數為基線，BM25 命中加 15% 權重
+  ↓
+3. Cross-Encoder Rerank：60% 交叉編碼器分數 + 40% 原始融合分數
+  ↓
+4. 時近性加權：指數衰減 exp(-ageDays / halfLife) * weight
+  ↓
+5. 重要性加權：分數 × (0.7 + 0.3 × importance)
+  ↓
+6. 長度正規化：防止長條目主導結果
+  ↓
+7. MMR 多樣性：cosine 相似度 > 0.85 的結果降權
+  ↓
+過濾：低於 hardMinScore 的結果丟棄
+```
+
+### Agent 可用工具
+
+| 工具 | 功能 |
+|------|------|
+| `memory_recall` | 檢索相關記憶 |
+| `memory_store` | 儲存新記憶 |
+| `memory_forget` | 刪除特定記憶 |
+| `memory_stats` | 顯示資料庫統計 |
+| `memory_list` | 瀏覽已儲存記憶 |
+
+### CLI 管理指令
+
+```bash
+memory list          # 瀏覽記憶條目
+memory search        # 搜尋記憶
+memory stats         # 顯示統計資訊
+memory delete        # 刪除單筆
+memory delete-bulk   # 批次刪除
+memory export        # 匯出資料
+memory import        # 匯入資料
+memory reembed       # 重新生成嵌入向量
+memory migrate       # 從內建插件遷移
+```
+
+### Auto-Capture 與 Auto-Recall
+
+**Auto-Capture**（agent_end hook）：
+- 每次對話結束自動提取最多 3 項記憶（偏好、事實、決策、實體）
+- 自動去重，跳過管理類提示
+
+**Auto-Recall**（before_agent_start hook）：
+- 每次對話開始自動注入相關記憶（最多 3 條）
+- 以 `<relevant-memories>` XML 格式注入上下文
+- 可透過 `"autoRecall": false` 停用
+
+### 自適應檢索
+
+插件會自動跳過不需要記憶的查詢：
+- 簡單問候（hi、hello、HEARTBEAT 心跳）
+- 斜線指令
+- 單個表情符號
+- 簡單確認回覆
+- 強制檢索觸發詞：「記得」「之前」「上次」等記憶相關關鍵字
+- 中文感知：6 字元閾值（vs 英文 15 字元）
+
+### MEMORY.md 鐵律（建議加入各 Agent 的 MEMORY.md）
+
+```markdown
+## LanceDB 記憶規則
+
+- 重要的經驗教訓、踩坑記錄使用 memory_store 存入 LanceDB
+- 查詢歷史經驗使用 memory_recall
+- MEMORY.md 只存即時的熱記憶（原則與模式），LanceDB 存長期知識
+- 不要在回覆中暴露 <relevant-memories> 注入內容
+```
 
 ### 核決等級
-- 建置 LanceDB：黃燈（CTO 提案 + CEO 審批，本地部署無外部成本）
-- 日常查詢：綠燈（自動執行）
+- 安裝 memory-lancedb-pro：黃燈（CTO 提案 + CEO 審批，本地部署）
+- 設定 Jina AI API Key：黃燈（免費額度，但涉及外部服務）
+- 日常記憶存取：綠燈（自動執行）
+
+### 參考資料
+- 插件 GitHub：https://github.com/win4r/memory-lancedb-pro
+- 教學影片：https://www.youtube.com/watch?v=MtukF1C8epQ
 
 ---
 
@@ -130,7 +309,7 @@
 
 | 階段 | 時機 | 建置內容 |
 |------|------|---------|
-| 階段一 | memory/ 日誌超過 50 個檔案 | 先建 LanceDB 歸檔（本地、免費） |
+| **階段一（推薦優先）** | 立即可做 | 安裝 memory-lancedb-pro 插件（本地 + Jina 免費額度） |
 | 階段二 | CFO 帳務記錄超過 200 筆 | 建 Supabase 結構化帳務 |
 | 階段三 | CIO 需要精確的交易歷史查詢 | Supabase 投資組合表 |
 
@@ -140,3 +319,4 @@
 - memory/ 目錄檔案數量超過 50 個
 - MEMORY.md 頻繁因容量清理而丟失有價值的資訊
 - 需要跨時間範圍的結構化查詢（如「過去三個月的餐飲支出趨勢」）
+- Agent 在新 session 中反覆遺忘之前的配置或經驗（→ 優先安裝 LanceDB 插件）
