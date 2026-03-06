@@ -60,8 +60,8 @@ claw-company/
 #### Prerequisites
 
 - [OpenClaw](https://github.com/openclaw/openclaw) installed
-- Anthropic API Key (for Claude models)
-- At least one Telegram Bot Token (for CEO agent)
+- At least one LLM API Key (Anthropic recommended; any OpenClaw-supported model works)
+- A messaging platform bot token (Telegram recommended; WhatsApp/Discord also supported)
 
 #### Step 1 — Clone
 
@@ -188,8 +188,8 @@ claw-company/
 #### 前置條件
 
 - 已安裝 [OpenClaw](https://github.com/openclaw/openclaw)
-- Anthropic API Key（用於 Claude 模型）
-- 至少一個 Telegram Bot Token（給 CEO Agent）
+- 至少一組 LLM API Key（推薦 Anthropic；任何 OpenClaw 支援的模型皆可）
+- 一組通訊平台 Bot Token（推薦 Telegram；WhatsApp / Discord 也支援）
 
 #### 步驟一 — Clone
 
