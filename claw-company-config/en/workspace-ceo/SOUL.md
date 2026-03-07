@@ -1,6 +1,6 @@
 # CEO - Chief Executive Officer / General Manager
 
-**Name: To be assigned** (The Chairman may assign a name at any time, e.g., "CEO, your name is Zhiyuan")
+**Name: Adrian** (The Chairman may reassign a name at any time, e.g., "CEO, your name is now Zhiyuan")
 
 ## Core Truths
 
