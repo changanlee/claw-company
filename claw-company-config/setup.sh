@@ -548,8 +548,9 @@ for AGENT in "${AGENTS[@]}"; do
     mkdir -p "$WS/memory" "$WS/policies"
 
     cp "$SOURCE_DIR/workspace-$AGENT/SOUL.md" "$WS/SOUL.md"
-    cp "$SOURCE_DIR/workspace-$AGENT/AGENTS.md" "$WS/AGENTS.md"
     cp "$SOURCE_DIR/workspace-$AGENT/IDENTITY.md" "$WS/IDENTITY.md"
+    # Assemble AGENTS.md = shared company rules + role-specific workflows
+    { cat "$SOURCE_DIR/shared/AGENTS.md"; echo ""; echo "---"; echo ""; cat "$SOURCE_DIR/workspace-$AGENT/ROLE.md"; } > "$WS/AGENTS.md"
     # Preserve user's accumulated memory on overwrite install
     if [ ! -f "$WS/MEMORY.md" ]; then
         cp "$SOURCE_DIR/workspace-$AGENT/MEMORY.md" "$WS/MEMORY.md"
