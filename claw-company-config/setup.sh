@@ -695,7 +695,7 @@ COMMANDS
 if [ "$LANG_DIR" = "zh" ]; then
     echo ""
     echo "  3. 執行 'openclaw gateway start' 啟動服務"
-    echo "  4. 透過 Telegram 向 CEO Bot 發送第一條訊息測試"
+    echo "  4. 透過你設定的通訊平台向 CEO Bot 發送第一條訊息測試"
     echo ""
     echo "管理指令："
     echo "  移除 claw-company：./setup.sh --uninstall"
@@ -703,7 +703,7 @@ if [ "$LANG_DIR" = "zh" ]; then
 else
     echo ""
     echo "  3. Run 'openclaw gateway start' to start the service"
-    echo "  4. Send a test message to the CEO Bot via Telegram"
+    echo "  4. Send a test message to the CEO Bot via your configured platform"
     echo ""
     echo "Management:"
     echo "  Uninstall: ./setup.sh --uninstall"

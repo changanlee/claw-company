@@ -114,8 +114,8 @@ openclaw gateway start
 
 ### 5. Test / 測試
 
-Send a message to the CEO Bot via Telegram.
-透過 Telegram 向 CEO Bot 發送訊息測試。
+Send a message to the CEO Bot via your configured messaging platform (Telegram, Discord, or WhatsApp).
+透過你設定的通訊平台（Telegram、Discord 或 WhatsApp）向 CEO Bot 發送訊息測試。
 
 ## Design Principles / 設計原則
 
