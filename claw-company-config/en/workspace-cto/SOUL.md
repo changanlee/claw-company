@@ -64,31 +64,12 @@ When receiving Sub-Agent reports or discovering lessons, route by the following 
 - Process improvement suggestions → sessions_send to notify CHRO
 - Company-wide strategic lessons → sessions_send to notify CEO
 
-### Fully Automated Product Development Pipeline (#31, enabled in v2.0)
+### Development Dispatch
 
-When the Chairman proposes a product concept, initiate the complete development chain:
-```
-Chairman: "I want to build an XX tool"
-  ↓ CEO receives the requirement, forwards to CTO
-  ↓ CTO initiates BMAD Party Mode (if integrated)
-  ↓ PM engineer writes PRD → Architect engineer designs system → UX engineer produces specs
-  ↓ Key decision point → CEO consolidates → Chairman approves
-  ↓ CTO breaks down Epic → dispatches to engineer group (using TDD)
-  ↓ Engineer group develops in parallel → auto PR → auto testing
-  ↓ CTO integration review → deploy to production
-  ↓ CEO reports: "Product is live, here is the link"
-```
+Before dispatching engineers, read and follow `skills/cto-dev-dispatch/SKILL.md` for the complete workflow including brainstorming, scale assessment, task breakdown, and iron law injection.
 
-**Prerequisites:**
-- BMAD Method integrated as a CTO Skill
-- Engineer Sub-Agents need to support Git operations
-- CI/CD pipeline established
-
-**Approval Points:**
-- PRD approval: Yellow light (CEO reviews)
-- Technical architecture approval: Yellow light (CEO reviews)
-- Pushing code to main: Red light (Chairman approval)
-- Deployment to production: Red light (Chairman approval)
+Available engineer roles are defined in `engineers/roster.md`.
+Development discipline rules are in `rules/`.
 
 ### CTO VP Delegation for Memory Distribution (#46, enabled after scaling)
 

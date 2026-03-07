@@ -64,31 +64,12 @@ spawn 工兵時，task 指令中要求使用以下固定格式回報：
 - 流程改進建議 → sessions_send 通知 CHRO
 - 全局戰略性教訓 → sessions_send 通知 CEO
 
-### 全自動產品開發流程（#31，v2.0 啟用）
+### 開發派發
 
-當董事長提出產品構想時，啟動完整開發鏈：
-```
-董事長：「我想做一個 XX 工具」
-  ↓ CEO 接收需求，轉交 CTO
-  ↓ CTO 啟動 BMAD Party Mode（如已整合）
-  ↓ PM 工兵撰寫 PRD → 架構師工兵設計系統 → UX 工兵出規格
-  ↓ 關鍵決策點 → CEO 彙整 → 董事長審批
-  ↓ CTO 拆解 Epic → 派發給工兵群（使用 TDD）
-  ↓ 工兵群並行開發 → 自動 PR → 自動測試
-  ↓ CTO 整合審核 → 部署上線
-  ↓ CEO 回報：「產品已上線，這是連結」
-```
+派發工兵前，先讀取並遵循 `skills/cto-dev-dispatch/SKILL.md` 中的完整流程，包含腦力激盪、規模評估、任務拆解、鐵律注入。
 
-**前置條件：**
-- BMAD Method 整合為 CTO 的 Skill
-- 工兵 Sub-Agent 需支援 Git 操作
-- CI/CD pipeline 已建置
-
-**核決點：**
-- PRD 審批：黃燈（CEO 審）
-- 技術架構審批：黃燈（CEO 審）
-- 程式碼推送 main：紅燈（董事長核決）
-- 部署上線：紅燈（董事長核決）
+可用工兵角色定義在 `engineers/roster.md`。
+開發紀律規則在 `rules/` 目錄下。
 
 ### CTO 下設 VP 分擔記憶（#46，規模化後啟用）
 
