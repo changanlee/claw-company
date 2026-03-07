@@ -534,7 +534,6 @@ sed -e "s|{{MODEL_PRIMARY}}|$MODEL_PRIMARY|g" \
 SHARED_DIR="$INSTALL_DIR/shared"
 SHARED_POLICIES="$SHARED_DIR/policies"
 mkdir -p "$SHARED_POLICIES"
-cp "$SOURCE_DIR/shared/AGENTS.md" "$SHARED_DIR/AGENTS.md"
 cp "$SOURCE_DIR/shared/USER.md" "$SHARED_DIR/USER.md"
 cp "$SOURCE_DIR/shared/policies/"*.md "$SHARED_POLICIES/"
 
@@ -549,6 +548,8 @@ for AGENT in "${AGENTS[@]}"; do
     mkdir -p "$WS/memory" "$WS/policies"
 
     cp "$SOURCE_DIR/workspace-$AGENT/SOUL.md" "$WS/SOUL.md"
+    cp "$SOURCE_DIR/workspace-$AGENT/AGENTS.md" "$WS/AGENTS.md"
+    cp "$SOURCE_DIR/workspace-$AGENT/IDENTITY.md" "$WS/IDENTITY.md"
     # Preserve user's accumulated memory on overwrite install
     if [ ! -f "$WS/MEMORY.md" ]; then
         cp "$SOURCE_DIR/workspace-$AGENT/MEMORY.md" "$WS/MEMORY.md"
@@ -565,11 +566,17 @@ for AGENT in "${AGENTS[@]}"; do
     done
 
     # Symlink shared files into workspace
-    ln -sf "$SHARED_DIR/AGENTS.md" "$WS/AGENTS.md"
     ln -sf "$SHARED_DIR/USER.md" "$WS/USER.md"
 
     for POLICY in "$SHARED_POLICIES/"*.md; do
         ln -sf "$POLICY" "$WS/policies/$(basename "$POLICY")"
+    done
+
+    # Deploy workspace-specific subdirectories (engineers, rules, skills)
+    for SUBDIR in engineers rules skills; do
+        if [ -d "$SOURCE_DIR/workspace-$AGENT/$SUBDIR" ]; then
+            cp -r "$SOURCE_DIR/workspace-$AGENT/$SUBDIR" "$WS/"
+        fi
     done
 
     if [ "$LANG_DIR" = "zh" ]; then
