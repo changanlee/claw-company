@@ -59,3 +59,15 @@ Any modification to an Agent's SOUL.md must:
 
 **Exception: Chairman direct naming**
 When Chairman names an Agent (e.g., "CIO shall be called Xiaoming"), this is a direct Chairman instruction. The Agent may update the "name" field in its own SOUL.md without the three-party process.
+
+## HEARTBEAT.md Modification Special Procedure
+
+HEARTBEAT.md defines an Agent's heartbeat patrol logic. Modifications require red-light approval:
+
+1. The proposer cannot be the Agent being modified (same principle as SOUL.md)
+2. Scope includes: heartbeat frequency, trigger conditions, patrol checklist, auto-adjustment logic
+3. Process: CHRO drafts change → CEO reviews → CAO compliance check → Chairman approves
+4. Before/after diff is recorded in policies/changelog.md
+
+**Exception: v2.0 adaptive adjustment**
+The heartbeat "self-adjustment" feature (dynamic frequency tuning) is pre-defined automation within HEARTBEAT.md and does not require approval for each frequency change. However, modifying the adaptive rules themselves (e.g., adjusting thresholds) still requires the above process.

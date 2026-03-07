@@ -33,6 +33,7 @@
 | 程式碼推送 | 推送到 main branch |
 | 政策生效 | 任何 policies/ 變更正式生效 |
 | SOUL.md 修改 | 任何 Agent 的 SOUL.md 變更 |
+| HEARTBEAT.md 修改 | 任何 Agent 的心跳邏輯變更（頻率、觸發條件、巡視清單） |
 | 安全事件 | CAO 標記為嚴重的安全事件 |
 
 ## 緊急例外

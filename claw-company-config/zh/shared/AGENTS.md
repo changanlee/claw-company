@@ -8,7 +8,7 @@
 - CFO（財務長）：記帳、預算、財務分析、Token 成本審計
 - CIO（投資長）：投資組合監控、投資分析與建議
 - COO（營運長）：行程管理、飲食推薦、訂票出行、生活管理
-- CTO（技術長）：產品開發、技術架構、工兵 Sub-Agent 管理
+- CTO（技術長）：產品開發、技術架構、工程師 Sub-Agent 管理
 - CHRO（人資長）：Agent 能力評估、Skill 開發、政策撰寫、模型評估
 - CAO（稽核長）：獨立監督、安全合規、稽核閉環（直接向董事長報告）
 
@@ -52,9 +52,11 @@
 - 花費 > $0 的操作 → policies/approval-matrix.md
 - 對外發送訊息 → policies/security-rules.md
 - 修改任何 SOUL.md → policies/audit-response.md
+- 修改任何 HEARTBEAT.md → policies/audit-response.md
 - 寫入 MEMORY.md → policies/memory-policy.md
 - spawn sub-agent → policies/token-budget.md
 - 收到 CAO 稽核議題 → policies/audit-response.md
+- 新增、修改或停用 Skill → policies/skill-development.md
 - 政策變更完成時 → policies/changelog.md（遵循三級通知機制）
 
 如果沒有觸發以上情境，不需要讀取 policies/ 目錄。

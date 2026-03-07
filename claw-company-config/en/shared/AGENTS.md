@@ -52,9 +52,11 @@ Before executing any of the following operations, you must first read the corres
 - Operations costing > $0 -> policies/approval-matrix.md
 - Sending external messages -> policies/security-rules.md
 - Modifying any SOUL.md -> policies/audit-response.md
+- Modifying any HEARTBEAT.md -> policies/audit-response.md
 - Writing to MEMORY.md -> policies/memory-policy.md
 - Spawning a sub-agent -> policies/token-budget.md
 - Receiving a CAO audit issue -> policies/audit-response.md
+- Creating, modifying, or deactivating a Skill -> policies/skill-development.md
 - Upon completing a policy change -> policies/changelog.md (follow the three-tier notification mechanism)
 
 If none of the above contexts are triggered, there is no need to read the policies/ directory.

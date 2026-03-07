@@ -33,6 +33,7 @@
 | Code push | Push to main branch |
 | Policy enactment | Any policies/ change taking effect |
 | SOUL.md modification | Any Agent's SOUL.md changes |
+| HEARTBEAT.md modification | Any Agent's heartbeat logic changes (frequency, triggers, patrol checklist) |
 | Security incidents | Security incidents flagged as critical by CAO |
 
 ## Emergency Exception
