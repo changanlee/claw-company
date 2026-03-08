@@ -1,8 +1,9 @@
 #!/bin/bash
 # ============================================
-# One-Person Company — OpenClaw Multi-Agent Deployment Script
-# 一人公司 — OpenClaw 多代理人架構部署腳本
-# Version: v0.6
+# One-Person Company — OpenClaw Supplement Pack Installer
+# 一人公司 — OpenClaw 補充包安裝腳本
+# Version: v1.0
+# Compatible with: OpenClaw >= 2026.3.7
 # ============================================
 
 set -e
@@ -11,6 +12,25 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 OPENCLAW_DIR="$HOME/.openclaw"
 INSTALL_DIR="$OPENCLAW_DIR/claw-company"
 AGENTS=("ceo" "cfo" "cio" "coo" "cto" "chro" "cao")
+REQUIRED_MIN_VERSION="2026.3.7"
+
+# ============================================
+# Version comparison helper
+# Compares two dot-separated version strings
+# Returns 0 if $1 >= $2, 1 otherwise
+# ============================================
+version_gte() {
+    local IFS='.'
+    local i
+    local -a v1=($1) v2=($2)
+    for ((i=0; i<${#v2[@]}; i++)); do
+        local n1=${v1[$i]:-0}
+        local n2=${v2[$i]:-0}
+        if (( n1 > n2 )); then return 0; fi
+        if (( n1 < n2 )); then return 1; fi
+    done
+    return 0
+}
 
 # ============================================
 # Uninstall mode
@@ -64,8 +84,8 @@ fi
 # ============================================
 echo ""
 echo "=========================================="
-echo "  OpenClaw One-Person Company Setup"
-echo "  OpenClaw 一人公司部署"
+echo "  OpenClaw One-Person Company Installer"
+echo "  OpenClaw 一人公司補充包安裝"
 echo "=========================================="
 echo ""
 
@@ -104,6 +124,53 @@ SOURCE_DIR="$SCRIPT_DIR/$LANG_DIR"
 if [ ! -d "$SOURCE_DIR" ]; then
     echo "[ERROR] Language directory not found: $SOURCE_DIR"
     exit 1
+fi
+
+echo ""
+
+# --------------------------------------------
+# Prerequisites check
+# --------------------------------------------
+if ! command -v openclaw &> /dev/null; then
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "[ERROR] 找不到 openclaw 指令，請先安裝 OpenClaw"
+    else
+        echo "[ERROR] openclaw command not found. Please install OpenClaw first."
+    fi
+    echo "  https://github.com/openclaw/openclaw"
+    exit 1
+fi
+
+# --------------------------------------------
+# Version check
+# --------------------------------------------
+CURRENT_VERSION=$(openclaw --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+
+if [ -z "$CURRENT_VERSION" ]; then
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "[WARN] 無法偵測 OpenClaw 版本，繼續安裝（建議版本 >= $REQUIRED_MIN_VERSION）"
+    else
+        echo "[WARN] Could not detect OpenClaw version, proceeding (recommended >= $REQUIRED_MIN_VERSION)"
+    fi
+elif ! version_gte "$CURRENT_VERSION" "$REQUIRED_MIN_VERSION"; then
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "[ERROR] OpenClaw 版本過舊：$CURRENT_VERSION（需要 >= $REQUIRED_MIN_VERSION）"
+        echo ""
+        echo "  請先升級 OpenClaw："
+        echo "  npm update -g openclaw"
+    else
+        echo "[ERROR] OpenClaw version too old: $CURRENT_VERSION (requires >= $REQUIRED_MIN_VERSION)"
+        echo ""
+        echo "  Please upgrade OpenClaw:"
+        echo "  npm update -g openclaw"
+    fi
+    exit 1
+else
+    if [ "$LANG_DIR" = "zh" ]; then
+        echo "[INFO] OpenClaw 版本：$CURRENT_VERSION ✓"
+    else
+        echo "[INFO] OpenClaw version: $CURRENT_VERSION ✓"
+    fi
 fi
 
 echo ""
@@ -155,34 +222,15 @@ if [ -d "$INSTALL_DIR" ]; then
 fi
 
 # --------------------------------------------
-# Prerequisites check
-# --------------------------------------------
-if ! command -v openclaw &> /dev/null; then
-    if [ "$LANG_DIR" = "zh" ]; then
-        echo "[ERROR] 找不到 openclaw 指令，請先安裝 OpenClaw"
-    else
-        echo "[ERROR] openclaw command not found. Please install OpenClaw first."
-    fi
-    echo "  https://github.com/openclaw/openclaw"
-    exit 1
-fi
-
-# --------------------------------------------
 # Detect available models from existing OpenClaw config
 # --------------------------------------------
-
-# Determine which openclaw.json to read models from:
-# If reinstalling (symlink exists pointing to claw-company), read from backup or resolve the real source.
-# Otherwise read from the original file.
 OPENCLAW_CONFIG_SOURCE=""
 if [ -L "$OPENCLAW_DIR/openclaw.json" ]; then
     LINK_TARGET=$(readlink "$OPENCLAW_DIR/openclaw.json")
     if echo "$LINK_TARGET" | grep -q "claw-company"; then
-        # It's our symlink — check if target still exists (may have been wiped by clean reinstall)
         if [ -f "$LINK_TARGET" ]; then
             OPENCLAW_CONFIG_SOURCE="$LINK_TARGET"
         fi
-        # Also check for a backup
         if [ -z "$OPENCLAW_CONFIG_SOURCE" ]; then
             LATEST_BACKUP=$(ls -t "$OPENCLAW_DIR"/openclaw.json.backup.* 2>/dev/null | head -1)
             if [ -n "$LATEST_BACKUP" ]; then
@@ -220,14 +268,14 @@ done < <(grep -o '"model"[[:space:]]*:[[:space:]]*"[^"]*"' "$OPENCLAW_CONFIG_SOU
     | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' \
     | grep '/' | sort -u)
 
-# Extract from "primary": "provider/name" and fallbacks array values
+# Extract from "primary": "provider/name" and fallbacks
 while IFS= read -r m; do
     [ -n "$m" ] && AVAILABLE_MODELS+=("$m")
 done < <(grep -oE '"(primary)"[[:space:]]*:[[:space:]]*"[^"]*"' "$OPENCLAW_CONFIG_SOURCE" 2>/dev/null \
     | sed 's/.*:[[:space:]]*"\([^"]*\)"/\1/' \
     | grep '/' | sort -u)
 
-# Extract from models.allowlist — match lines with both "id" and a provider/model pattern
+# Extract from models.allowlist
 while IFS= read -r m; do
     [ -n "$m" ] && AVAILABLE_MODELS+=("$m")
 done < <(grep '"alias"' "$OPENCLAW_CONFIG_SOURCE" 2>/dev/null \
@@ -247,14 +295,14 @@ if [ ${#AVAILABLE_MODELS[@]} -eq 0 ]; then
         echo "  請先在 OpenClaw 中設定至少一個模型："
         echo "  openclaw models set <model-id>"
         echo ""
-        echo "  設定完成後再重新執行 ./setup.sh"
+        echo "  設定完成後再重新執行 ./install.sh"
     else
         echo "[ERROR] No models found in $OPENCLAW_DIR/openclaw.json"
         echo ""
         echo "  Please configure at least one model in OpenClaw first:"
         echo "  openclaw models set <model-id>"
         echo ""
-        echo "  Then re-run ./setup.sh"
+        echo "  Then re-run ./install.sh"
     fi
     exit 1
 fi
@@ -306,7 +354,6 @@ else
 fi
 
 # Helper: let user pick a model from the available list
-# All display output goes to stderr (&2), only the result goes to stdout
 pick_model() {
     local ALIAS_NAME="$1"
     local PICKED=""
@@ -374,7 +421,7 @@ TIER_CEO="smart"; TIER_CFO="smart"; TIER_CIO="smart"
 TIER_COO="fast";  TIER_CTO="smart"; TIER_CHRO="fast"; TIER_CAO="smart"
 TIER_CTO_SUB="fast"
 
-# Helper: set tier for a role without eval
+# Helper: set tier for a role
 set_tier() {
     local ROLE="$1" VAL="$2"
     case "$ROLE" in
@@ -401,46 +448,6 @@ get_tier() {
         CHRO)     echo "$TIER_CHRO" ;;
         CAO)      echo "$TIER_CAO" ;;
     esac
-}
-
-pick_tier_zh() {
-    echo ""
-    echo "  對每個角色選擇 smart 或 fast："
-    echo "  （smart = 高能力模型，fast = 輕量快速模型）"
-    echo ""
-    for ROLE in CEO CFO CIO COO CTO CTO_SUB CHRO CAO; do
-        DEFAULT=$(get_tier "$ROLE")
-        while true; do
-            read -r -p "  $ROLE [$DEFAULT]: " INPUT
-            INPUT="${INPUT:-$DEFAULT}"
-            if [ "$INPUT" = "smart" ] || [ "$INPUT" = "fast" ]; then
-                set_tier "$ROLE" "$INPUT"
-                break
-            else
-                echo "    請輸入 smart 或 fast"
-            fi
-        done
-    done
-}
-
-pick_tier_en() {
-    echo ""
-    echo "  Choose smart or fast for each agent:"
-    echo "  (smart = high capability, fast = lightweight)"
-    echo ""
-    for ROLE in CEO CFO CIO COO CTO CTO_SUB CHRO CAO; do
-        DEFAULT=$(get_tier "$ROLE")
-        while true; do
-            read -r -p "  $ROLE [$DEFAULT]: " INPUT
-            INPUT="${INPUT:-$DEFAULT}"
-            if [ "$INPUT" = "smart" ] || [ "$INPUT" = "fast" ]; then
-                set_tier "$ROLE" "$INPUT"
-                break
-            else
-                echo "    Please enter smart or fast"
-            fi
-        done
-    done
 }
 
 echo "=========================================="
@@ -470,7 +477,19 @@ if [ "$LANG_DIR" = "zh" ]; then
                 echo "  對每個角色選擇 smart 或 fast："
                 echo "  （smart = 高能力模型，fast = 輕量快速模型）"
                 echo ""
-                pick_tier_zh
+                for ROLE in CEO CFO CIO COO CTO CTO_SUB CHRO CAO; do
+                    DEFAULT=$(get_tier "$ROLE")
+                    while true; do
+                        read -r -p "  $ROLE [$DEFAULT]: " INPUT
+                        INPUT="${INPUT:-$DEFAULT}"
+                        if [ "$INPUT" = "smart" ] || [ "$INPUT" = "fast" ]; then
+                            set_tier "$ROLE" "$INPUT"
+                            break
+                        else
+                            echo "    請輸入 smart 或 fast"
+                        fi
+                    done
+                done
                 break ;;
             *) echo "無效輸入，請輸入 1 或 2。" ;;
         esac
@@ -489,7 +508,23 @@ else
         case "$TIER_CHOICE" in
             1) break ;;
             2)
-                pick_tier_en
+                echo ""
+                echo "  Choose smart or fast for each agent:"
+                echo "  (smart = high capability, fast = lightweight)"
+                echo ""
+                for ROLE in CEO CFO CIO COO CTO CTO_SUB CHRO CAO; do
+                    DEFAULT=$(get_tier "$ROLE")
+                    while true; do
+                        read -r -p "  $ROLE [$DEFAULT]: " INPUT
+                        INPUT="${INPUT:-$DEFAULT}"
+                        if [ "$INPUT" = "smart" ] || [ "$INPUT" = "fast" ]; then
+                            set_tier "$ROLE" "$INPUT"
+                            break
+                        else
+                            echo "    Please enter smart or fast"
+                        fi
+                    done
+                done
                 break ;;
             *) echo "Invalid input. Please enter 1 or 2." ;;
         esac
@@ -516,7 +551,7 @@ else
 fi
 echo ""
 
-# 1. Deploy openclaw.json (with model substitution)
+# 1. Deploy openclaw.json (with model/tier substitution)
 mkdir -p "$INSTALL_DIR"
 sed -e "s|{{MODEL_PRIMARY}}|$MODEL_PRIMARY|g" \
     -e "s|{{MODEL_LIGHT}}|$MODEL_LIGHT|g" \
@@ -530,10 +565,11 @@ sed -e "s|{{MODEL_PRIMARY}}|$MODEL_PRIMARY|g" \
     -e "s|{{TIER_CAO}}|$TIER_CAO|g" \
     "$SOURCE_DIR/openclaw.json" > "$INSTALL_DIR/openclaw.json"
 
-# 2. Deploy shared
+# 2. Deploy shared directory (company rules + policies)
 SHARED_DIR="$INSTALL_DIR/shared"
 SHARED_POLICIES="$SHARED_DIR/policies"
 mkdir -p "$SHARED_POLICIES"
+cp "$SOURCE_DIR/shared/company-rules.md" "$SHARED_DIR/company-rules.md"
 cp "$SOURCE_DIR/shared/USER.md" "$SHARED_DIR/USER.md"
 cp "$SOURCE_DIR/shared/policies/"*.md "$SHARED_POLICIES/"
 
@@ -547,10 +583,14 @@ for AGENT in "${AGENTS[@]}"; do
     WS="$INSTALL_DIR/workspace-$AGENT"
     mkdir -p "$WS/memory" "$WS/policies"
 
+    # Copy workspace files (no concatenation — company rules loaded at runtime)
     cp "$SOURCE_DIR/workspace-$AGENT/SOUL.md" "$WS/SOUL.md"
     cp "$SOURCE_DIR/workspace-$AGENT/IDENTITY.md" "$WS/IDENTITY.md"
-    # Assemble AGENTS.md = shared company rules + role-specific workflows
-    { cat "$SOURCE_DIR/shared/AGENTS.md"; echo ""; echo "---"; echo ""; cat "$SOURCE_DIR/workspace-$AGENT/AGENTS.md"; } > "$WS/AGENTS.md"
+
+    # AGENTS.md: replace {{INSTALL_DIR}} placeholder with actual install path
+    sed "s|{{INSTALL_DIR}}|$INSTALL_DIR|g" \
+        "$SOURCE_DIR/workspace-$AGENT/AGENTS.md" > "$WS/AGENTS.md"
+
     # Preserve user's accumulated memory on overwrite install
     if [ ! -f "$WS/MEMORY.md" ]; then
         cp "$SOURCE_DIR/workspace-$AGENT/MEMORY.md" "$WS/MEMORY.md"
@@ -560,6 +600,12 @@ for AGENT in "${AGENTS[@]}"; do
         cp "$SOURCE_DIR/workspace-$AGENT/HEARTBEAT.md" "$WS/HEARTBEAT.md"
     fi
 
+    # Copy workspace-specific TOOLS.md if exists (no shared assembly)
+    if [ -f "$SOURCE_DIR/workspace-$AGENT/TOOLS.md" ]; then
+        cp "$SOURCE_DIR/workspace-$AGENT/TOOLS.md" "$WS/TOOLS.md"
+    fi
+
+    # Copy extra files
     for EXTRA in briefing-template.md status.md issues.md; do
         if [ -f "$SOURCE_DIR/workspace-$AGENT/$EXTRA" ]; then
             cp "$SOURCE_DIR/workspace-$AGENT/$EXTRA" "$WS/$EXTRA"
@@ -580,11 +626,7 @@ for AGENT in "${AGENTS[@]}"; do
         fi
     done
 
-    if [ "$LANG_DIR" = "zh" ]; then
-        echo "  [OK] workspace-$AGENT"
-    else
-        echo "  [OK] workspace-$AGENT"
-    fi
+    echo "  [OK] workspace-$AGENT"
 done
 
 # 4. Deploy skills
@@ -607,7 +649,6 @@ if [ -n "$EXISTING_AUTH_FILE" ]; then
     for AGENT in "${AGENTS[@]}"; do
         AGENT_DIR="$INSTALL_DIR/agents/$AGENT/agent"
         mkdir -p "$AGENT_DIR"
-        # Don't overwrite if agent already has auth configured
         if [ ! -f "$AGENT_DIR/auth-profiles.json" ]; then
             cp "$EXISTING_AUTH_FILE" "$AGENT_DIR/auth-profiles.json"
         fi
@@ -646,10 +687,12 @@ if [ "$LANG_DIR" = "zh" ]; then
     echo "=========================================="
     echo ""
     echo "  安裝位置：$INSTALL_DIR"
+    echo "  相容版本：OpenClaw >= $REQUIRED_MIN_VERSION"
     echo ""
-    echo "  所有 claw-company 的檔案都在這個資料夾裡。"
-    echo "  OpenClaw 透過 symlink 讀取配置："
-    echo "  $OPENCLAW_DIR/openclaw.json → $INSTALL_DIR/openclaw.json"
+    echo "  架構說明："
+    echo "  • 公司規範存放在 $INSTALL_DIR/shared/company-rules.md"
+    echo "  • 各 Agent 每次啟動時會自動讀取公司規範（runtime read）"
+    echo "  • CEO 經董事長核決後可修改公司規範，修改即時生效"
     echo ""
     echo "下一步："
     echo "  1. 編輯 $INSTALL_DIR/openclaw.json，填入真實的 Bot Token"
@@ -659,10 +702,12 @@ else
     echo "=========================================="
     echo ""
     echo "  Installed to: $INSTALL_DIR"
+    echo "  Compatible with: OpenClaw >= $REQUIRED_MIN_VERSION"
     echo ""
-    echo "  All claw-company files are contained in this directory."
-    echo "  OpenClaw reads config via symlink:"
-    echo "  $OPENCLAW_DIR/openclaw.json → $INSTALL_DIR/openclaw.json"
+    echo "  Architecture:"
+    echo "  • Company rules are stored at $INSTALL_DIR/shared/company-rules.md"
+    echo "  • Each Agent loads company rules at session start (runtime read)"
+    echo "  • CEO can modify company rules with Chairman's approval, effective immediately"
     echo ""
     echo "Next steps:"
     echo "  1. Edit $INSTALL_DIR/openclaw.json and fill in your Bot Tokens"
@@ -673,7 +718,7 @@ echo ""
 cat << COMMANDS
 openclaw agents add ceo \\
   --workspace $INSTALL_DIR/workspace-ceo \\
-  --model $TIER_CEO --default
+  --model $TIER_CEO
 
 openclaw agents add cfo \\
   --workspace $INSTALL_DIR/workspace-cfo \\
@@ -702,10 +747,30 @@ COMMANDS
 
 if [ "$LANG_DIR" = "zh" ]; then
     echo ""
-    echo "  3. 註冊排程任務（Cron Jobs）："
+    echo "  3. 綁定通道到 Agent："
+    echo ""
+    echo "     # CEO 綁定（所有通道預設路由到 CEO）"
+    echo "     openclaw agents bind --agent ceo --bind telegram:default"
+    echo "     openclaw agents bind --agent ceo --bind whatsapp"
+    echo "     openclaw agents bind --agent ceo --bind discord"
+    echo ""
+    echo "     # CAO 綁定（獨立稽核通道）"
+    echo "     openclaw agents bind --agent cao --bind telegram:audit"
+    echo ""
+    echo "  4. 註冊排程任務（Cron Jobs）："
 else
     echo ""
-    echo "  3. Register Cron Jobs:"
+    echo "  3. Bind channels to Agents:"
+    echo ""
+    echo "     # CEO bindings (all channels route to CEO by default)"
+    echo "     openclaw agents bind --agent ceo --bind telegram:default"
+    echo "     openclaw agents bind --agent ceo --bind whatsapp"
+    echo "     openclaw agents bind --agent ceo --bind discord"
+    echo ""
+    echo "     # CAO binding (independent audit channel)"
+    echo "     openclaw agents bind --agent cao --bind telegram:audit"
+    echo ""
+    echo "  4. Register Cron Jobs:"
 fi
 
 echo ""
@@ -761,21 +826,20 @@ CRON_COMMANDS
 
 if [ "$LANG_DIR" = "zh" ]; then
     echo ""
-    echo "  4. 執行 'openclaw gateway start' 啟動服務"
-    echo "  5. 透過你設定的通訊平台向 CEO Bot 發送第一條訊息測試"
+    echo "  5. 執行 'openclaw gateway start' 啟動服務"
+    echo "  6. 透過你設定的通訊平台向 CEO Bot 發送第一條訊息測試"
     echo ""
     echo "管理指令："
-    echo "  移除 claw-company：./setup.sh --uninstall"
-    echo "  重新安裝：        ./setup.sh"
+    echo "  移除 claw-company：./install.sh --uninstall"
+    echo "  重新安裝：        ./install.sh"
 else
     echo ""
-    echo "  4. Run 'openclaw gateway start' to start the service"
-    echo "  5. Send a test message to the CEO Bot via your configured platform"
+    echo "  5. Run 'openclaw gateway start' to start the service"
+    echo "  6. Send a test message to the CEO Bot via your configured platform"
     echo ""
     echo "Management:"
-    echo "  Uninstall: ./setup.sh --uninstall"
-    echo "  Reinstall: ./setup.sh"
+    echo "  Uninstall: ./install.sh --uninstall"
+    echo "  Reinstall: ./install.sh"
 fi
-
 
 echo ""

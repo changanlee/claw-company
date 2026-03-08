@@ -20,8 +20,8 @@ This project supports **English** and **繁體中文**. Choose your version:
 ## Quick Start / 快速開始
 
 ```bash
-chmod +x setup.sh
-./setup.sh
+chmod +x install.sh
+./install.sh
 ```
 
 The setup script will prompt you to choose a language. All configuration files, agent personalities, policies, and documentation will be deployed in your selected language.
@@ -47,16 +47,17 @@ CAO — Independent audit, reports directly to Chairman / 獨立監督，直接�
 
 ```
 claw-company-config/
-├── setup.sh                    # Bilingual deployment script / 雙語部署腳本
+├── install.sh                    # Bilingual deployment script / 雙語部署腳本
 ├── README.md                   # This file / 本文件
 ├── en/                         # English version / 英文版
 │   ├── openclaw.json
 │   ├── shared/
-│   │   ├── AGENTS.md
+│   │   ├── company-rules.md    # Company rules (runtime read) / 公司規範（啟動時載入）
 │   │   ├── USER.md
 │   │   ├── policies/
 │   │   └── setup-guides/
 │   ├── workspace-{agent}/
+│   │   ├── AGENTS.md           # Role-specific + startup-read instruction / 角色職責 + 啟動必讀
 │   │   ├── SOUL.md
 │   │   ├── MEMORY.md
 │   │   └── HEARTBEAT.md
@@ -64,11 +65,12 @@ claw-company-config/
 └── zh/                         # Chinese version / 中文版
     ├── openclaw.json
     ├── shared/
-    │   ├── AGENTS.md
+    │   ├── company-rules.md
     │   ├── USER.md
     │   ├── policies/
     │   └── setup-guides/
     ├── workspace-{agent}/
+    │   ├── AGENTS.md
     │   ├── SOUL.md
     │   ├── MEMORY.md
     │   └── HEARTBEAT.md
@@ -77,7 +79,7 @@ claw-company-config/
 
 ## Prerequisites / 前置條件
 
-- OpenClaw installed / 已安裝 OpenClaw（https://github.com/openclaw/openclaw）
+- OpenClaw >= 2026.3.7 / 已安裝 OpenClaw >= 2026.3.7（https://github.com/openclaw/openclaw）
 - At least one LLM API Key configured in OpenClaw / 至少一組已在 OpenClaw 中配置的 LLM API Key
 - A messaging platform Bot Token (Telegram recommended) / 一組通訊平台 Bot Token（推薦 Telegram）
 
@@ -97,14 +99,14 @@ Edit `{en|zh}/openclaw.json` and replace the placeholders:
 ### 2. Run Setup / 執行部署
 
 ```bash
-chmod +x setup.sh
-./setup.sh
+chmod +x install.sh
+./install.sh
 ```
 
 ### 3. Register Agents and Cron / 註冊 Agent 和排程
 
 Copy and run the commands printed by the setup script.
-複製並執行 setup.sh 輸出的指令。
+複製並執行 install.sh 輸出的指令。
 
 ### 4. Start / 啟動
 
@@ -123,7 +125,7 @@ Send a message to the CEO Bot via your configured messaging platform (Telegram, 
 |---|---|
 | Three-tier Approval / 三級核決 | Green (auto) → Yellow (CEO review) → Red (Chairman approval) |
 | Three-way Checks / 三方制衡 | CEO (execution) ↔ CAO (oversight) ↔ CHRO (policy) |
-| Layered Memory / 記憶分層 | MEMORY.md (hot) → memory/ logs (warm) → LanceDB (cold, future) |
+| Layered Memory / 記憶分層 | MEMORY.md (hot) → memory/ logs (warm) → built-in vector search (cold) |
 | Layered Governance / 治理分層 | AGENTS.md (index) → SOUL.md (role) → policies/ (details) |
 | On-demand Loading / 按需載入 | Policies loaded only when triggered, saving tokens |
 | Refined Reporting / 精煉回報 | Layer-by-layer refinement; Chairman receives summaries only |
