@@ -1,0 +1,76 @@
+---
+name: recommend
+description: "Produce memory health report (suggested cleanup/archive item list)"
+next-step: null
+output-file: null
+template: null
+---
+
+# Step 3: Produce Recommendations
+
+**Progress: Step 3 of 3**
+
+## Goal
+
+Produce a memory health report listing items recommended for cleanup or archival.
+
+## Execution Rules
+
+- 📖 Read the entire step file before taking action
+- 🚫 Do not pre-read subsequent steps
+- 🚫 Do not skip steps
+
+## Instructions
+
+### 1. Memory Health Report
+
+```markdown
+# Memory Health Report — {date}
+
+## Summary
+- Overall Health: Good / Needs Attention / Needs Cleanup
+- Agent Requiring Most Attention: {Agent name}
+
+## Agent Memory Health
+| Agent | Utilization | Stale Ratio | Structure Score | Recommendation |
+|-------|------------|------------|----------------|---------------|
+
+## Cleanup Recommendations
+### Priority Cleanup (Critical/Warning)
+- {Agent}: {specific recommendation}
+
+### Suggested Cleanup (Attention)
+- {Agent}: {specific recommendation}
+
+### Structure Improvements
+- {Agent}: {specific recommendation}
+```
+
+### 2. Specific Cleanup Suggestions
+
+For each Agent needing cleanup, list:
+
+- Entries recommended for deletion (stale, redundant)
+- Entries recommended for archival (historically valuable but rarely used, move to memory/)
+- Entries recommended for update (outdated content)
+- Structural adjustment suggestions
+
+**Note**: CHRO only provides recommendations and does not directly modify other Agents' MEMORY.md. Each Agent executes cleanup independently.
+
+### 3. Submit Report
+
+- Submit to CEO for management reference
+- For Agents with memory utilization over 80%, directly notify via `sessions_send` with cleanup recommendations
+- CTO has its own weekly memory self-cleanup mechanism (cron) — can reference but do not duplicate
+
+### 4. Update Records
+
+- Update CHRO MEMORY.md with memory health trends
+- Store full report in memory/
+
+## Completion Criteria
+
+- [ ] Memory health report produced
+- [ ] Specific cleanup suggestions listed
+- [ ] Submitted to CEO and Agents requiring attention
+- [ ] Records updated

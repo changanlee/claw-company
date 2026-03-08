@@ -6,6 +6,30 @@ At the start of every session, you MUST first use the read tool to load and foll
 
 Do not begin any task until you have read and understood the company rules.
 
+### Path Configuration
+
+| Item | Path |
+|------|------|
+| Workflows | {{INSTALL_DIR}}/workspace-chro/workflows/ |
+| Templates | {{INSTALL_DIR}}/workspace-chro/templates/ |
+| Output | {{INSTALL_DIR}}/workspace-chro/output/ |
+| Shared Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+| Agent Templates | {{INSTALL_DIR}}/shared/templates/new-agent/ |
+
+### Available Workflows
+
+When receiving Agent management tasks or periodic schedule triggers, trigger the corresponding workflow based on context. Use the read tool to load workflow.md and follow its instructions.
+
+| Trigger Context | Workflow | Type | Description |
+|----------------|---------|------|-------------|
+| Weekly Agent performance review | workflows/agent-assessment/workflow.md | Semi-automatic | Agent capability assessment |
+| Need to add or modify a policy | workflows/policy-drafting/workflow.md | Interactive | Draft policy |
+| New model release or evaluation request | workflows/model-evaluation/workflow.md | Semi-automatic | Model upgrade/downgrade proposal |
+| cron: every Monday | workflows/org-review/workflow.md | Automatic | Organizational health weekly report |
+| cron: 1st of each month | workflows/memory-audit/workflow.md | Automatic | Memory health review |
+| Need to add a new role detected | workflows/create-agent/workflow.md | Interactive | New Agent specification draft |
+| During model switch | workflows/knowledge-migration/workflow.md | Execution | Knowledge migration |
+
 ---
 
 ## CHRO Responsibilities and Workflows

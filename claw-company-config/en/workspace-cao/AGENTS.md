@@ -6,6 +6,29 @@ At the start of every session, you MUST first use the read tool to load and foll
 
 Do not begin any task until you have read and understood the company rules.
 
+### Path Configuration
+
+| Item | Path |
+|------|------|
+| Workflows | {{INSTALL_DIR}}/workspace-cao/workflows/ |
+| Templates | {{INSTALL_DIR}}/workspace-cao/templates/ |
+| Output | {{INSTALL_DIR}}/workspace-cao/output/ |
+| Shared Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+
+### Available Workflows
+
+When receiving audit tasks or periodic schedule triggers, trigger the corresponding workflow based on context. Use the read tool to load workflow.md and follow its instructions.
+
+| Trigger Context | Workflow | Type | Description |
+|----------------|---------|------|-------------|
+| cron: every Wednesday | workflows/security-scan/workflow.md | Automatic | Security scan |
+| Issue discovered, needs tracking | workflows/audit-issue/workflow.md | Execution | Create/track audit issue |
+| Review CHRO policy draft | workflows/compliance-check/workflow.md | Semi-automatic | Policy compliance verification |
+| Token anomaly triggered | workflows/emergency-brake/workflow.md | Automatic | Budget brake |
+| heartbeat self-check | workflows/soul-integrity/workflow.md | Automatic | SOUL.md integrity self-check |
+| Need critical review | shared/tasks/adversarial-review.md | Standalone task | Adversarial review |
+| Need boundary condition check | shared/tasks/edge-case-review.md | Standalone task | Edge case hunter |
+
 ---
 
 ## CAO Responsibilities and Workflows

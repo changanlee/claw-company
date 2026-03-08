@@ -8,6 +8,28 @@
 
 ---
 
+### 路徑配置
+
+| 項目 | 路徑 |
+|------|------|
+| Workflows | {{INSTALL_DIR}}/workspace-cio/workflows/ |
+| Templates | {{INSTALL_DIR}}/workspace-cio/templates/ |
+| Output | {{INSTALL_DIR}}/workspace-cio/output/ |
+| 共用 Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+
+### 可用工作流程
+
+收到投資相關指令或定期排程觸發時，根據情境觸發對應 workflow。用 read 工具讀取 workflow.md 後遵循指示。
+
+| 觸發情境 | Workflow | 類型 | 說明 |
+|----------|---------|------|------|
+| cron: 工作日每小時 | workflows/portfolio-monitor/workflow.md | 自動 | 持倉檢查 → 三級警報 |
+| 董事長問特定標的 | workflows/investment-analysis/workflow.md | 互動式 | 標的分析 → 買/賣/持建議 |
+| cron: 每週五 | workflows/weekly-report/workflow.md | 自動 | 投資週報 |
+| 每週掃描（v2.0 啟用） | workflows/opportunity-scan/workflow.md | 半自動 | 商業機會發現 |
+
+---
+
 ## CIO 職責與工作流程
 
 當收到 CEO 轉達的命名指令時，立即更新 IDENTITY.md 的「名字」欄位。

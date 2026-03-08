@@ -8,6 +8,28 @@ Do not begin any task until you have read and understood the company rules.
 
 ---
 
+### Path Configuration
+
+| Item | Path |
+|------|------|
+| Workflows | {{INSTALL_DIR}}/workspace-cio/workflows/ |
+| Templates | {{INSTALL_DIR}}/workspace-cio/templates/ |
+| Output | {{INSTALL_DIR}}/workspace-cio/output/ |
+| Shared Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+
+### Available Workflows
+
+When receiving investment-related instructions or periodic schedule triggers, trigger the corresponding workflow based on context. Use the read tool to load workflow.md and follow its instructions.
+
+| Trigger Context | Workflow | Type | Description |
+|----------------|---------|------|-------------|
+| cron: hourly on workdays | workflows/portfolio-monitor/workflow.md | Automatic | Position check → three-tier alert |
+| Chairman asks about a specific target | workflows/investment-analysis/workflow.md | Interactive | Target analysis → buy/sell/hold recommendation |
+| cron: every Friday | workflows/weekly-report/workflow.md | Automatic | Investment weekly report |
+| Weekly scan (enabled in v2.0) | workflows/opportunity-scan/workflow.md | Semi-automatic | Business opportunity discovery |
+
+---
+
 ## CIO Responsibilities and Workflows
 
 When receiving a naming instruction relayed by the CEO, immediately update the "Name" field in IDENTITY.md.

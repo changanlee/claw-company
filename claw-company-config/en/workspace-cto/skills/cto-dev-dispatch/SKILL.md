@@ -11,21 +11,68 @@ This skill defines Atlas's (CTO) complete workflow when receiving a development 
 
 ## Phase 1: Brainstorming
 
+### 1.1 Preparation
+
 1. **Load the roster.** Read `engineers/roster.md` to know all available engineer roles and their auto-select triggers.
+2. **Auto-select relevant roles.** Based on the incoming requirement, match it against the "Auto-select When" column in the roster. Select all roles whose triggers match the requirement context.
+3. **Read selected engineer definitions.** For each auto-selected role, read the corresponding file from `engineers/` to understand their capabilities and work methods.
+4. **Chairman can adjust the team.** At any point, the Chairman may request additional roles (e.g., "bring in QA too"). Load the requested engineer definition and incorporate their perspective.
 
-2. **Auto-select relevant roles.** Based on the incoming requirement, match it against the "Auto-select When" column in the roster. Select all roles whose triggers match the requirement context. These engineers' perspectives will inform the brainstorming discussion.
+### 1.2 Select Technique Mode
 
-3. **Read selected engineer definitions.** For each auto-selected role, read the corresponding file from `engineers/` (e.g., `engineers/pm.md`, `engineers/architect.md`) to understand their capabilities and work methods.
+Read `{{INSTALL_DIR}}/shared/brain-methods.csv` and present four modes to the Chairman:
 
-4. **Conduct brainstorming with Chairman (via CEO).** Present the requirement analysis to the Chairman:
-   - Summarize the requirement as understood
-   - List which engineer roles were auto-selected and why
-   - Propose 2-3 approaches with trade-offs from the perspectives of the selected roles
-   - Ask one focused question at a time to refine the direction
+> Before we start brainstorming, how would you like to select thinking techniques?
+>
+> 1. **Self-select** — Browse 9 categories and pick techniques that interest you
+> 2. **AI-recommended** — I'll recommend 2-3 techniques best suited to this requirement
+> 3. **Random** — Randomly draw techniques for serendipitous inspiration
+> 4. **Direct discussion** — Skip techniques and go straight to Q&A-style design discussion
 
-5. **Chairman can adjust the team.** At any point, the Chairman may request additional roles (e.g., "bring in QA too" or "get UX involved"). Load the requested engineer definition and incorporate their perspective.
+#### Mode 1 — Self-select
 
-6. **Confirm design before proceeding.** Summarize the agreed approach and get explicit Chairman approval before moving to Phase 2.
+1. List all 9 categories with technique counts.
+2. After Chairman selects a category, list all techniques with name and brief description.
+3. Chairman picks 1-3 techniques.
+
+#### Mode 2 — AI-recommended
+
+Analyze the requirement across these dimensions and recommend 2-3 techniques:
+- **Goal analysis**: Innovation exploration → creative/wild categories; problem-solving → deep/structured
+- **Complexity**: Complex/abstract → deep/structured; concrete/clear → creative/theatrical
+- **Time**: Short session → 1 technique; longer → multi-technique chain
+- Include reasoning for each recommendation. Chairman may accept or re-select.
+
+#### Mode 3 — Random
+
+Randomly draw 2 techniques from the CSV. Show name, category, and description. Chairman may accept or request re-draw.
+
+#### Mode 4 — Direct discussion
+
+Skip technique selection and go straight to traditional Q&A-style design discussion (backward-compatible with original flow).
+
+### 1.3 Execute Techniques
+
+For each selected technique (Mode 4 skips this step):
+
+1. Explain the technique's rules and facilitation prompts to the Chairman (from the CSV description field).
+2. Incorporate perspectives from the auto-selected engineer roles to guide divergent thinking.
+3. Execute **1-2 rounds** of dialogue per technique, recording all generated ideas.
+4. **Anti-bias mechanism**: Every 10 accumulated ideas, deliberately shift the thinking angle.
+
+### 1.4 Converge into Design
+
+Regardless of which mode was used, this step is consistent:
+
+1. Based on brainstorming (or direct discussion) results, propose **2-3 technical approaches** with trade-off analysis.
+2. Ask **one focused question at a time**, wait for an answer before continuing.
+3. After Chairman approval, produce a **technical design document** containing:
+   - Confirmed approach overview
+   - Key decision points and rationale
+   - Technical constraints and boundaries
+   - Expected component/module structure
+4. The technical design document serves as input for subsequent phases (scale assessment, task breakdown).
+5. After confirming the design direction, proceed to the next phase.
 
 ---
 

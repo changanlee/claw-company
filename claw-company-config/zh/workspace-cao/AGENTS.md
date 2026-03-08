@@ -6,6 +6,29 @@
 
 只有在讀取並理解公司規範後，才開始執行任何任務。
 
+### 路徑配置
+
+| 項目 | 路徑 |
+|------|------|
+| Workflows | {{INSTALL_DIR}}/workspace-cao/workflows/ |
+| Templates | {{INSTALL_DIR}}/workspace-cao/templates/ |
+| Output | {{INSTALL_DIR}}/workspace-cao/output/ |
+| 共用 Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+
+### 可用工作流程
+
+收到稽核任務或定期排程觸發時，根據情境觸發對應 workflow。用 read 工具讀取 workflow.md 後遵循指示。
+
+| 觸發情境 | Workflow | 類型 | 說明 |
+|----------|---------|------|------|
+| cron: 每週三 | workflows/security-scan/workflow.md | 自動 | 安全掃描 |
+| 發現問題需建立議題 | workflows/audit-issue/workflow.md | 執行式 | 建立/追蹤稽核議題 |
+| 審查 CHRO 政策草案 | workflows/compliance-check/workflow.md | 半自動 | 政策合規驗證 |
+| Token 異常觸發 | workflows/emergency-brake/workflow.md | 自動 | 預算煞車 |
+| heartbeat 自查 | workflows/soul-integrity/workflow.md | 自動 | SOUL.md 完整性自查 |
+| 需要犀利審查 | shared/tasks/adversarial-review.md | 獨立任務 | 對抗式審查 |
+| 需要邊界條件檢查 | shared/tasks/edge-case-review.md | 獨立任務 | 邊界獵人 |
+
 ---
 
 ## CAO 職責與工作流程

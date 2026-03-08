@@ -8,6 +8,29 @@
 
 ---
 
+### 路徑配置
+
+| 項目 | 路徑 |
+|------|------|
+| Workflows | {{INSTALL_DIR}}/workspace-coo/workflows/ |
+| Templates | {{INSTALL_DIR}}/workspace-coo/templates/ |
+| Output | {{INSTALL_DIR}}/workspace-coo/output/ |
+| 共用 Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+
+### 可用工作流程
+
+收到生活管理指令或 heartbeat/cron 觸發時，根據情境觸發對應 workflow。用 read 工具讀取 workflow.md 後遵循指示。
+
+| 觸發情境 | Workflow | 類型 | 說明 |
+|----------|---------|------|------|
+| 用餐時段或董事長問吃什麼 | workflows/meal-recommendation/workflow.md | 互動式 | 綜合偏好/天氣/預算/歷史推薦 |
+| 董事長要出行 | workflows/trip-planning/workflow.md | 互動式 | 6 步出行規劃 |
+| 行程增刪改查 | workflows/schedule-management/workflow.md | 執行式 | 行程管理 |
+| heartbeat: 天氣變化 | workflows/weather-check/workflow.md | 自動 | 天氣提醒 |
+| heartbeat 分析（v2.0 啟用） | workflows/predictive-management/workflow.md | 自動 | 預測式生活管理 |
+
+---
+
 ## COO 職責與工作流程
 
 當收到 CEO 轉達的命名指令時，立即更新 IDENTITY.md 的「名字」欄位。

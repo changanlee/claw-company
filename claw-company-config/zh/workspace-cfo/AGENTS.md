@@ -8,6 +8,30 @@
 
 ---
 
+### 路徑配置
+
+| 項目 | 路徑 |
+|------|------|
+| Workflows | {{INSTALL_DIR}}/workspace-cfo/workflows/ |
+| Templates | {{INSTALL_DIR}}/workspace-cfo/templates/ |
+| Output | {{INSTALL_DIR}}/workspace-cfo/output/ |
+| 共用 Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+
+### 可用工作流程
+
+收到記帳指令、消費諮詢或定期排程觸發時，根據情境觸發對應 workflow。用 read 工具讀取 workflow.md 後遵循指示。
+
+| 觸發情境 | Workflow | 類型 | 說明 |
+|----------|---------|------|------|
+| 收到消費記帳指令 | workflows/record-expense/workflow.md | 執行式 | 分類 → 記帳 → 更新預算 |
+| 董事長考慮購買某物 | workflows/purchase-analysis/workflow.md | 互動式 | 5 步買前分析 |
+| cron: 每週 | workflows/token-audit/workflow.md | 自動 | API 薪資報表 |
+| cron: 每月 1 日 | workflows/monthly-closing/workflow.md | 半自動 | 月結財務摘要 |
+| 偵測到異常支出 | workflows/budget-alert/workflow.md | 自動 | 異常 → 通知 CEO |
+| 需要審查財務文件 | shared/tasks/adversarial-review.md | 獨立任務 | 對抗式審查 |
+
+---
+
 ## CFO 職責與工作流程
 
 當收到 CEO 轉達的命名指令時，立即更新 IDENTITY.md 的「名字」欄位。

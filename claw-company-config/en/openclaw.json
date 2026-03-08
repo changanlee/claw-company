@@ -36,7 +36,7 @@
     "list": [
       // ---- Layer 1: CEO ----
       {
-        "id": "ceo",
+        "id": "cc-ceo",
         "default": true,
         "workspace": "~/.openclaw/claw-company/workspace-ceo",
         "agentDir": "~/.openclaw/claw-company/agents/ceo/agent",
@@ -46,13 +46,13 @@
           "emoji": "👔"
         },
         "subagents": {
-          "allowAgents": ["cfo", "cio", "coo", "cto", "chro"]
+          "allowAgents": ["cc-cfo", "cc-cio", "cc-coo", "cc-cto", "cc-chro"]
         }
       },
 
       // ---- Layer 2: C-Suite Executives ----
       {
-        "id": "cfo",
+        "id": "cc-cfo",
         "workspace": "~/.openclaw/claw-company/workspace-cfo",
         "agentDir": "~/.openclaw/claw-company/agents/cfo/agent",
         "model": "{{TIER_CFO}}",
@@ -62,7 +62,7 @@
         }
       },
       {
-        "id": "cio",
+        "id": "cc-cio",
         "workspace": "~/.openclaw/claw-company/workspace-cio",
         "agentDir": "~/.openclaw/claw-company/agents/cio/agent",
         "model": "{{TIER_CIO}}",
@@ -72,7 +72,7 @@
         }
       },
       {
-        "id": "coo",
+        "id": "cc-coo",
         "workspace": "~/.openclaw/claw-company/workspace-coo",
         "agentDir": "~/.openclaw/claw-company/agents/coo/agent",
         "model": "{{TIER_COO}}",
@@ -82,7 +82,7 @@
         }
       },
       {
-        "id": "cto",
+        "id": "cc-cto",
         "workspace": "~/.openclaw/claw-company/workspace-cto",
         "agentDir": "~/.openclaw/claw-company/agents/cto/agent",
         "model": "{{TIER_CTO}}",
@@ -96,7 +96,7 @@
         }
       },
       {
-        "id": "chro",
+        "id": "cc-chro",
         "workspace": "~/.openclaw/claw-company/workspace-chro",
         "agentDir": "~/.openclaw/claw-company/agents/chro/agent",
         "model": "{{TIER_CHRO}}",
@@ -108,7 +108,7 @@
 
       // ---- Independent Oversight: CAO (Chief Audit Officer) ----
       {
-        "id": "cao",
+        "id": "cc-cao",
         "workspace": "~/.openclaw/claw-company/workspace-cao",
         "agentDir": "~/.openclaw/claw-company/agents/cao/agent",
         "model": "{{TIER_CAO}}",
@@ -126,7 +126,7 @@
   "tools": {
     "agentToAgent": {
       "enabled": true,
-      "allow": ["ceo", "cfo", "cio", "coo", "cto", "chro", "cao"]
+      "allow": ["cc-ceo", "cc-cfo", "cc-cio", "cc-coo", "cc-cto", "cc-chro", "cc-cao"]
     },
     "loopDetection": {
       "enabled": true,
@@ -171,11 +171,11 @@
   // ============================================
   "bindings": [
     // All channels default to CEO
-    { "agentId": "ceo", "match": { "channel": "telegram", "accountId": "default" } },
-    { "agentId": "ceo", "match": { "channel": "whatsapp" } },
-    { "agentId": "ceo", "match": { "channel": "discord" } },
+    { "agentId": "cc-ceo", "match": { "channel": "telegram", "accountId": "default" } },
+    { "agentId": "cc-ceo", "match": { "channel": "whatsapp" } },
+    { "agentId": "cc-ceo", "match": { "channel": "discord" } },
     // CAO has independent Telegram bot
-    { "agentId": "cao", "match": { "channel": "telegram", "accountId": "audit" } }
+    { "agentId": "cc-cao", "match": { "channel": "telegram", "accountId": "audit" } }
   ],
 
   // ============================================

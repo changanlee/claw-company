@@ -53,16 +53,16 @@ ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 ```sql
 -- CFO：完整讀寫
 CREATE POLICY "cfo_full_access" ON transactions
-  FOR ALL USING (auth.agent_id() = 'cfo')
-  WITH CHECK (auth.agent_id() = 'cfo');
+  FOR ALL USING (auth.agent_id() = 'cc-cfo')
+  WITH CHECK (auth.agent_id() = 'cc-cfo');
 
 -- CEO：唯讀（查看財務報表）
 CREATE POLICY "ceo_read_transactions" ON transactions
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 -- CAO：唯讀（稽核用途）
 CREATE POLICY "cao_read_transactions" ON transactions
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### budgets（CFO 管理）
@@ -70,19 +70,19 @@ CREATE POLICY "cao_read_transactions" ON transactions
 ```sql
 -- CFO：完整讀寫
 CREATE POLICY "cfo_full_budgets" ON budgets
-  FOR ALL USING (auth.agent_id() = 'cfo')
-  WITH CHECK (auth.agent_id() = 'cfo');
+  FOR ALL USING (auth.agent_id() = 'cc-cfo')
+  WITH CHECK (auth.agent_id() = 'cc-cfo');
 
 -- COO：唯讀（查詢餐飲預算餘額）
 CREATE POLICY "coo_read_budgets" ON budgets
-  FOR SELECT USING (auth.agent_id() = 'coo');
+  FOR SELECT USING (auth.agent_id() = 'cc-coo');
 
 -- CEO / CAO：唯讀
 CREATE POLICY "ceo_read_budgets" ON budgets
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 CREATE POLICY "cao_read_budgets" ON budgets
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### portfolio（CIO 管理）
@@ -90,16 +90,16 @@ CREATE POLICY "cao_read_budgets" ON budgets
 ```sql
 -- CIO：完整讀寫
 CREATE POLICY "cio_full_portfolio" ON portfolio
-  FOR ALL USING (auth.agent_id() = 'cio')
-  WITH CHECK (auth.agent_id() = 'cio');
+  FOR ALL USING (auth.agent_id() = 'cc-cio')
+  WITH CHECK (auth.agent_id() = 'cc-cio');
 
 -- CEO：唯讀（查看投資狀況）
 CREATE POLICY "ceo_read_portfolio" ON portfolio
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 -- CAO：唯讀（稽核）
 CREATE POLICY "cao_read_portfolio" ON portfolio
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### trades（CIO 管理）
@@ -107,15 +107,15 @@ CREATE POLICY "cao_read_portfolio" ON portfolio
 ```sql
 -- CIO：完整讀寫
 CREATE POLICY "cio_full_trades" ON trades
-  FOR ALL USING (auth.agent_id() = 'cio')
-  WITH CHECK (auth.agent_id() = 'cio');
+  FOR ALL USING (auth.agent_id() = 'cc-cio')
+  WITH CHECK (auth.agent_id() = 'cc-cio');
 
 -- CEO / CAO：唯讀
 CREATE POLICY "ceo_read_trades" ON trades
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 CREATE POLICY "cao_read_trades" ON trades
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### events（COO 管理）
@@ -123,16 +123,16 @@ CREATE POLICY "cao_read_trades" ON trades
 ```sql
 -- COO：完整讀寫
 CREATE POLICY "coo_full_events" ON events
-  FOR ALL USING (auth.agent_id() = 'coo')
-  WITH CHECK (auth.agent_id() = 'coo');
+  FOR ALL USING (auth.agent_id() = 'cc-coo')
+  WITH CHECK (auth.agent_id() = 'cc-coo');
 
 -- CEO：唯讀（查看行程安排）
 CREATE POLICY "ceo_read_events" ON events
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 -- CAO：唯讀
 CREATE POLICY "cao_read_events" ON events
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### token_usage（CFO 管理，全體可讀）
@@ -140,8 +140,8 @@ CREATE POLICY "cao_read_events" ON events
 ```sql
 -- CFO：完整讀寫
 CREATE POLICY "cfo_full_token_usage" ON token_usage
-  FOR ALL USING (auth.agent_id() = 'cfo')
-  WITH CHECK (auth.agent_id() = 'cfo');
+  FOR ALL USING (auth.agent_id() = 'cc-cfo')
+  WITH CHECK (auth.agent_id() = 'cc-cfo');
 
 -- 所有 Agent：可讀取自己的 Token 用量
 CREATE POLICY "agent_read_own_usage" ON token_usage
@@ -149,10 +149,10 @@ CREATE POLICY "agent_read_own_usage" ON token_usage
 
 -- CEO / CAO：讀取所有人的用量
 CREATE POLICY "ceo_read_all_usage" ON token_usage
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 CREATE POLICY "cao_read_all_usage" ON token_usage
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### audit_log（CAO 管理）
@@ -160,12 +160,12 @@ CREATE POLICY "cao_read_all_usage" ON token_usage
 ```sql
 -- CAO：完整讀寫
 CREATE POLICY "cao_full_audit" ON audit_log
-  FOR ALL USING (auth.agent_id() = 'cao')
-  WITH CHECK (auth.agent_id() = 'cao');
+  FOR ALL USING (auth.agent_id() = 'cc-cao')
+  WITH CHECK (auth.agent_id() = 'cc-cao');
 
 -- CEO：唯讀
 CREATE POLICY "ceo_read_audit" ON audit_log
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 -- 被稽核 Agent：只能讀取與自己相關的記錄
 CREATE POLICY "agent_read_own_audit" ON audit_log

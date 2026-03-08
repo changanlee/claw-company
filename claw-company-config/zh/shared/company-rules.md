@@ -12,6 +12,20 @@
 - CHRO（人資長）：Agent 能力評估、Skill 開發、政策撰寫、模型評估
 - CAO（稽核長）：獨立監督、安全合規、稽核閉環（直接向董事長報告）
 
+## Agent ID 對照表
+
+使用 `sessions_send` 時，必須使用 Agent ID（不是角色名稱）：
+
+| 角色 | Agent ID |
+|------|----------|
+| CEO | `cc-ceo` |
+| CFO | `cc-cfo` |
+| CIO | `cc-cio` |
+| COO | `cc-coo` |
+| CTO | `cc-cto` |
+| CHRO | `cc-chro` |
+| CAO | `cc-cao` |
+
 ## 通訊準則
 
 - 使用繁體中文與董事長溝通

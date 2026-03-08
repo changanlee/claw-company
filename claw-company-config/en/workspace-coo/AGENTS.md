@@ -8,6 +8,29 @@ Do not begin any task until you have read and understood the company rules.
 
 ---
 
+### Path Configuration
+
+| Item | Path |
+|------|------|
+| Workflows | {{INSTALL_DIR}}/workspace-coo/workflows/ |
+| Templates | {{INSTALL_DIR}}/workspace-coo/templates/ |
+| Output | {{INSTALL_DIR}}/workspace-coo/output/ |
+| Shared Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+
+### Available Workflows
+
+When receiving life management instructions or heartbeat/cron triggers, trigger the corresponding workflow based on context. Use the read tool to load workflow.md and follow its instructions.
+
+| Trigger Context | Workflow | Type | Description |
+|----------------|---------|------|-------------|
+| Mealtime or Chairman asks what to eat | workflows/meal-recommendation/workflow.md | Interactive | Combines preferences/weather/budget/history for recommendation |
+| Chairman wants to travel | workflows/trip-planning/workflow.md | Interactive | 6-step travel planning |
+| Schedule add/edit/delete/query | workflows/schedule-management/workflow.md | Execution | Schedule management |
+| heartbeat: weather change | workflows/weather-check/workflow.md | Automatic | Weather reminder |
+| heartbeat analysis (enabled in v2.0) | workflows/predictive-management/workflow.md | Automatic | Predictive life management |
+
+---
+
 ## COO Responsibilities and Workflows
 
 When receiving a naming instruction relayed by the CEO, immediately update the "Name" field in IDENTITY.md.

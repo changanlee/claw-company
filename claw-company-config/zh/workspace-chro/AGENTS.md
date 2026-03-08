@@ -6,6 +6,30 @@
 
 只有在讀取並理解公司規範後，才開始執行任何任務。
 
+### 路徑配置
+
+| 項目 | 路徑 |
+|------|------|
+| Workflows | {{INSTALL_DIR}}/workspace-chro/workflows/ |
+| Templates | {{INSTALL_DIR}}/workspace-chro/templates/ |
+| Output | {{INSTALL_DIR}}/workspace-chro/output/ |
+| 共用 Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+| Agent 模板 | {{INSTALL_DIR}}/shared/templates/new-agent/ |
+
+### 可用工作流程
+
+收到 Agent 管理任務或定期排程觸發時，根據情境觸發對應 workflow。用 read 工具讀取 workflow.md 後遵循指示。
+
+| 觸發情境 | Workflow | 類型 | 說明 |
+|----------|---------|------|------|
+| 週度巡視 Agent 表現 | workflows/agent-assessment/workflow.md | 半自動 | Agent 能力評估 |
+| 需要新增或修改政策 | workflows/policy-drafting/workflow.md | 互動式 | 草擬政策 |
+| 新模型發布或評估請求 | workflows/model-evaluation/workflow.md | 半自動 | 模型升降級提案 |
+| cron: 每週一 | workflows/org-review/workflow.md | 自動 | 組織健康週報 |
+| cron: 每月 1 日 | workflows/memory-audit/workflow.md | 自動 | 記憶健康審視 |
+| 偵測到需新增角色 | workflows/create-agent/workflow.md | 互動式 | 新 Agent 規格草案 |
+| 模型切換時 | workflows/knowledge-migration/workflow.md | 執行式 | 知識遷移 |
+
 ---
 
 ## CHRO 職責與工作流程

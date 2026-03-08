@@ -53,16 +53,16 @@ ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 ```sql
 -- CFO: Full read/write access
 CREATE POLICY "cfo_full_access" ON transactions
-  FOR ALL USING (auth.agent_id() = 'cfo')
-  WITH CHECK (auth.agent_id() = 'cfo');
+  FOR ALL USING (auth.agent_id() = 'cc-cfo')
+  WITH CHECK (auth.agent_id() = 'cc-cfo');
 
 -- CEO: Read-only (view financial reports)
 CREATE POLICY "ceo_read_transactions" ON transactions
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 -- CAO: Read-only (audit purposes)
 CREATE POLICY "cao_read_transactions" ON transactions
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### budgets (Managed by CFO)
@@ -70,19 +70,19 @@ CREATE POLICY "cao_read_transactions" ON transactions
 ```sql
 -- CFO: Full read/write access
 CREATE POLICY "cfo_full_budgets" ON budgets
-  FOR ALL USING (auth.agent_id() = 'cfo')
-  WITH CHECK (auth.agent_id() = 'cfo');
+  FOR ALL USING (auth.agent_id() = 'cc-cfo')
+  WITH CHECK (auth.agent_id() = 'cc-cfo');
 
 -- COO: Read-only (check dining budget balance)
 CREATE POLICY "coo_read_budgets" ON budgets
-  FOR SELECT USING (auth.agent_id() = 'coo');
+  FOR SELECT USING (auth.agent_id() = 'cc-coo');
 
 -- CEO / CAO: Read-only
 CREATE POLICY "ceo_read_budgets" ON budgets
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 CREATE POLICY "cao_read_budgets" ON budgets
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### portfolio (Managed by CIO)
@@ -90,16 +90,16 @@ CREATE POLICY "cao_read_budgets" ON budgets
 ```sql
 -- CIO: Full read/write access
 CREATE POLICY "cio_full_portfolio" ON portfolio
-  FOR ALL USING (auth.agent_id() = 'cio')
-  WITH CHECK (auth.agent_id() = 'cio');
+  FOR ALL USING (auth.agent_id() = 'cc-cio')
+  WITH CHECK (auth.agent_id() = 'cc-cio');
 
 -- CEO: Read-only (view investment status)
 CREATE POLICY "ceo_read_portfolio" ON portfolio
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 -- CAO: Read-only (audit)
 CREATE POLICY "cao_read_portfolio" ON portfolio
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### trades (Managed by CIO)
@@ -107,15 +107,15 @@ CREATE POLICY "cao_read_portfolio" ON portfolio
 ```sql
 -- CIO: Full read/write access
 CREATE POLICY "cio_full_trades" ON trades
-  FOR ALL USING (auth.agent_id() = 'cio')
-  WITH CHECK (auth.agent_id() = 'cio');
+  FOR ALL USING (auth.agent_id() = 'cc-cio')
+  WITH CHECK (auth.agent_id() = 'cc-cio');
 
 -- CEO / CAO: Read-only
 CREATE POLICY "ceo_read_trades" ON trades
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 CREATE POLICY "cao_read_trades" ON trades
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### events (Managed by COO)
@@ -123,16 +123,16 @@ CREATE POLICY "cao_read_trades" ON trades
 ```sql
 -- COO: Full read/write access
 CREATE POLICY "coo_full_events" ON events
-  FOR ALL USING (auth.agent_id() = 'coo')
-  WITH CHECK (auth.agent_id() = 'coo');
+  FOR ALL USING (auth.agent_id() = 'cc-coo')
+  WITH CHECK (auth.agent_id() = 'cc-coo');
 
 -- CEO: Read-only (view schedule)
 CREATE POLICY "ceo_read_events" ON events
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 -- CAO: Read-only
 CREATE POLICY "cao_read_events" ON events
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### token_usage (Managed by CFO, readable by all)
@@ -140,8 +140,8 @@ CREATE POLICY "cao_read_events" ON events
 ```sql
 -- CFO: Full read/write access
 CREATE POLICY "cfo_full_token_usage" ON token_usage
-  FOR ALL USING (auth.agent_id() = 'cfo')
-  WITH CHECK (auth.agent_id() = 'cfo');
+  FOR ALL USING (auth.agent_id() = 'cc-cfo')
+  WITH CHECK (auth.agent_id() = 'cc-cfo');
 
 -- All Agents: Can read their own token usage
 CREATE POLICY "agent_read_own_usage" ON token_usage
@@ -149,10 +149,10 @@ CREATE POLICY "agent_read_own_usage" ON token_usage
 
 -- CEO / CAO: Read all Agents' usage
 CREATE POLICY "ceo_read_all_usage" ON token_usage
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 CREATE POLICY "cao_read_all_usage" ON token_usage
-  FOR SELECT USING (auth.agent_id() = 'cao');
+  FOR SELECT USING (auth.agent_id() = 'cc-cao');
 ```
 
 ### audit_log (Managed by CAO)
@@ -160,12 +160,12 @@ CREATE POLICY "cao_read_all_usage" ON token_usage
 ```sql
 -- CAO: Full read/write access
 CREATE POLICY "cao_full_audit" ON audit_log
-  FOR ALL USING (auth.agent_id() = 'cao')
-  WITH CHECK (auth.agent_id() = 'cao');
+  FOR ALL USING (auth.agent_id() = 'cc-cao')
+  WITH CHECK (auth.agent_id() = 'cc-cao');
 
 -- CEO: Read-only
 CREATE POLICY "ceo_read_audit" ON audit_log
-  FOR SELECT USING (auth.agent_id() = 'ceo');
+  FOR SELECT USING (auth.agent_id() = 'cc-ceo');
 
 -- Audited Agents: Can only read records related to themselves
 CREATE POLICY "agent_read_own_audit" ON audit_log

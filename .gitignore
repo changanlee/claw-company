@@ -16,6 +16,9 @@ secrets.yaml
 .claude/
 CLAUDE.md
 
+# Snapshot (auto-generated)
+SNAPSHOT.md
+
 # Node
 node_modules/
 

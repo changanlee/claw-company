@@ -12,6 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 OPENCLAW_DIR="$HOME/.openclaw"
 INSTALL_DIR="$OPENCLAW_DIR/claw-company"
 AGENTS=("ceo" "cfo" "cio" "coo" "cto" "chro" "cao")
+AGENT_PREFIX="cc-"
 REQUIRED_MIN_VERSION="2026.3.7"
 
 # ============================================
@@ -182,7 +183,7 @@ if [ -d "$INSTALL_DIR" ]; then
     if [ "$LANG_DIR" = "zh" ]; then
         echo "[WARN] 偵測到已安裝的 claw-company：$INSTALL_DIR"
         echo ""
-        echo "  1) 覆蓋安裝（保留 memory/ 和 auth 資料）"
+        echo "  1) 覆蓋安裝（保留 memory/、output/ 和 auth 資料）"
         echo "  2) 完全重裝（清空後重新安裝）"
         echo "  3) 取消"
         echo ""
@@ -201,7 +202,7 @@ if [ -d "$INSTALL_DIR" ]; then
     else
         echo "[WARN] Existing claw-company installation found: $INSTALL_DIR"
         echo ""
-        echo "  1) Overwrite (keep memory/ and auth data)"
+        echo "  1) Overwrite (keep memory/, output/ and auth data)"
         echo "  2) Clean reinstall (wipe and start fresh)"
         echo "  3) Cancel"
         echo ""
@@ -584,6 +585,21 @@ if [ -d "$SOURCE_DIR/shared/templates" ]; then
     cp -r "$SOURCE_DIR/shared/templates" "$SHARED_DIR/"
 fi
 
+# Deploy shared standards (with {{INSTALL_DIR}} substitution)
+if [ -d "$SOURCE_DIR/shared/standards" ]; then
+    mkdir -p "$SHARED_DIR/standards"
+    for STD_FILE in "$SOURCE_DIR/shared/standards/"*.md; do
+        [ -f "$STD_FILE" ] || continue
+        sed "s|{{INSTALL_DIR}}|$INSTALL_DIR|g" \
+            "$STD_FILE" > "$SHARED_DIR/standards/$(basename "$STD_FILE")"
+    done
+fi
+
+# Deploy shared tasks
+if [ -d "$SOURCE_DIR/shared/tasks" ]; then
+    cp -r "$SOURCE_DIR/shared/tasks" "$SHARED_DIR/"
+fi
+
 # 3. Deploy workspaces
 for AGENT in "${AGENTS[@]}"; do
     WS="$INSTALL_DIR/workspace-$AGENT"
@@ -632,6 +648,44 @@ for AGENT in "${AGENTS[@]}"; do
             cp -r "$SOURCE_DIR/workspace-$AGENT/$SUBDIR" "$WS/"
         fi
     done
+
+    # Deploy templates (plain copy, no substitution needed)
+    if [ -d "$SOURCE_DIR/workspace-$AGENT/templates" ]; then
+        cp -r "$SOURCE_DIR/workspace-$AGENT/templates" "$WS/"
+    fi
+
+    # Deploy workflows (with {{INSTALL_DIR}} substitution in all .md files)
+    if [ -d "$SOURCE_DIR/workspace-$AGENT/workflows" ]; then
+        # Copy directory structure first
+        find "$SOURCE_DIR/workspace-$AGENT/workflows" -type d | while read -r DIR; do
+            REL="${DIR#$SOURCE_DIR/workspace-$AGENT/}"
+            mkdir -p "$WS/$REL"
+        done
+        # Copy .md files with substitution
+        find "$SOURCE_DIR/workspace-$AGENT/workflows" -type f -name "*.md" | while read -r FILE; do
+            REL="${FILE#$SOURCE_DIR/workspace-$AGENT/}"
+            sed "s|{{INSTALL_DIR}}|$INSTALL_DIR|g" "$FILE" > "$WS/$REL"
+        done
+        # Copy non-.md files as-is (e.g. .yaml, .json if any)
+        find "$SOURCE_DIR/workspace-$AGENT/workflows" -type f ! -name "*.md" | while read -r FILE; do
+            REL="${FILE#$SOURCE_DIR/workspace-$AGENT/}"
+            cp "$FILE" "$WS/$REL"
+        done
+    fi
+
+    # Deploy output directories (preserve existing contents on overwrite)
+    if [ -d "$SOURCE_DIR/workspace-$AGENT/output" ]; then
+        # Create output subdirectories but don't overwrite existing files
+        find "$SOURCE_DIR/workspace-$AGENT/output" -type d | while read -r DIR; do
+            REL="${DIR#$SOURCE_DIR/workspace-$AGENT/}"
+            mkdir -p "$WS/$REL"
+        done
+        # Only copy .gitkeep files (structure markers), never overwrite user output
+        find "$SOURCE_DIR/workspace-$AGENT/output" -type f -name ".gitkeep" | while read -r FILE; do
+            REL="${FILE#$SOURCE_DIR/workspace-$AGENT/}"
+            [ -f "$WS/$REL" ] || cp "$FILE" "$WS/$REL"
+        done
+    fi
 
     echo "  [OK] workspace-$AGENT"
 done
@@ -701,6 +755,9 @@ if [ "$LANG_DIR" = "zh" ]; then
     echo "  • 通用工具規範存放在 $INSTALL_DIR/shared/tools-policy.md"
     echo "  • 各 Agent 每次啟動時會自動讀取公司規範與工具規範（runtime read）"
     echo "  • CEO 經董事長核決後可修改規範，修改即時生效"
+    echo "  • 工作流程（workflows/）：BMAD 四階段 + 快速流程 + TEA 測試"
+    echo "  • 範本（templates/）：各 Agent 標準產出範本"
+    echo "  • 產出（output/）：Agent 工作產出存放區（覆蓋安裝時保留）"
     echo ""
     echo "下一步："
     echo "  1. 編輯 $INSTALL_DIR/openclaw.json，填入真實的 Bot Token"
@@ -717,6 +774,9 @@ else
     echo "  • Common tool policies are stored at $INSTALL_DIR/shared/tools-policy.md"
     echo "  • Each Agent loads rules and tool policies at session start (runtime read)"
     echo "  • CEO can modify rules with Chairman's approval, effective immediately"
+    echo "  • Workflows: BMAD 4-phase lifecycle + quick-flow + TEA testing"
+    echo "  • Templates: Standardized output templates per Agent"
+    echo "  • Output: Agent work output storage (preserved on overwrite install)"
     echo ""
     echo "Next steps:"
     echo "  1. Edit $INSTALL_DIR/openclaw.json and fill in your Bot Tokens"
@@ -725,31 +785,31 @@ fi
 
 echo ""
 cat << COMMANDS
-openclaw agents add ceo \\
+openclaw agents add cc-ceo \\
   --workspace $INSTALL_DIR/workspace-ceo \\
   --model $TIER_CEO
 
-openclaw agents add cfo \\
+openclaw agents add cc-cfo \\
   --workspace $INSTALL_DIR/workspace-cfo \\
   --model $TIER_CFO
 
-openclaw agents add cio \\
+openclaw agents add cc-cio \\
   --workspace $INSTALL_DIR/workspace-cio \\
   --model $TIER_CIO
 
-openclaw agents add coo \\
+openclaw agents add cc-coo \\
   --workspace $INSTALL_DIR/workspace-coo \\
   --model $TIER_COO
 
-openclaw agents add cto \\
+openclaw agents add cc-cto \\
   --workspace $INSTALL_DIR/workspace-cto \\
   --model $TIER_CTO
 
-openclaw agents add chro \\
+openclaw agents add cc-chro \\
   --workspace $INSTALL_DIR/workspace-chro \\
   --model $TIER_CHRO
 
-openclaw agents add cao \\
+openclaw agents add cc-cao \\
   --workspace $INSTALL_DIR/workspace-cao \\
   --model $TIER_CAO
 COMMANDS
@@ -759,12 +819,12 @@ if [ "$LANG_DIR" = "zh" ]; then
     echo "  3. 綁定通道到 Agent："
     echo ""
     echo "     # CEO 綁定（所有通道預設路由到 CEO）"
-    echo "     openclaw agents bind --agent ceo --bind telegram:default"
-    echo "     openclaw agents bind --agent ceo --bind whatsapp"
-    echo "     openclaw agents bind --agent ceo --bind discord"
+    echo "     openclaw agents bind --agent cc-ceo --bind telegram:default"
+    echo "     openclaw agents bind --agent cc-ceo --bind whatsapp"
+    echo "     openclaw agents bind --agent cc-ceo --bind discord"
     echo ""
     echo "     # CAO 綁定（獨立稽核通道）"
-    echo "     openclaw agents bind --agent cao --bind telegram:audit"
+    echo "     openclaw agents bind --agent cc-cao --bind telegram:audit"
     echo ""
     echo "  4. 註冊排程任務（Cron Jobs）："
 else
@@ -772,12 +832,12 @@ else
     echo "  3. Bind channels to Agents:"
     echo ""
     echo "     # CEO bindings (all channels route to CEO by default)"
-    echo "     openclaw agents bind --agent ceo --bind telegram:default"
-    echo "     openclaw agents bind --agent ceo --bind whatsapp"
-    echo "     openclaw agents bind --agent ceo --bind discord"
+    echo "     openclaw agents bind --agent cc-ceo --bind telegram:default"
+    echo "     openclaw agents bind --agent cc-ceo --bind whatsapp"
+    echo "     openclaw agents bind --agent cc-ceo --bind discord"
     echo ""
     echo "     # CAO binding (independent audit channel)"
-    echo "     openclaw agents bind --agent cao --bind telegram:audit"
+    echo "     openclaw agents bind --agent cc-cao --bind telegram:audit"
     echo ""
     echo "  4. Register Cron Jobs:"
 fi
@@ -788,7 +848,7 @@ cat << CRON_COMMANDS
 openclaw cron add \\
   --name "morning-briefing" \\
   --cron "30 6 * * *" \\
-  --agent ceo \\
+  --agent cc-ceo \\
   --model $TIER_CEO \\
   --message "執行晨間簡報：用 sessions_send 向 CFO、CIO、COO、CTO 請求過去 12 小時摘要，等待回覆後精煉成簡報，附上需要董事長決議的事項清單。格式參閱 briefing-template.md"
 
@@ -796,7 +856,7 @@ openclaw cron add \\
 openclaw cron add \\
   --name "investment-monitor" \\
   --cron "0 9-16 * * 1-5" \\
-  --agent cio \\
+  --agent cc-cio \\
   --model $TIER_CIO \\
   --message "檢查投資組合數據，只有當任何持倉變動超過 5% 時才透過 sessions_send 通知 CEO，否則靜默記錄到 memory/ 日誌"
 
@@ -804,7 +864,7 @@ openclaw cron add \\
 openclaw cron add \\
   --name "memory-cleanup" \\
   --cron "0 3 1 * *" \\
-  --agent chro \\
+  --agent cc-chro \\
   --model $TIER_CHRO \\
   --message "審視各 Agent 的 MEMORY.md 健康度：檢查行數是否接近 200 行上限、是否有重複或過時條目、超過 30 天的 memory/ 日誌是否需要歸檔。產出記憶健康報告 sessions_send 給 CEO"
 
@@ -812,7 +872,7 @@ openclaw cron add \\
 openclaw cron add \\
   --name "weekly-org-review" \\
   --cron "0 8 * * 1" \\
-  --agent chro \\
+  --agent cc-chro \\
   --model $TIER_CHRO \\
   --message "產出週度組織健康報告：各 Agent 本週表現摘要、能力缺口分析、模型配置建議、Skill 使用情況。sessions_send 給 CEO 納入晨間簡報"
 
@@ -820,7 +880,7 @@ openclaw cron add \\
 openclaw cron add \\
   --name "security-scan" \\
   --cron "0 2 * * 3" \\
-  --agent cao \\
+  --agent cc-cao \\
   --model $TIER_CAO \\
   --message "執行全系統安全掃描：檢查各 Agent 的 SOUL.md 完整性、檢查近期 session 日誌中的異常行為模式、驗證安全紅線規則是否被遵守。產出安全報告直接推送董事長"
 
@@ -828,7 +888,7 @@ openclaw cron add \\
 openclaw cron add \\
   --name "cto-memory-cleanup" \\
   --cron "0 3 * * 0" \\
-  --agent cto \\
+  --agent cc-cto \\
   --model $TIER_CTO \\
   --message "執行週度記憶自清理：刪除過時條目、晉升反覆模式為原則、歸檔 status.md 中超過 7 天的已完成任務、確保 MEMORY.md 不超過 200 行、檢查矛盾條目。完成後將清理摘要寫入 memory/ 日誌"
 CRON_COMMANDS

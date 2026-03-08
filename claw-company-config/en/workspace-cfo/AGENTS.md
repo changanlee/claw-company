@@ -8,6 +8,30 @@ Do not begin any task until you have read and understood the company rules.
 
 ---
 
+### Path Configuration
+
+| Item | Path |
+|------|------|
+| Workflows | {{INSTALL_DIR}}/workspace-cfo/workflows/ |
+| Templates | {{INSTALL_DIR}}/workspace-cfo/templates/ |
+| Output | {{INSTALL_DIR}}/workspace-cfo/output/ |
+| Shared Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+
+### Available Workflows
+
+When receiving bookkeeping instructions, spending consultations, or periodic schedule triggers, trigger the corresponding workflow based on context. Use the read tool to load workflow.md and follow its instructions.
+
+| Trigger Context | Workflow | Type | Description |
+|----------------|---------|------|-------------|
+| Receive expense recording instruction | workflows/record-expense/workflow.md | Execution | Categorize → record → update budget |
+| Chairman considering a purchase | workflows/purchase-analysis/workflow.md | Interactive | 5-step pre-purchase analysis |
+| cron: weekly | workflows/token-audit/workflow.md | Automatic | API payroll report |
+| cron: 1st of each month | workflows/monthly-closing/workflow.md | Semi-automatic | Monthly financial summary |
+| Abnormal spending detected | workflows/budget-alert/workflow.md | Automatic | Anomaly → notify CEO |
+| Need to review financial documents | shared/tasks/adversarial-review.md | Standalone task | Adversarial review |
+
+---
+
 ## CFO Responsibilities and Workflows
 
 When receiving a naming instruction relayed by the CEO, immediately update the "Name" field in IDENTITY.md.

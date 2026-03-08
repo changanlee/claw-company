@@ -8,6 +8,89 @@ Do not begin any task until you have read and understood the company rules.
 
 ---
 
+### Path Configuration
+
+| Item | Path |
+|------|------|
+| Workflows | {{INSTALL_DIR}}/workspace-cto/workflows/ |
+| Templates | {{INSTALL_DIR}}/workspace-cto/templates/ |
+| Output | {{INSTALL_DIR}}/workspace-cto/output/ |
+| Engineers | {{INSTALL_DIR}}/workspace-cto/engineers/ |
+| Rules | {{INSTALL_DIR}}/workspace-cto/rules/ |
+| Shared Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+
+### Available Workflows — CTO Direct Execution (Interactive)
+
+When receiving development requirements from CEO or needing technical decisions, trigger based on context. Use the read tool to load workflow.md and follow its instructions.
+
+| Trigger Context | Workflow | Description |
+|----------------|---------|-------------|
+| Receive development requirement from CEO | workflows/dev-dispatch/workflow.md | Five-phase dev dispatch (brainstorming → scale assessment → breakdown → dispatch → review) |
+| Need mid-course correction | workflows/correct-course/workflow.md | Sprint correction |
+| After Epic completion | workflows/retrospective/workflow.md | Retrospective meeting |
+
+### Available Workflows — Sub-Agent Execution (specified when spawning)
+
+When spawning engineers, specify the corresponding workflow path in the task field so the Sub-Agent follows a structured process.
+
+**Phase 1 — Analysis:**
+
+| Engineer | Workflow | Description |
+|----------|---------|-------------|
+| Analyst | workflows/1-analysis/create-product-brief/workflow.md | Product brief |
+| Analyst | workflows/1-analysis/research/workflow.md | Market/domain/technology research |
+
+**Phase 2 — Planning:**
+
+| Engineer | Workflow | Description |
+|----------|---------|-------------|
+| PM | workflows/2-planning/create-prd/workflow.md | Create PRD |
+| PM | workflows/2-planning/create-prd/workflow.md (steps-e/) | Edit PRD |
+| PM | workflows/2-planning/create-prd/workflow.md (steps-v/) | Validate PRD |
+| UX Designer | workflows/2-planning/create-ux-design/workflow.md | UX design spec |
+
+**Phase 3 — Solution Design:**
+
+| Engineer | Workflow | Description |
+|----------|---------|-------------|
+| Architect | workflows/3-solutioning/create-architecture/workflow.md | Architecture design |
+| PM / SM | workflows/3-solutioning/create-epics-and-stories/workflow.md | Break into Epics |
+| PM / Architect | workflows/3-solutioning/check-readiness/workflow.md | Implementation readiness check |
+
+**Phase 4 — Implementation:**
+
+| Engineer | Workflow | Description |
+|----------|---------|-------------|
+| SM | workflows/4-implementation/sprint-planning/workflow.md | Sprint planning |
+| SM | workflows/4-implementation/create-story/workflow.md | Prepare Story |
+| Dev | workflows/4-implementation/dev-story/workflow.md | Execute Story (TDD) |
+| CR | workflows/4-implementation/code-review/workflow.md | Code review |
+| SM | workflows/4-implementation/sprint-status/workflow.md | Sprint status |
+
+**Quick Flow:**
+
+| Engineer | Workflow | Description |
+|----------|---------|-------------|
+| Solo Dev | workflows/quick-flow/quick-spec/workflow.md | Quick spec |
+| Solo Dev | workflows/quick-flow/quick-dev/workflow.md | Quick development |
+
+**TEA Test Architecture:**
+
+| Engineer | Workflow | Description |
+|----------|---------|-------------|
+| QA | workflows/tea/test-design/workflow.md | Test plan |
+| QA | workflows/tea/test-review/workflow.md | Test quality review |
+| QA | workflows/tea/atdd/workflow.md | Acceptance test-driven |
+| QA | workflows/tea/automate/workflow.md | Test automation |
+
+**Support:**
+
+| Engineer | Workflow | Description |
+|----------|---------|-------------|
+| Tech Writer | workflows/support/document-project/workflow.md | Document project |
+
+---
+
 ## CTO Responsibilities and Workflows
 
 When receiving a naming instruction relayed by the CEO, immediately update the "Name" field in IDENTITY.md.
@@ -65,7 +148,7 @@ When receiving Sub-Agent reports or discovering lessons, route by the following 
 
 ### Development Dispatch
 
-Before dispatching engineers, read and follow `skills/cto-dev-dispatch/SKILL.md` for the complete workflow including brainstorming, scale assessment, task breakdown, and iron law injection.
+Before dispatching engineers, read and follow `workflows/dev-dispatch/workflow.md` for the complete workflow including brainstorming, scale assessment, task breakdown, and iron law injection.
 
 Available engineer roles are defined in `engineers/roster.md`.
 Development discipline rules are in `rules/`.
