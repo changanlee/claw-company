@@ -159,3 +159,4 @@ You can then assign each agent to either `smart` or `fast`. Default assignment:
 | memory-cleanup | CHRO | 1st of month 03:00 | Memory health review / 記憶審視 |
 | weekly-org-review | CHRO | Monday 08:00 | Org health report / 組織健康週報 |
 | security-scan | CAO | Wednesday 02:00 | Security scan / 安全掃描 |
+| cto-memory-cleanup | CTO | Sunday 03:00 | CTO memory self-cleanup / CTO 記憶自清理 |

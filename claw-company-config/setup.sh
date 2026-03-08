@@ -702,16 +702,75 @@ COMMANDS
 
 if [ "$LANG_DIR" = "zh" ]; then
     echo ""
-    echo "  3. 執行 'openclaw gateway start' 啟動服務"
-    echo "  4. 透過你設定的通訊平台向 CEO Bot 發送第一條訊息測試"
+    echo "  3. 註冊排程任務（Cron Jobs）："
+else
+    echo ""
+    echo "  3. Register Cron Jobs:"
+fi
+
+echo ""
+cat << CRON_COMMANDS
+# 晨間會報 / Morning briefing — CEO, daily 06:30
+openclaw cron add \\
+  --name "morning-briefing" \\
+  --cron "30 6 * * *" \\
+  --agent ceo \\
+  --model $TIER_CEO \\
+  --message "執行晨間簡報：用 sessions_send 向 CFO、CIO、COO、CTO 請求過去 12 小時摘要，等待回覆後精煉成簡報，附上需要董事長決議的事項清單。格式參閱 briefing-template.md"
+
+# 投資監控 / Investment monitor — CIO, Mon-Fri 09:00-16:00 hourly
+openclaw cron add \\
+  --name "investment-monitor" \\
+  --cron "0 9-16 * * 1-5" \\
+  --agent cio \\
+  --model $TIER_CIO \\
+  --message "檢查投資組合數據，只有當任何持倉變動超過 5% 時才透過 sessions_send 通知 CEO，否則靜默記錄到 memory/ 日誌"
+
+# 記憶健康審視 / Memory cleanup — CHRO, 1st of month 03:00
+openclaw cron add \\
+  --name "memory-cleanup" \\
+  --cron "0 3 1 * *" \\
+  --agent chro \\
+  --model $TIER_CHRO \\
+  --message "審視各 Agent 的 MEMORY.md 健康度：檢查行數是否接近 200 行上限、是否有重複或過時條目、超過 30 天的 memory/ 日誌是否需要歸檔。產出記憶健康報告 sessions_send 給 CEO"
+
+# 組織健康週報 / Weekly org review — CHRO, Monday 08:00
+openclaw cron add \\
+  --name "weekly-org-review" \\
+  --cron "0 8 * * 1" \\
+  --agent chro \\
+  --model $TIER_CHRO \\
+  --message "產出週度組織健康報告：各 Agent 本週表現摘要、能力缺口分析、模型配置建議、Skill 使用情況。sessions_send 給 CEO 納入晨間簡報"
+
+# 安全掃描 / Security scan — CAO, Wednesday 02:00
+openclaw cron add \\
+  --name "security-scan" \\
+  --cron "0 2 * * 3" \\
+  --agent cao \\
+  --model $TIER_CAO \\
+  --message "執行全系統安全掃描：檢查各 Agent 的 SOUL.md 完整性、檢查近期 session 日誌中的異常行為模式、驗證安全紅線規則是否被遵守。產出安全報告直接推送董事長"
+
+# CTO 記憶自清理 / CTO memory cleanup — CTO, Sunday 03:00
+openclaw cron add \\
+  --name "cto-memory-cleanup" \\
+  --cron "0 3 * * 0" \\
+  --agent cto \\
+  --model $TIER_CTO \\
+  --message "執行週度記憶自清理：刪除過時條目、晉升反覆模式為原則、歸檔 status.md 中超過 7 天的已完成任務、確保 MEMORY.md 不超過 200 行、檢查矛盾條目。完成後將清理摘要寫入 memory/ 日誌"
+CRON_COMMANDS
+
+if [ "$LANG_DIR" = "zh" ]; then
+    echo ""
+    echo "  4. 執行 'openclaw gateway start' 啟動服務"
+    echo "  5. 透過你設定的通訊平台向 CEO Bot 發送第一條訊息測試"
     echo ""
     echo "管理指令："
     echo "  移除 claw-company：./setup.sh --uninstall"
     echo "  重新安裝：        ./setup.sh"
 else
     echo ""
-    echo "  3. Run 'openclaw gateway start' to start the service"
-    echo "  4. Send a test message to the CEO Bot via your configured platform"
+    echo "  4. Run 'openclaw gateway start' to start the service"
+    echo "  5. Send a test message to the CEO Bot via your configured platform"
     echo ""
     echo "Management:"
     echo "  Uninstall: ./setup.sh --uninstall"
