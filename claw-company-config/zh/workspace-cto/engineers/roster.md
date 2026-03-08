@@ -15,7 +15,8 @@ Atlas（CTO）可依據任務需求召喚以下工程師角色。每個角色有
 | 分析師 Analyst | analyst.md | Hazel | 📊 | 市場研究、需求分析、數據分析、可行性評估 | 3 | ❌ | 商業分析、競爭研究 |
 | Scrum Master | scrum-master.md | Grant | 📌 | Sprint規劃、用戶故事、Epic拆解、進度追蹤 | 5 | ❌ | Epic 拆解、Sprint 規劃 |
 | 獨立開發工程師 Solo Dev | solo-dev.md | Blaze | ⚡ | 全端開發、快速原型、獨立決策、端到端交付 | 2 | ❌ | 小型獨立功能 |
-| 程式碼審核員 Code Reviewer | code-reviewer.md | Knox | 🔒 | 代碼審查、標準對照、問題分級、安全審查 | 1 | ❌ | 開發後審查 |
+| 規格合規審查員 Spec Reviewer | spec-reviewer.md | Scout | 🔎 | 規格對照、需求驗證、驗收標準逐項比對、差異分析 | 0 | ❌ | 開發後審查（第一階段） |
+| 程式碼審核員 Code Reviewer | code-reviewer.md | Knox | 🔒 | 代碼品質、架構一致性、安全審查、效能審查 | 1 | ❌ | 開發後審查（第二階段，Spec Reviewer 通過後） |
 
 ## Sidecar 記憶
 

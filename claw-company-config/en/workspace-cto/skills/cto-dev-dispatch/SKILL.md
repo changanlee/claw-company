@@ -74,6 +74,15 @@ Regardless of which mode was used, this step is consistent:
 4. The technical design document serves as input for subsequent phases (scale assessment, task breakdown).
 5. After confirming the design direction, proceed to the next phase.
 
+### ⛔ Brainstorming Hard Gate
+
+Before the Chairman approves the design document, the following are **forbidden**:
+- Entering the task breakdown phase
+- Spawning any engineer Sub-Agent
+- Writing any production code or scaffolding
+
+Violation check: If you find yourself thinking "the design is clear enough, no need to discuss," that is your signal that discussion is needed.
+
 ---
 
 ## Phase 2: Scale Assessment
@@ -120,38 +129,50 @@ For each task ready for development:
    - New feature / Refactor: `rules/tdd-iron-law.md` + `rules/verification.md`
    - Bug fix: `rules/debugging-iron-law.md` + `rules/tdd-iron-law.md` + `rules/verification.md`
 
-3. **Compose spawn instruction.** Build the complete task instruction for the engineer, including:
+3. **Sub-Agent dispatch principles:**
+   - **Fresh agent per task** — Spawn a new engineer for each task. Never reuse a previous task's sub-agent. Prevents context pollution.
+   - **Controller does not fix** — When a reviewer finds issues, spawn a new implementer to fix. Atlas never modifies code directly.
+   - Engineers should ask Atlas when uncertain rather than guessing.
+
+4. **Compose spawn instruction.** Build the complete task instruction for the engineer, including:
    - Task description and context
    - Acceptance criteria
    - Constraints and boundaries
    - Expected output format
    - Report format (from the engineer's definition)
-   - Applicable iron law rules — paste the full content from `rules/*.md` files so the spawned engineer has the rules embedded in their context
+   - Applicable iron law rules — paste the full content from `rules/*.md` files (including anti-rationalization tables) so the spawned engineer has the rules embedded in their context
 
-4. **Select and spawn engineer.** Choose the appropriate engineer:
+5. **Select and spawn engineer.** Choose the appropriate engineer:
    - Standard tasks: spawn Dev (Amelia) from `engineers/dev.md`
    - Small standalone features: spawn Solo Dev (Barry) from `engineers/solo-dev.md`
    - Multiple independent tasks: spawn multiple Dev engineers in parallel
 
 ---
 
-## Phase 5: Review
+## Phase 5: Two-Phase Review
 
-### Simplified Workflow
+### Simplified Workflow (Single Phase)
 1. Spawn Code Reviewer from `engineers/code-reviewer.md` to review the completed work.
 2. Code Reviewer produces a categorized issue report (Critical/Important/Minor).
 3. Results report directly to Atlas.
-4. Any Critical issues: spawn Dev engineer to fix, then re-review.
+4. Any Critical issues: spawn a new Dev engineer to fix (Atlas does not fix directly), then re-review.
+5. After passing, Atlas summarizes results and reports to CEO.
 
-### Full Workflow
-1. Spawn Code Reviewer from `engineers/code-reviewer.md` for first review.
-2. Code Reviewer produces a categorized issue report.
-3. Atlas performs a second review focusing on:
-   - Alignment with the approved architecture spec
-   - Cross-component integration correctness
-   - Overall system coherence
-4. Any Critical issues: spawn Dev engineer to fix, then re-review from step 1.
-5. All issues must be resolved before proceeding.
+### Full Workflow (Two Phases)
+
+**Phase 1: Spec Compliance Review**
+1. Spawn Spec Reviewer from `engineers/spec-reviewer.md`.
+2. Spec Reviewer independently reads the code and verifies acceptance criteria item by item.
+3. Non-compliant: spawn a new Dev engineer to fix (Atlas does not fix directly), then re-submit for Spec Review.
+4. After compliance, proceed to Phase 2.
+
+**Phase 2: Code Quality Review**
+1. Spawn Code Reviewer from `engineers/code-reviewer.md`.
+2. Code Reviewer reviews code quality, architecture, security, performance.
+3. Any Critical or Important issues: spawn a new Dev engineer to fix (Atlas does not fix directly), then re-review.
+4. After all issues resolved, Atlas summarizes results and reports to CEO.
+
+**After all tasks complete**, optionally spawn a final reviewer to check overall implementation consistency.
 
 ---
 
@@ -171,3 +192,10 @@ Applies to:
 - Any action that affects live systems
 
 Procedure: Atlas prepares a deployment/merge summary with verification evidence (per `rules/verification.md`) and escalates to the Chairman through the CEO. No action is taken until explicit Chairman approval is received.
+
+### Quality Gate
+- All tests passing (zero failures).
+- Spec compliance review passed (full workflow).
+- Code review with no Critical issues.
+- Acceptance criteria verified item by item.
+- Verification evidence included in report.

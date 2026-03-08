@@ -22,8 +22,8 @@ CEO (General Manager) — Coordination, delegation, refined reporting
   ├── CIO (Investment) — Portfolio monitoring, market analysis
   ├── COO (Operations) — Scheduling, meals, travel, life management
   ├── CTO (Technology) — Product development, sub-agent management
-  │     └── 10 Engineer Sub-Agents
-  │          PM, Architect, Dev, QA, UX, Tech-Writer, Analyst, Scrum-Master, Solo-Dev, Code-Reviewer
+  │     └── 11 Engineer Sub-Agents
+  │          PM, Architect, Dev, QA, UX, Tech-Writer, Analyst, Scrum-Master, Solo-Dev, Spec-Reviewer, Code-Reviewer
   └── CHRO (HR)        — Agent capability assessment, policy writing
 
 CAO (Auditor) — Independent oversight, reports directly to Chairman
@@ -120,6 +120,9 @@ The company integrates the [BMAD Method](https://github.com/bmad-method/bmad-met
 | Refined Reporting | Layer-by-layer refinement; Chairman receives summaries only |
 | BMAD Lifecycle | Analysis → Planning → Solutioning → Implementation structured phases |
 | TDD Iron Law | RED → GREEN → REFACTOR cycle enforced for all coding tasks |
+| Anti-Rationalization | Every iron law and SOUL.md includes excuse-vs-fact tables to counter LLM rationalization tendencies |
+| Two-Phase Review | Spec compliance (Scout) → Code quality (Knox); fresh sub-agent per task; controller never fixes |
+| Verification Before Completion | No claims without fresh evidence; "should work" is forbidden |
 
 ### Getting Started
 
@@ -235,8 +238,8 @@ CEO（總經理）— 統籌、分派、精煉回報
   ├── CIO（投資長）— 投資組合監控、市場分析
   ├── COO（營運長）— 行程、飲食、出行、生活管理
   ├── CTO（技術長）— 產品開發、工程師管理
-  │     └── 10 位工程師子代理
-  │          PM、Architect、Dev、QA、UX、Tech-Writer、Analyst、Scrum-Master、Solo-Dev、Code-Reviewer
+  │     └── 11 位工程師子代理
+  │          PM、Architect、Dev、QA、UX、Tech-Writer、Analyst、Scrum-Master、Solo-Dev、Spec-Reviewer、Code-Reviewer
   └── CHRO（人資長）— Agent 能力評估、政策撰寫
 
 CAO（稽核長）— 獨立監督，直接向董事長報告
@@ -333,6 +336,9 @@ claw-company/
 | 精煉回報 | 逐層精煉，董事長只收到摘要，不收原始資料 |
 | BMAD 生命週期 | 分析 → 規劃 → 方案 → 實作 結構化階段 |
 | TDD 鐵律 | RED → GREEN → REFACTOR 循環，所有編碼任務強制遵守 |
+| 反合理化機制 | 每條鐵律和 SOUL.md 都含「藉口 vs 事實」對照表，對抗 LLM 合理化傾向 |
+| 兩階段審查 | 規格合規（Scout）→ 程式碼品質（Knox）；每任務新鮮 sub-agent；controller 不修復 |
+| 完成前驗證 | 沒有新鮮驗證證據不可宣稱完成；「應該沒問題」是禁用語 |
 
 ### 快速開始
 

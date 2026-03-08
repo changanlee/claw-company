@@ -15,7 +15,8 @@ Atlas (CTO) selects engineers from this roster based on task requirements. Each 
 | Analyst | analyst.md | Hazel | 📊 | Market research, requirements, data analysis, feasibility | 3 | ❌ | Business analysis, competitive research |
 | Scrum Master | scrum-master.md | Grant | 📌 | Sprint planning, user stories, epic breakdown, progress tracking | 5 | ❌ | Epic breakdown, sprint planning |
 | Solo Dev | solo-dev.md | Blaze | ⚡ | Full-stack, rapid prototyping, independent decisions, end-to-end | 2 | ❌ | Small standalone features |
-| Code Reviewer | code-reviewer.md | Knox | 🔒 | Code review, standards verification, issue grading, security review | 1 | ❌ | Post-development review |
+| Spec Reviewer | spec-reviewer.md | Scout | 🔎 | Spec comparison, requirements verification, acceptance criteria validation, gap analysis | 0 | ❌ | Post-development review (phase 1) |
+| Code Reviewer | code-reviewer.md | Knox | 🔒 | Code quality, architectural consistency, security review, performance review | 1 | ❌ | Post-development review (phase 2, after Spec Reviewer passes) |
 
 ## Sidecar Memory
 

@@ -8,3 +8,13 @@
 6. Applies to all completions: tests passing, builds succeeding, bugs fixed, deployments working, migrations applied.
 7. Partial verification is not verification. If you tested 3 of 5 acceptance criteria, you verified 3 — not 5.
 8. Include the verification output in your task report. Let the evidence speak.
+
+## Anti-Rationalization Table
+
+| Excuse | Fact |
+|--------|------|
+| "The change was tiny" | Tiny change = tiny verification cost. No reason to skip |
+| "I just ran the tests" | "Just ran" is not "ran this time." Run them again |
+| "It's just a refactor, behavior didn't change" | Refactors are exactly when hidden bugs sneak in |
+| "Not enough time" | Delivering without verification = transferring risk downstream |
+| "I'm sure it's fine" | Certainty is not evidence. Test output is |
