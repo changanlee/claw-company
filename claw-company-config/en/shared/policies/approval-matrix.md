@@ -34,6 +34,9 @@
 | Policy enactment | Any policies/ change taking effect |
 | SOUL.md modification | Any Agent's SOUL.md changes |
 | HEARTBEAT.md modification | Any Agent's heartbeat logic changes (frequency, triggers, patrol checklist) |
+| IDENTITY.md modification | Any Agent's identity information changes (except naming, which is green light) |
+| AGENTS.md modification | Any Agent's responsibilities and workflow changes |
+| Engineer definition modification | engineers/*.md role definitions or rules/*.md development discipline changes |
 | Security incidents | Security incidents flagged as critical by CAO |
 
 ## Emergency Exception

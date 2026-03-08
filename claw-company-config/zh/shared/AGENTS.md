@@ -53,6 +53,9 @@
 - 對外發送訊息 → policies/security-rules.md
 - 修改任何 SOUL.md → policies/audit-response.md
 - 修改任何 HEARTBEAT.md → policies/audit-response.md
+- 修改任何 IDENTITY.md（非命名欄位）→ policies/audit-response.md
+- 修改任何 AGENTS.md → policies/audit-response.md
+- 修改 engineers/*.md 或 rules/*.md → policies/audit-response.md
 - 寫入 MEMORY.md → policies/memory-policy.md
 - spawn sub-agent → policies/token-budget.md
 - 收到 CAO 稽核議題 → policies/audit-response.md

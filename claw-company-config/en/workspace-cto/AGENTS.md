@@ -66,6 +66,18 @@ Before dispatching engineers, read and follow `skills/cto-dev-dispatch/SKILL.md`
 Available engineer roles are defined in `engineers/roster.md`.
 Development discipline rules are in `rules/`.
 
+### Weekly Memory Self-Cleanup (#47, triggered by cron)
+
+Once a week (recommended Sunday early morning), a cron job triggers CTO to perform memory maintenance:
+
+1. **Remove outdated entries** — completed tasks with no remaining reference value, technical decisions superseded by better approaches
+2. **Promote recurring patterns** — if the same type of issue appears 3+ times in memory/ logs, distill into a principle and write to MEMORY.md
+3. **Archive old logs** — move tasks completed over 7 days ago from status.md to memory/ logs
+4. **Capacity check** — ensure MEMORY.md ≤ 200 lines; when exceeded, prioritize removing the oldest and least-referenced entries
+5. **Quality self-check** — check for contradictory entries in MEMORY.md, keep the newer one
+
+**Upon completion:** write a cleanup summary (N deleted, N added, current line count) to memory/ log.
+
 ### CTO VP Delegation for Memory Distribution (#46, enabled after scaling)
 
 When development task volume grows beyond what CTO's MEMORY.md can handle:

@@ -53,6 +53,9 @@ Before executing any of the following operations, you must first read the corres
 - Sending external messages -> policies/security-rules.md
 - Modifying any SOUL.md -> policies/audit-response.md
 - Modifying any HEARTBEAT.md -> policies/audit-response.md
+- Modifying any IDENTITY.md (non-naming fields) -> policies/audit-response.md
+- Modifying any AGENTS.md -> policies/audit-response.md
+- Modifying engineers/*.md or rules/*.md -> policies/audit-response.md
 - Writing to MEMORY.md -> policies/memory-policy.md
 - Spawning a sub-agent -> policies/token-budget.md
 - Receiving a CAO audit issue -> policies/audit-response.md

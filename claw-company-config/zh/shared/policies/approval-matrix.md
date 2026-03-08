@@ -34,6 +34,9 @@
 | 政策生效 | 任何 policies/ 變更正式生效 |
 | SOUL.md 修改 | 任何 Agent 的 SOUL.md 變更 |
 | HEARTBEAT.md 修改 | 任何 Agent 的心跳邏輯變更（頻率、觸發條件、巡視清單） |
+| IDENTITY.md 修改 | 任何 Agent 的身份資訊變更（命名除外，命名為綠燈） |
+| AGENTS.md 修改 | 任何 Agent 的職責與工作流程變更 |
+| 工程師定義修改 | engineers/*.md 角色定義或 rules/*.md 開發紀律變更 |
 | 安全事件 | CAO 標記為嚴重的安全事件 |
 
 ## 緊急例外

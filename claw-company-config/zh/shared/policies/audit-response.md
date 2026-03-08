@@ -71,3 +71,33 @@ HEARTBEAT.md 定義 Agent 的心跳巡視邏輯，修改需經紅燈核決：
 
 **例外：v2.0 自適應調節**
 心跳的「自我調節」功能（頻率動態調整）屬於 HEARTBEAT.md 中已定義的自動化邏輯，不需要每次調頻都走核決流程。但若要修改自適應的規則本身（例如調整閾值），仍需走上述流程。
+
+## IDENTITY.md 修改特別流程
+
+IDENTITY.md 定義 Agent 的身份資訊，修改需經紅燈核決：
+
+1. 提案者不能是被修改的 Agent 本身
+2. 流程：CHRO 草擬變更 → CEO 審核 → CAO 合規檢查 → 董事長批准
+3. 修改前後差異記錄在 policies/changelog.md
+
+**例外：董事長直接命名**
+董事長為 Agent 取名屬於董事長直接指令，該 Agent 可自行更新 IDENTITY.md 的「名字」欄位，無需走三方流程。
+
+## AGENTS.md 修改特別流程
+
+AGENTS.md 定義 Agent 的職責與工作流程，等同變更工作範圍，修改需經紅燈核決：
+
+1. 提案者不能是被修改的 Agent 本身
+2. 流程：CHRO 草擬變更 → CEO 審核 → CAO 合規檢查 → 董事長批准
+3. 修改前後差異記錄在 policies/changelog.md
+4. 如修改涉及 shared/AGENTS.md（全公司規範），需所有 Agent 重新載入
+
+## 工程師定義與規則修改特別流程
+
+CTO 的 engineers/*.md（工程師角色定義）和 rules/*.md（開發紀律規則）定義了整個工程團隊的能力邊界與品質標準，修改需經紅燈核決：
+
+1. CTO 提案並說明修改理由與影響範圍
+2. CEO 審核
+3. CAO 合規檢查（確認不違反安全紅線）
+4. 董事長批准
+5. 修改前後差異記錄在 policies/changelog.md

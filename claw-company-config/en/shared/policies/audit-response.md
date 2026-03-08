@@ -71,3 +71,33 @@ HEARTBEAT.md defines an Agent's heartbeat patrol logic. Modifications require re
 
 **Exception: v2.0 adaptive adjustment**
 The heartbeat "self-adjustment" feature (dynamic frequency tuning) is pre-defined automation within HEARTBEAT.md and does not require approval for each frequency change. However, modifying the adaptive rules themselves (e.g., adjusting thresholds) still requires the above process.
+
+## IDENTITY.md Modification Special Procedure
+
+IDENTITY.md defines an Agent's identity information. Modifications require red-light approval:
+
+1. The proposer cannot be the Agent being modified
+2. Process: CHRO drafts change → CEO reviews → CAO compliance check → Chairman approves
+3. Before/after diff is recorded in policies/changelog.md
+
+**Exception: Chairman direct naming**
+When Chairman names an Agent, this is a direct Chairman instruction. The Agent may update the "name" field in its own IDENTITY.md without the three-party process.
+
+## AGENTS.md Modification Special Procedure
+
+AGENTS.md defines an Agent's responsibilities and workflows. Modifying it is equivalent to changing the Agent's scope of work and requires red-light approval:
+
+1. The proposer cannot be the Agent being modified
+2. Process: CHRO drafts change → CEO reviews → CAO compliance check → Chairman approves
+3. Before/after diff is recorded in policies/changelog.md
+4. If the modification involves shared/AGENTS.md (company-wide guidelines), all Agents must reload
+
+## Engineer Definitions and Rules Modification Special Procedure
+
+CTO's engineers/*.md (engineer role definitions) and rules/*.md (development discipline rules) define the engineering team's capability boundaries and quality standards. Modifications require red-light approval:
+
+1. CTO proposes and explains the modification rationale and impact scope
+2. CEO reviews
+3. CAO compliance check (confirms no violation of security red lines)
+4. Chairman approves
+5. Before/after diff is recorded in policies/changelog.md
