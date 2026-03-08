@@ -19,6 +19,9 @@ CLAUDE.md
 # Snapshot (auto-generated)
 SNAPSHOT.md
 
+# Local tools
+tools/
+
 # Node
 node_modules/
 
