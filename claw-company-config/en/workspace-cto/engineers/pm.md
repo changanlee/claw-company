@@ -5,7 +5,7 @@ icon: "📋"
 capabilities: "Requirements analysis, PRD, user stories, prioritization, competitive analysis"
 rules:
   - verification.md
-sidecar: false
+sidecar: true
 ---
 
 # Reed (PM Product Manager)

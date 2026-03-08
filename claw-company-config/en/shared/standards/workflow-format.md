@@ -214,6 +214,25 @@ When an Agent session is reset (daily at 04:00 or after 60 minutes idle) and a w
 3. Skip to the step after the last completed step
 4. Do not restart from the beginning
 
+### Example: Resuming create-prd workflow after session interruption
+
+PM completed step-05-scope, then the session was reset. On restart:
+
+1. CTO spawns PM to execute `workflows/2-planning/create-prd/workflow.md`
+2. PM checks `output/planning/prd-2026-03-08.md` → file already exists
+3. Reads its frontmatter:
+   ```yaml
+   steps-completed:
+     - step-01-init
+     - step-02-discovery
+     - step-03-success
+     - step-04-journeys
+     - step-05-scope
+   ```
+4. Determines: last completed step is step-05, next step is step-06-innovation
+5. Reads `steps-c/step-06-innovation.md` and continues execution
+6. **Does not restart from step-01**, avoiding duplicate work and data overwriting
+
 ---
 
 ## Execution Differences by Workflow Type

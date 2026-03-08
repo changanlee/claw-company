@@ -214,6 +214,25 @@ tags: []
 3. 跳到最後完成步驟的下一步繼續執行
 4. 不要從頭重新開始
 
+### 範例：session 中斷後續接 create-prd workflow
+
+PM 在 step-05-scope 完成後 session 被 reset。重新啟動時：
+
+1. CTO spawn PM 執行 `workflows/2-planning/create-prd/workflow.md`
+2. PM 檢查 `output/planning/prd-2026-03-08.md` → 檔案已存在
+3. 讀取其 frontmatter：
+   ```yaml
+   steps-completed:
+     - step-01-init
+     - step-02-discovery
+     - step-03-success
+     - step-04-journeys
+     - step-05-scope
+   ```
+4. 判定：最後完成步驟為 step-05，下一步為 step-06-innovation
+5. 讀取 `steps-c/step-06-innovation.md` 繼續執行
+6. ⚠️ **不從 step-01 重新開始**，避免重複工作與資料覆蓋
+
 ---
 
 ## 三種 Workflow 類型的執行差異

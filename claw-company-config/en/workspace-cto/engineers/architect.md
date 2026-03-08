@@ -5,7 +5,7 @@ icon: "🏗️"
 capabilities: "System design, technology selection, scalable patterns, infrastructure planning, technical risk assessment"
 rules:
   - verification.md
-sidecar: false
+sidecar: true
 ---
 
 # Mason (Architect)

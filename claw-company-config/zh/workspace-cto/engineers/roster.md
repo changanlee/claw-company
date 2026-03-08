@@ -6,8 +6,8 @@ Atlas（CTO）可依據任務需求召喚以下工程師角色。每個角色有
 
 | 角色 | 檔案 | 名字 | Icon | 專長 | Workflows | Sidecar | 自動加入時機 |
 |------|------|------|------|------|-----------|---------|-------------|
-| 產品經理 PM | pm.md | Reed | 📋 | 需求分析、PRD、用戶故事、優先級排序、競品對比 | 5 | ❌ | 產品構想、功能規劃 |
-| 架構師 Architect | architect.md | Mason | 🏗️ | 系統設計、技術選型、可擴展模式、技術風險評估 | 3 | ❌ | 技術決策、基礎設施 |
+| 產品經理 PM | pm.md | Reed | 📋 | 需求分析、PRD、用戶故事、優先級排序、競品對比 | 5 | ✅ | 產品構想、功能規劃 |
+| 架構師 Architect | architect.md | Mason | 🏗️ | 系統設計、技術選型、可擴展模式、技術風險評估 | 3 | ✅ | 技術決策、基礎設施 |
 | 開發工程師 Dev Engineer | dev.md | Ivy | 💻 | 功能實作、TDD、代碼品質、Bug修復、重構 | 2 | ❌ | 任何編碼任務 |
 | QA 工程師 QA Engineer | qa.md | Vera | 🔍 | 測試策略、品質閘門、測試用例設計、回歸測試 | 5 | ✅ | 品質問題、測試規劃 |
 | UX 設計師 UX Designer | ux-designer.md | Lena | 🎨 | 使用者體驗、UI模式、用戶研究、無障礙設計 | 1 | ❌ | 面向用戶的功能 |
@@ -24,6 +24,8 @@ Atlas（CTO）可依據任務需求召喚以下工程師角色。每個角色有
 
 | 角色 | Sidecar 路徑 | 內容 |
 |------|-------------|------|
+| 產品經理 PM | sidecar/pm/prd-standards.md | PRD 撰寫標準（JTBD、用戶故事、驗收標準可測試性） |
+| 架構師 Architect | sidecar/architect/architecture-standards.md | 架構設計標準（ADR、Boring Tech、技術選型框架） |
 | QA 工程師 QA Engineer | sidecar/qa/test-standards.md | 測試標準與策略（TEA 精華） |
 | 技術文件工程師 Tech Writer | sidecar/tech-writer/documentation-standards.md | 技術文件撰寫標準 |
 

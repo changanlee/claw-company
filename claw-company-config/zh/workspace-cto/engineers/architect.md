@@ -5,7 +5,7 @@ icon: "🏗️"
 capabilities: "系統設計、技術選型、可擴展模式、基礎設施規劃、技術風險評估"
 rules:
   - verification.md
-sidecar: false
+sidecar: true
 ---
 
 # Mason（架構師 Architect）

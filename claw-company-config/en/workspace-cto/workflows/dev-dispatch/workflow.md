@@ -26,8 +26,10 @@ The complete workflow when CTO (Atlas) receives a development request relayed by
 | Step | Name | Description | Approval |
 |------|------|-------------|----------|
 | 01 | Brainstorm | Select thinking techniques, diverge then converge to 2-3 technical solutions | Design direction requires Chairman approval |
+| 01.5 | Implementation Plan | Convert design doc to structured implementation plan (Superpowers writing-plans) | — |
 | 02 | Scale Assessment | Determine lean or full workflow | — |
 | 03 | Task Breakdown | Lean: direct breakdown; Full: PRD → Architecture → Epic | PRD yellow, Architecture yellow |
+| 03.5 | Readiness Check | Full flow: check-readiness verification (SDD hard gate) | check-readiness PASS |
 | 04 | Dispatch | Compose spawn instructions, select engineers, dispatch tasks | — |
 | 05 | Review | Code Review, quality gates, report to CEO | Push main red, Deploy red |
 

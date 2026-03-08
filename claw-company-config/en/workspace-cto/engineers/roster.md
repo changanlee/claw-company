@@ -6,8 +6,8 @@ Atlas (CTO) selects engineers from this roster based on task requirements. Each 
 
 | Role | File | Name | Icon | Specialty | Workflows | Sidecar | Auto-select When |
 |------|------|------|------|-----------|-----------|---------|-----------------|
-| PM | pm.md | Reed | 📋 | Requirements, PRD, user stories, prioritization, competitive analysis | 5 | ❌ | Product concept, feature planning |
-| Architect | architect.md | Mason | 🏗️ | System design, tech selection, scalable patterns, risk assessment | 3 | ❌ | Technical decisions, infrastructure |
+| PM | pm.md | Reed | 📋 | Requirements, PRD, user stories, prioritization, competitive analysis | 5 | ✅ | Product concept, feature planning |
+| Architect | architect.md | Mason | 🏗️ | System design, tech selection, scalable patterns, risk assessment | 3 | ✅ | Technical decisions, infrastructure |
 | Dev | dev.md | Ivy | 💻 | Implementation, TDD, code quality, bug fixing, refactoring | 2 | ❌ | Any coding task |
 | QA | qa.md | Vera | 🔍 | Test strategy, quality gates, test design, regression, perf/security | 5 | ✅ | Quality concerns, test planning |
 | UX Designer | ux-designer.md | Lena | 🎨 | User experience, UI patterns, user research, accessibility | 1 | ❌ | User-facing features |
@@ -24,6 +24,8 @@ Engineers with Sidecar load additional domain knowledge files on startup:
 
 | Role | Sidecar Path | Content |
 |------|-------------|---------|
+| PM | sidecar/pm/prd-standards.md | PRD writing standards (JTBD, user stories, acceptance criteria testability) |
+| Architect | sidecar/architect/architecture-standards.md | Architecture design standards (ADR, Boring Tech, tech selection framework) |
 | QA | sidecar/qa/test-standards.md | Test standards and strategy (TEA essentials) |
 | Tech Writer | sidecar/tech-writer/documentation-standards.md | Technical documentation standards |
 

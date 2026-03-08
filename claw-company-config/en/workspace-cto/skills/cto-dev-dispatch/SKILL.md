@@ -72,7 +72,22 @@ Regardless of which mode was used, this step is consistent:
    - Technical constraints and boundaries
    - Expected component/module structure
 4. The technical design document serves as input for subsequent phases (scale assessment, task breakdown).
-5. After confirming the design direction, proceed to the next phase.
+5. After confirming the design direction, proceed to 1.5 Implementation Plan.
+
+### 1.5 Implementation Plan Draft
+
+After the technical design document is approved, Atlas organizes key decisions, component structure, and constraints into a **structured implementation plan** as the single source of truth for all subsequent phases.
+
+The implementation plan includes:
+1. **Goals & Constraints** (from brainstorming conclusions)
+2. **Component/Module List** (from the technical design document)
+3. **Dependencies & Execution Order** (Atlas's judgment)
+4. **Risk Items** (risks identified during brainstorming)
+5. **Scale Pre-assessment** (large/small, providing input for Phase 2)
+
+This plan does not require additional approval (already covered by the design document approval), but must be completed before entering scale assessment.
+
+> Reference: Superpowers methodology: writing-plans — have a structured plan first, then assess scale and dispatch.
 
 ### ⛔ Brainstorming Hard Gate
 
@@ -114,6 +129,35 @@ Atlas directly breaks the confirmed design into concrete, actionable tasks. Each
 
 3. **Atlas breaks Epics** — Using the approved PRD and architecture spec, Atlas breaks the work into epics and tasks. Each task includes description, acceptance criteria, constraints, and expected output.
 
+### ⛔ SDD Hard Gate (Full Flow Only)
+
+Before entering Phase 4, **all** of the following must be confirmed:
+
+1. PRD approved by CEO (yellow light passed)
+2. Architecture spec approved by CEO (yellow light passed)
+3. Epic breakdown complete, each story includes testable acceptance criteria
+4. Execute check-readiness verification (spawn PM or Architect to run `workflows/3-solutioning/check-readiness/workflow.md`)
+5. check-readiness result is **PASS**
+
+❌ If any condition is unmet, **entering Phase 4 is FORBIDDEN**.
+
+Violation check: If you're thinking "the spec is good enough, let's start coding," that is exactly what the SDD iron law is designed to intercept. Read `rules/sdd-iron-law.md` to confirm.
+
+### Lean Flow SDD Check
+
+Lean flow does not run the check-readiness workflow, but tasks broken down by Atlas **must**:
+- Include testable acceptance criteria for each task
+- Have clearly defined and verifiable expected output
+- Comply with `rules/sdd-iron-law.md` clause 7
+
+### Test Strategy Decision (Full Flow Optional)
+
+After check-readiness passes, decide whether to plan a test strategy upfront based on requirement complexity:
+
+- **High risk/complexity**: Spawn QA engineer (`engineers/qa.md`) to execute `workflows/tea/test-design/workflow.md`, producing a test plan as reference input for Dev engineers
+- **Normal requirements**: Skip — Dev engineers handle coverage within the TDD workflow
+- **Mandatory triggers**: If security, payments, multi-system integration, or user data processing is involved → always spawn QA for test strategy planning
+
 ---
 
 ## Phase 4: Development Dispatch
@@ -134,13 +178,40 @@ For each task ready for development:
    - **Controller does not fix** — When a reviewer finds issues, spawn a new implementer to fix. Atlas never modifies code directly.
    - Engineers should ask Atlas when uncertain rather than guessing.
 
-4. **Compose spawn instruction.** Build the complete task instruction for the engineer, including:
-   - Task description and context
-   - Acceptance criteria
-   - Constraints and boundaries
-   - Expected output format
-   - Report format (from the engineer's definition)
-   - Applicable iron law rules — paste the full content from `rules/*.md` files (including anti-rationalization tables) so the spawned engineer has the rules embedded in their context
+4. **Compose spawn instruction.** Each spawn task's task field **must** include the following structure:
+
+```
+【Task Description】
+{Specific goals, scope, constraints}
+
+【Expected Output】
+{Deliverable list}
+
+【Workflow】
+Read and follow: `workflows/{path}/workflow.md`
+
+【Iron Law Injection】
+Before starting work, read the following iron law rules and strictly comply:
+{Rule paths from the reference table below}
+
+【Report Format】
+Use the standard report format from the engineer's definition file.
+```
+
+#### Iron Law Injection Reference Table
+
+| Task Type | Injected Rules |
+|-----------|---------------|
+| New Feature (Dev) | `rules/tdd-iron-law.md` + `rules/verification.md` + `rules/sdd-iron-law.md` |
+| Bug Fix (Dev) | `rules/debugging-iron-law.md` + `rules/tdd-iron-law.md` + `rules/verification.md` |
+| Refactor (Dev) | `rules/tdd-iron-law.md` + `rules/verification.md` |
+| Spec Tasks (PM/Architect) | `rules/sdd-iron-law.md` + `rules/verification.md` |
+| Test Tasks (QA) | `rules/tdd-iron-law.md` + `rules/verification.md` |
+| Review Tasks (Scout/Knox) | Per the `rules` field in the engineer's definition file |
+
+Iron law path format: `{{INSTALL_DIR}}/workspace-cto/rules/{rule-name}.md`
+
+⚠️ **No-exception rule**: Regardless of engineer seniority or task simplicity, iron law injection is executed 100% of the time. "This engineer is senior enough to skip injection" is an anti-rationalization excuse.
 
 5. **Select and spawn engineer.** Choose the appropriate engineer:
    - Standard tasks: spawn Dev (Amelia) from `engineers/dev.md`
@@ -199,3 +270,10 @@ Procedure: Atlas prepares a deployment/merge summary with verification evidence 
 - Code review with no Critical issues.
 - Acceptance criteria verified item by item.
 - Verification evidence included in report.
+
+### Test Quality Review (Full Flow Optional)
+
+After the quality gate passes, Atlas may optionally spawn QA engineer to execute `workflows/tea/test-review/workflow.md`:
+- **Trigger conditions**: Insufficient test coverage, complex logic not covered by tests, or a test plan from Phase 3 that needs verification
+- **Output**: Test quality report with improvement recommendations
+- **Non-blocking**: Test quality review results do not block delivery, but recommendations should be included in the next Sprint's improvement items

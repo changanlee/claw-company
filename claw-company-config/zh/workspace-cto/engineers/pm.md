@@ -5,7 +5,7 @@ icon: "📋"
 capabilities: "需求分析、PRD、用戶故事、優先級排序、競品對比"
 rules:
   - verification.md
-sidecar: false
+sidecar: true
 ---
 
 # Reed（產品經理 PM）
