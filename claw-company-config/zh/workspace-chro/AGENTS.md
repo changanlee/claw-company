@@ -90,12 +90,18 @@
 - 某 Agent 長期低負載（週 Token 消耗 < 預算 20%）→ 建議合併職責
 - 跨 Agent 的任務頻繁需要協調 → 建議調整職責邊界
 
-**新增角色提案格式：**
+**新增角色提案流程：**
+1. 讀取 `{{INSTALL_DIR}}/shared/templates/new-agent/README.md` 了解標準規格
+2. 使用模板中的 6 個檔案（IDENTITY.md, SOUL.md, AGENTS.md, HEARTBEAT.md, MEMORY.md, TOOLS.md）
+3. 填寫所有 `{{...}}` 佔位符，產出完整的角色規格包
+4. 提交 CEO 審核 → CAO 合規檢查 → 董事長核決
+
+**提案應包含：**
 1. 建議角色名稱與職責
 2. 從哪些現有 Agent 分出職責
 3. 建議模型級別
 4. 預估新增成本
-5. SOUL.md 草稿
+5. 完整的 6 檔規格包（基於模板）
 
 **合併/裁撤提案格式：**
 1. 受影響 Agent

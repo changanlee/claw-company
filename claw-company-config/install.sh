@@ -570,12 +570,18 @@ SHARED_DIR="$INSTALL_DIR/shared"
 SHARED_POLICIES="$SHARED_DIR/policies"
 mkdir -p "$SHARED_POLICIES"
 cp "$SOURCE_DIR/shared/company-rules.md" "$SHARED_DIR/company-rules.md"
+cp "$SOURCE_DIR/shared/tools-policy.md" "$SHARED_DIR/tools-policy.md"
 cp "$SOURCE_DIR/shared/USER.md" "$SHARED_DIR/USER.md"
 cp "$SOURCE_DIR/shared/policies/"*.md "$SHARED_POLICIES/"
 
 if [ -d "$SOURCE_DIR/shared/setup-guides" ]; then
     mkdir -p "$SHARED_DIR/setup-guides"
     cp "$SOURCE_DIR/shared/setup-guides/"*.md "$SHARED_DIR/setup-guides/"
+fi
+
+# Deploy new-agent templates (for CHRO to create new roles)
+if [ -d "$SOURCE_DIR/shared/templates" ]; then
+    cp -r "$SOURCE_DIR/shared/templates" "$SHARED_DIR/"
 fi
 
 # 3. Deploy workspaces
@@ -600,9 +606,10 @@ for AGENT in "${AGENTS[@]}"; do
         cp "$SOURCE_DIR/workspace-$AGENT/HEARTBEAT.md" "$WS/HEARTBEAT.md"
     fi
 
-    # Copy workspace-specific TOOLS.md if exists (no shared assembly)
+    # TOOLS.md: replace {{INSTALL_DIR}} placeholder with actual install path
     if [ -f "$SOURCE_DIR/workspace-$AGENT/TOOLS.md" ]; then
-        cp "$SOURCE_DIR/workspace-$AGENT/TOOLS.md" "$WS/TOOLS.md"
+        sed "s|{{INSTALL_DIR}}|$INSTALL_DIR|g" \
+            "$SOURCE_DIR/workspace-$AGENT/TOOLS.md" > "$WS/TOOLS.md"
     fi
 
     # Copy extra files
@@ -691,8 +698,9 @@ if [ "$LANG_DIR" = "zh" ]; then
     echo ""
     echo "  架構說明："
     echo "  • 公司規範存放在 $INSTALL_DIR/shared/company-rules.md"
-    echo "  • 各 Agent 每次啟動時會自動讀取公司規範（runtime read）"
-    echo "  • CEO 經董事長核決後可修改公司規範，修改即時生效"
+    echo "  • 通用工具規範存放在 $INSTALL_DIR/shared/tools-policy.md"
+    echo "  • 各 Agent 每次啟動時會自動讀取公司規範與工具規範（runtime read）"
+    echo "  • CEO 經董事長核決後可修改規範，修改即時生效"
     echo ""
     echo "下一步："
     echo "  1. 編輯 $INSTALL_DIR/openclaw.json，填入真實的 Bot Token"
@@ -706,8 +714,9 @@ else
     echo ""
     echo "  Architecture:"
     echo "  • Company rules are stored at $INSTALL_DIR/shared/company-rules.md"
-    echo "  • Each Agent loads company rules at session start (runtime read)"
-    echo "  • CEO can modify company rules with Chairman's approval, effective immediately"
+    echo "  • Common tool policies are stored at $INSTALL_DIR/shared/tools-policy.md"
+    echo "  • Each Agent loads rules and tool policies at session start (runtime read)"
+    echo "  • CEO can modify rules with Chairman's approval, effective immediately"
     echo ""
     echo "Next steps:"
     echo "  1. Edit $INSTALL_DIR/openclaw.json and fill in your Bot Tokens"

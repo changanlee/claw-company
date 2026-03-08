@@ -90,12 +90,18 @@ When CHRO discovers organizational adjustments are needed during weekly reviews:
 - An Agent has been consistently underloaded (weekly Token consumption < 20% of budget) → suggest merging responsibilities
 - Cross-Agent tasks frequently require coordination → suggest adjusting responsibility boundaries
 
+**New Role Proposal Process:**
+1. Read `{{INSTALL_DIR}}/shared/templates/new-agent/README.md` for standard specifications
+2. Use the 6 template files (IDENTITY.md, SOUL.md, AGENTS.md, HEARTBEAT.md, MEMORY.md, TOOLS.md)
+3. Fill in all `{{...}}` placeholders to produce a complete role specification package
+4. Submit to CEO review → CAO compliance check → Chairman approval
+
 **New Role Proposal Format:**
 1. Suggested role name and responsibilities
 2. Which existing Agents' responsibilities to split from
 3. Recommended model level
 4. Estimated additional cost
-5. SOUL.md draft
+5. Complete 6-file specification package (based on template)
 
 **Merger/Elimination Proposal Format:**
 1. Affected Agents

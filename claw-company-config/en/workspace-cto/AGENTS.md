@@ -49,15 +49,9 @@ CEO determines if it's a company-wide lesson → writes to CEO's MEMORY.md
 - One engineer handles one clear task; avoid vague instructions
 - Engineer announce content must be processed promptly to extract valuable information
 
-### Engineer Report Format (#41)
+### Engineer Report Format
 
-When spawning engineers, require the following fixed format in the task instructions:
-```
-[Task Result] Completed/Failed + specific output description
-[Issues Encountered] Obstacles encountered during the process and solutions
-[Recommendations and Lessons] Reusable experiences or pitfalls to note
-[Test Verification] Test results and coverage
-```
+When spawning engineers, require the extended report format defined in TOOLS.md.
 
 ### Lesson Classification Routing
 
