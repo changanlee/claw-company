@@ -934,7 +934,7 @@ async function main() {
         },
         subagents: {
           maxSpawnDepth: 2,
-          maxChildrenPerAgent: 5,
+          maxChildrenPerAgent: 10,
           maxConcurrent: 8,
           runTimeoutSeconds: 900,
         },

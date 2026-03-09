@@ -156,7 +156,18 @@ After check-readiness passes, decide whether to plan a test strategy upfront bas
 
 - **High risk/complexity**: Spawn QA engineer (`engineers/qa.md`) to execute `workflows/tea/test-design/workflow.md`, producing a test plan as reference input for Dev engineers
 - **Normal requirements**: Skip — Dev engineers handle coverage within the TDD workflow
-- **Mandatory triggers**: If security, payments, multi-system integration, or user data processing is involved → always spawn QA for test strategy planning
+
+#### ⚠️ TEA Mandatory Triggers (Cannot Skip)
+
+The following contexts **require** spawning QA for test strategy planning. CTO cannot skip these based on personal judgment:
+
+- Involves user authentication / authorization mechanisms
+- Involves payment / financial transaction processing
+- Involves multi-system integration (API integration with ≥ 2 external services)
+- Involves user personal data processing (PII)
+- Involves security-sensitive operations (encryption, token management, permission control)
+
+Violation check: If you're thinking "this security feature is simple enough to skip dedicated testing," that is your signal that QA involvement is needed.
 
 ---
 
@@ -178,9 +189,17 @@ For each task ready for development:
    - **Controller does not fix** — When a reviewer finds issues, spawn a new implementer to fix. Atlas never modifies code directly.
    - Engineers should ask Atlas when uncertain rather than guessing.
 
-4. **Compose spawn instruction.** Each spawn task's task field **must** include the following structure:
+4. **Compose spawn instruction.** Each spawn task's task field **must** include the following structure. Note: Sub-Agents only receive CTO's AGENTS.md and TOOLS.md automatically. All other files (role definition, iron laws, sidecar) must be injected via explicit read instructions in the task.
 
 ```
+You are {role name}. Before starting work, read the following files in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/{role}.md          ← your role definition
+2. read {{INSTALL_DIR}}/workspace-cto/rules/{rule-1}.md            ← iron law
+3. read {{INSTALL_DIR}}/workspace-cto/rules/{rule-2}.md            ← iron law
+4. read {{INSTALL_DIR}}/workspace-cto/engineers/sidecar/{...}.md   ← domain knowledge (if applicable)
+
+After reading, execute the following task:
+
 【Task Description】
 {Specific goals, scope, constraints}
 
@@ -190,26 +209,142 @@ For each task ready for development:
 【Workflow】
 Read and follow: `workflows/{path}/workflow.md`
 
-【Iron Law Injection】
-Before starting work, read the following iron law rules and strictly comply:
-{Rule paths from the reference table below}
-
 【Report Format】
-Use the standard report format from the engineer's definition file.
+Read and follow: `{{INSTALL_DIR}}/workspace-cto/engineers/report-template.md`
 ```
 
-#### Iron Law Injection Reference Table
+#### Spawn Instruction Templates (by task type)
+
+**New Feature (Dev):**
+```
+You are Dev engineer Ivy. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/dev.md
+2. read {{INSTALL_DIR}}/workspace-cto/rules/tdd-iron-law.md
+3. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+4. read {{INSTALL_DIR}}/workspace-cto/rules/sdd-iron-law.md
+After reading, execute the following task: ...
+```
+
+**Bug Fix (Dev):**
+```
+You are Dev engineer Ivy. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/dev.md
+2. read {{INSTALL_DIR}}/workspace-cto/rules/debugging-iron-law.md
+3. read {{INSTALL_DIR}}/workspace-cto/rules/tdd-iron-law.md
+4. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+**Refactor (Dev):**
+```
+You are Dev engineer Ivy. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/dev.md
+2. read {{INSTALL_DIR}}/workspace-cto/rules/tdd-iron-law.md
+3. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+**PRD / Requirements (PM):**
+```
+You are Product Manager Reed. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/pm.md
+2. read {{INSTALL_DIR}}/workspace-cto/engineers/sidecar/pm/prd-standards.md
+3. read {{INSTALL_DIR}}/workspace-cto/rules/sdd-iron-law.md
+4. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+**Architecture Design (Architect):**
+```
+You are Architect Mason. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/architect.md
+2. read {{INSTALL_DIR}}/workspace-cto/engineers/sidecar/architect/architecture-standards.md
+3. read {{INSTALL_DIR}}/workspace-cto/rules/sdd-iron-law.md
+4. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+**Test Strategy (QA):**
+```
+You are QA Engineer Vera. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/qa.md
+2. read {{INSTALL_DIR}}/workspace-cto/engineers/sidecar/qa/test-standards.md
+3. read {{INSTALL_DIR}}/workspace-cto/rules/tdd-iron-law.md
+4. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+**Quick Development (Solo Dev):**
+```
+You are Solo Dev Blaze. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/solo-dev.md
+2. read {{INSTALL_DIR}}/workspace-cto/rules/tdd-iron-law.md
+3. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+**UX Design (UX Designer):**
+```
+You are UX Designer Lena. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/ux-designer.md
+2. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+**Technical Documentation (Tech Writer):**
+```
+You are Tech Writer Clara. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/tech-writer.md
+2. read {{INSTALL_DIR}}/workspace-cto/engineers/sidecar/tech-writer/documentation-standards.md
+3. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+**Research & Analysis (Analyst):**
+```
+You are Analyst Hazel. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/analyst.md
+2. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+**Sprint Planning / Epic Breakdown (Scrum Master):**
+```
+You are Scrum Master Grant. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/scrum-master.md
+2. read {{INSTALL_DIR}}/workspace-cto/rules/sdd-iron-law.md
+3. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+**Spec Compliance Review (Spec Reviewer):**
+```
+You are Spec Reviewer Scout. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/spec-reviewer.md
+2. read {{INSTALL_DIR}}/workspace-cto/rules/sdd-iron-law.md
+3. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+**Code Quality Review (Code Reviewer):**
+```
+You are Code Reviewer Knox. Before starting, read in order:
+1. read {{INSTALL_DIR}}/workspace-cto/engineers/code-reviewer.md
+2. read {{INSTALL_DIR}}/workspace-cto/rules/verification.md
+After reading, execute the following task: ...
+```
+
+#### Iron Law Injection Quick Reference
 
 | Task Type | Injected Rules |
 |-----------|---------------|
-| New Feature (Dev) | `rules/tdd-iron-law.md` + `rules/verification.md` + `rules/sdd-iron-law.md` |
-| Bug Fix (Dev) | `rules/debugging-iron-law.md` + `rules/tdd-iron-law.md` + `rules/verification.md` |
-| Refactor (Dev) | `rules/tdd-iron-law.md` + `rules/verification.md` |
-| Spec Tasks (PM/Architect) | `rules/sdd-iron-law.md` + `rules/verification.md` |
-| Test Tasks (QA) | `rules/tdd-iron-law.md` + `rules/verification.md` |
-| Review Tasks (Scout/Knox) | Per the `rules` field in the engineer's definition file |
-
-Iron law path format: `{{INSTALL_DIR}}/workspace-cto/rules/{rule-name}.md`
+| New Feature (Dev) | `tdd` + `verification` + `sdd` |
+| Bug Fix (Dev) | `debugging` + `tdd` + `verification` |
+| Refactor (Dev) | `tdd` + `verification` |
+| Spec Tasks (PM/Architect/SM) | `sdd` + `verification` |
+| Test Tasks (QA) | `tdd` + `verification` |
+| Review Tasks (Scout) | `sdd` + `verification` |
+| Review Tasks (Knox) | `verification` |
 
 ⚠️ **No-exception rule**: Regardless of engineer seniority or task simplicity, iron law injection is executed 100% of the time. "This engineer is senior enough to skip injection" is an anti-rationalization excuse.
 

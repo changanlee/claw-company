@@ -18,6 +18,46 @@ Do not begin any task until you have read and understood the company rules.
 | Engineers | {{INSTALL_DIR}}/workspace-cto/engineers/ |
 | Rules | {{INSTALL_DIR}}/workspace-cto/rules/ |
 | Shared Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+| Principles | {{INSTALL_DIR}}/shared/principles/index.md |
+
+### Resource Index
+
+Review this index at startup to understand all available workspace resources. Use it to assemble Sub-Agent task prompts during dispatch.
+
+**Engineers (11 roles):**
+- `engineers/dev.md` (Ivy 💻) — Dev engineer, TDD-driven implementation
+- `engineers/pm.md` (Reed 📋) — Product manager, PRD and user stories
+- `engineers/architect.md` (Mason 🏗️) — Architect, system design and tech selection
+- `engineers/qa.md` (Vera 🔍) — QA engineer, test strategy and quality gates
+- `engineers/ux-designer.md` (Lena 🎨) — UX designer, user experience
+- `engineers/tech-writer.md` (Clara 📝) — Technical writer
+- `engineers/analyst.md` (Hazel 📊) — Analyst, market and feasibility research
+- `engineers/scrum-master.md` (Grant 📌) — Scrum Master, Sprint and Epic breakdown
+- `engineers/solo-dev.md` (Blaze ⚡) — Solo dev, rapid prototyping
+- `engineers/spec-reviewer.md` (Scout 🔎) — Spec compliance reviewer (review phase 1)
+- `engineers/code-reviewer.md` (Knox 🔒) — Code quality reviewer (review phase 2)
+
+**Rules (4 iron laws):**
+- `rules/tdd-iron-law.md` — TDD discipline, RED→GREEN→REFACTOR
+- `rules/sdd-iron-law.md` — Spec-driven development, no spec no code
+- `rules/debugging-iron-law.md` — Systematic debugging, 4 phases + 3-strike rule
+- `rules/verification.md` — Verification before completion, no fresh evidence no claims
+
+**Sidecar Domain Knowledge (4):**
+- `engineers/sidecar/pm/prd-standards.md` — JTBD framework, testable acceptance criteria
+- `engineers/sidecar/architect/architecture-standards.md` — ADR format, Boring Technology principle
+- `engineers/sidecar/qa/test-standards.md` — Test pyramid, AAA pattern, CI/CD quality gates
+- `engineers/sidecar/tech-writer/documentation-standards.md` — CommonMark, writing principles, Mermaid standards
+
+### Sub-Agent Startup Protocol
+
+If you are an engineer Sub-Agent spawned by CTO, follow this protocol:
+
+1. **You inherited the CTO workspace.** This AGENTS.md is your resource map. The path configuration and resource index above are valid for you.
+2. **Read task-specified files first.** Upon receiving a task, your first action must be executing all `read` instructions listed in the task (role definition, iron laws, sidecar). Starting work without reading = protocol violation.
+3. **You cannot use sessions_send / sessions_spawn.** Use `announce` to report results when done.
+4. **Report format** follows `{{INSTALL_DIR}}/workspace-cto/engineers/report-template.md`.
+5. **When uncertain**, ask CTO rather than guessing.
 
 ### Available Workflows — CTO Direct Execution (Interactive)
 

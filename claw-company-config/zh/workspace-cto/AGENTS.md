@@ -18,6 +18,46 @@
 | Engineers | {{INSTALL_DIR}}/workspace-cto/engineers/ |
 | Rules | {{INSTALL_DIR}}/workspace-cto/rules/ |
 | 共用 Tasks | {{INSTALL_DIR}}/shared/tasks/ |
+| 營運準則 | {{INSTALL_DIR}}/shared/principles/index.md |
+
+### 資源索引
+
+啟動時瀏覽此索引，掌握 workspace 中可用的資源。派發 Sub-Agent 時依此索引組裝 task prompt。
+
+**Engineers（11 種角色）：**
+- `engineers/dev.md`（Ivy 💻）— 開發工程師，TDD 驅動實作
+- `engineers/pm.md`（Reed 📋）— 產品經理，PRD 與用戶故事
+- `engineers/architect.md`（Mason 🏗️）— 架構師，系統設計與技術選型
+- `engineers/qa.md`（Vera 🔍）— QA 工程師，測試策略與品質閘門
+- `engineers/ux-designer.md`（Lena 🎨）— UX 設計師，使用者體驗
+- `engineers/tech-writer.md`（Clara 📝）— 技術文件工程師
+- `engineers/analyst.md`（Hazel 📊）— 分析師，市場與可行性研究
+- `engineers/scrum-master.md`（Grant 📌）— Scrum Master，Sprint 與 Epic 拆解
+- `engineers/solo-dev.md`（Blaze ⚡）— 獨立開發工程師，快速原型
+- `engineers/spec-reviewer.md`（Scout 🔎）— 規格合規審查員（審查第一階段）
+- `engineers/code-reviewer.md`（Knox 🔒）— 代碼品質審查員（審查第二階段）
+
+**Rules（4 條鐵律）：**
+- `rules/tdd-iron-law.md` — TDD 紀律，RED→GREEN→REFACTOR
+- `rules/sdd-iron-law.md` — Spec 驅動開發，契約未定實現不開
+- `rules/debugging-iron-law.md` — 系統性除錯，4 階段 + 3 次失敗規則
+- `rules/verification.md` — 完成前驗證，無新鮮證據不宣稱完成
+
+**Sidecar 領域知識（4 個）：**
+- `engineers/sidecar/pm/prd-standards.md` — JTBD 框架、驗收標準可測試性
+- `engineers/sidecar/architect/architecture-standards.md` — ADR 格式、Boring Technology 原則
+- `engineers/sidecar/qa/test-standards.md` — 測試金字塔、AAA 模式、CI/CD 品質閘門
+- `engineers/sidecar/tech-writer/documentation-standards.md` — CommonMark、寫作原則、Mermaid 標準
+
+### Sub-Agent 啟動協議
+
+如果你是被 CTO spawn 的工程師 Sub-Agent，請遵循以下協議：
+
+1. **你繼承了 CTO 的 workspace**。此 AGENTS.md 是你的資源地圖，上方的路徑配置和資源索引對你有效。
+2. **先讀取 task 中指定的檔案**。收到任務後，第一步必須執行 task 中列出的所有 `read` 指令（角色定義、鐵律、sidecar）。未讀取即開始工作 = 違反協議。
+3. **你無法使用 sessions_send / sessions_spawn**。完成後用 `announce` 回報結果。
+4. **回報格式**參照 `{{INSTALL_DIR}}/workspace-cto/engineers/report-template.md`。
+5. **遇到不確定的問題**，向 CTO 提問而非猜測。
 
 ### 可用工作流程 — CTO 直接執行（互動式）
 
