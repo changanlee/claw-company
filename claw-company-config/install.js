@@ -1,0 +1,1186 @@
+#!/usr/bin/env node
+// ============================================
+// One-Person Company — OpenClaw Supplement Pack Installer
+// Version: v0.3 (cross-platform Node.js)
+// Compatible with: OpenClaw >= 2026.3.7
+// ============================================
+
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const { spawnSync } = require('child_process');
+const readline = require('readline');
+
+// ============================================
+// Constants
+// ============================================
+const SCRIPT_DIR = __dirname;
+const OPENCLAW_DIR = path.join(os.homedir(), '.openclaw');
+const INSTALL_DIR = path.join(OPENCLAW_DIR, 'claw-company');
+const AGENTS = ['ceo', 'cfo', 'cio', 'coo', 'cto', 'chro', 'cao'];
+const AGENT_PREFIX = 'cc-';
+const REQUIRED_MIN_VERSION = '2026.3.7';
+
+// State
+let langDir = '';
+let modelPrimary = '';
+let modelLight = '';
+const tiers = {
+  CEO: 'smart', CFO: 'smart', CIO: 'smart', COO: 'fast',
+  CTO: 'smart', CTO_SUB: 'fast', CHRO: 'fast', CAO: 'smart',
+};
+
+// ============================================
+// Helpers
+// ============================================
+
+function msg(en, zh) {
+  return langDir === 'zh' ? zh : en;
+}
+
+function log(text) {
+  console.log(text);
+}
+
+function logInfo(en, zh) {
+  log(`[INFO] ${msg(en, zh)}`);
+}
+
+function logWarn(en, zh) {
+  log(`[WARN] ${msg(en, zh)}`);
+}
+
+function logError(en, zh) {
+  log(`[ERROR] ${msg(en, zh)}`);
+}
+
+function logOk(text) {
+  log(`  [OK] ${text}`);
+}
+
+/** Compare two dot-separated version strings. Returns true if a >= b. */
+function versionGte(a, b) {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < pb.length; i++) {
+    const na = pa[i] || 0;
+    const nb = pb[i] || 0;
+    if (na > nb) return true;
+    if (na < nb) return false;
+  }
+  return true;
+}
+
+/** Strip JSONC comments (line and block) from a string, preserving strings. */
+function stripJsonComments(text) {
+  let result = '';
+  let inString = false;
+  let escape = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (escape) {
+      result += ch;
+      escape = false;
+      continue;
+    }
+    if (ch === '\\' && inString) {
+      result += ch;
+      escape = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      result += ch;
+      continue;
+    }
+    if (!inString && ch === '/' && text[i + 1] === '/') {
+      // Single-line comment: skip to end of line
+      while (i < text.length && text[i] !== '\n') i++;
+      result += '\n';
+      continue;
+    }
+    if (!inString && ch === '/' && text[i + 1] === '*') {
+      // Block comment: skip to closing */
+      i += 2;
+      while (i < text.length - 1 && !(text[i] === '*' && text[i + 1] === '/')) i++;
+      i++; // skip past closing /
+      continue;
+    }
+    result += ch;
+  }
+  // Also strip trailing commas before } or ]
+  return result.replace(/,(\s*[}\]])/g, '$1');
+}
+
+/** Read and parse a JSONC file. */
+function readJsonc(filePath) {
+  const raw = fs.readFileSync(filePath, 'utf-8');
+  return JSON.parse(stripJsonComments(raw));
+}
+
+/** Deep merge source into target (mutates target). Arrays are merged as union (deduplicated). */
+function deepMerge(target, source) {
+  for (const key of Object.keys(source)) {
+    if (
+      target[key] && typeof target[key] === 'object' && !Array.isArray(target[key]) &&
+      typeof source[key] === 'object' && !Array.isArray(source[key])
+    ) {
+      deepMerge(target[key], source[key]);
+    } else if (Array.isArray(target[key]) && Array.isArray(source[key])) {
+      // Merge arrays as union (preserve existing + add new)
+      const existing = new Set(target[key].map(v => typeof v === 'object' ? JSON.stringify(v) : v));
+      for (const item of source[key]) {
+        const k = typeof item === 'object' ? JSON.stringify(item) : item;
+        if (!existing.has(k)) {
+          target[key].push(item);
+          existing.add(k);
+        }
+      }
+    } else {
+      target[key] = source[key];
+    }
+  }
+  return target;
+}
+
+/** Execute a CLI command safely using spawnSync (no shell injection). Returns { ok, stdout, stderr }. */
+function tryExec(args) {
+  if (typeof args === 'string') args = args.split(/\s+/);
+  const [cmd, ...rest] = args;
+  const result = spawnSync(cmd, rest, { encoding: 'utf-8', timeout: 30000 });
+  if (result.status === 0) {
+    return { ok: true, stdout: (result.stdout || '').trim(), stderr: '' };
+  }
+  return { ok: false, stdout: '', stderr: (result.stderr || result.error?.message || '').trim() };
+}
+
+/** Build a display-friendly command string for fallback output. */
+function cmdToString(args) {
+  return args.map(a => (a.includes(' ') || a.includes('"')) ? `"${a.replace(/"/g, '\\"')}"` : a).join(' ');
+}
+
+/** Create a readline interface for interactive input. */
+function createRl() {
+  return readline.createInterface({ input: process.stdin, output: process.stdout });
+}
+
+/** Prompt user for input. Returns a promise. */
+function ask(rl, question) {
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => resolve(answer.trim()));
+  });
+}
+
+/** Replace {{INSTALL_DIR}} in a string. */
+function replaceInstallDir(text) {
+  return text.replaceAll('{{INSTALL_DIR}}', INSTALL_DIR);
+}
+
+/** Try symlink, fallback to copy on Windows or permission errors. Warns once on first fallback. */
+let symlinkFallbackWarned = false;
+function symlinkOrCopy(target, linkPath) {
+  try { if (fs.existsSync(linkPath) || fs.lstatSync(linkPath).isSymbolicLink()) fs.unlinkSync(linkPath); } catch (_) {}
+  try {
+    fs.symlinkSync(target, linkPath);
+  } catch (_) {
+    // Fallback: copy file instead of symlink
+    fs.copyFileSync(target, linkPath);
+    if (!symlinkFallbackWarned) {
+      logWarn(
+        'Symlinks not available, using file copies instead (shared file changes require reinstall)',
+        '無法建立 symlink，改用檔案複製（共用檔案變更後需重新安裝）'
+      );
+      symlinkFallbackWarned = true;
+    }
+  }
+}
+
+/** Text file extensions that may contain {{INSTALL_DIR}} placeholders. */
+const TEXT_EXTENSIONS = new Set(['.md', '.yaml', '.yml', '.json', '.jsonc', '.txt', '.csv']);
+
+/** Copy directory recursively, with optional {{INSTALL_DIR}} substitution in text files. */
+function deployDir(srcDir, dstDir, { substituteInstallDir = false, preserveExisting = false } = {}) {
+  if (!fs.existsSync(srcDir)) return;
+  fs.mkdirSync(dstDir, { recursive: true });
+
+  for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+    const srcPath = path.join(srcDir, entry.name);
+    const dstPath = path.join(dstDir, entry.name);
+
+    if (entry.isDirectory()) {
+      deployDir(srcPath, dstPath, { substituteInstallDir, preserveExisting });
+    } else {
+      if (preserveExisting && fs.existsSync(dstPath)) continue;
+      const ext = path.extname(entry.name).toLowerCase();
+      if (substituteInstallDir && TEXT_EXTENSIONS.has(ext)) {
+        const content = fs.readFileSync(srcPath, 'utf-8');
+        fs.writeFileSync(dstPath, replaceInstallDir(content));
+      } else {
+        fs.copyFileSync(srcPath, dstPath);
+      }
+    }
+  }
+}
+
+// ============================================
+// Uninstall
+// ============================================
+async function uninstall() {
+  log('');
+  log('==========================================');
+  log('  Uninstall claw-company');
+  log('==========================================');
+  log('');
+
+  if (!fs.existsSync(INSTALL_DIR)) {
+    log('claw-company is not installed.');
+    process.exit(0);
+  }
+
+  log(`This will remove: ${INSTALL_DIR}`);
+
+  // Read native json and check for injected settings
+  const nativeJsonPath = path.join(OPENCLAW_DIR, 'openclaw.json');
+  if (fs.existsSync(nativeJsonPath)) {
+    log(`Will also clean injected settings from: ${nativeJsonPath}`);
+  }
+
+  const rl = createRl();
+  const confirm = await ask(rl, '\nConfirm? (y/N): ');
+  rl.close();
+
+  if (confirm.toLowerCase() !== 'y') {
+    log('Cancelled.');
+    process.exit(0);
+  }
+
+  // Remove injected settings from native json
+  if (fs.existsSync(nativeJsonPath)) {
+    try {
+      const nativeJson = readJsonc(nativeJsonPath);
+      // Remove claw-company injected sections
+      if (nativeJson.agents && nativeJson.agents.defaults) {
+        delete nativeJson.agents.defaults.models;
+        delete nativeJson.agents.defaults.subagents;
+        delete nativeJson.agents.defaults.heartbeat;
+        delete nativeJson.agents.defaults.model;
+        // Clean up empty objects
+        if (Object.keys(nativeJson.agents.defaults).length === 0) {
+          delete nativeJson.agents.defaults;
+        }
+        if (nativeJson.agents && Object.keys(nativeJson.agents).length === 0) {
+          delete nativeJson.agents;
+        }
+      }
+      if (nativeJson.tools) {
+        delete nativeJson.tools.agentToAgent;
+        delete nativeJson.tools.loopDetection;
+        if (Object.keys(nativeJson.tools).length === 0) delete nativeJson.tools;
+      }
+      if (nativeJson.hooks && nativeJson.hooks.internal) {
+        delete nativeJson.hooks.internal;
+        if (Object.keys(nativeJson.hooks).length === 0) delete nativeJson.hooks;
+      }
+      if (nativeJson.cron) {
+        delete nativeJson.cron.enabled;
+        delete nativeJson.cron.maxConcurrentRuns;
+        if (Object.keys(nativeJson.cron).length === 0) delete nativeJson.cron;
+      }
+      fs.writeFileSync(nativeJsonPath, JSON.stringify(nativeJson, null, 2) + '\n');
+      log('[INFO] Cleaned injected settings from native openclaw.json');
+    } catch (err) {
+      logWarn(
+        `Could not clean native json: ${err.message}`,
+        `無法清理原生 json：${err.message}`
+      );
+    }
+  }
+
+  // Remove agents via CLI
+  for (const agent of AGENTS) {
+    tryExec(['openclaw', 'agents', 'remove', `${AGENT_PREFIX}${agent}`]);
+  }
+  log('[INFO] Removed agents via CLI');
+
+  // Remove cron jobs via CLI
+  const cronNames = [
+    'morning-briefing', 'investment-monitor', 'memory-cleanup',
+    'weekly-org-review', 'security-scan', 'cto-memory-cleanup',
+  ];
+  for (const name of cronNames) {
+    tryExec(['openclaw', 'cron', 'remove', '--name', name]);
+  }
+  log('[INFO] Removed cron jobs via CLI');
+
+  // Remove symlink if it points to claw-company
+  const nativeLink = path.join(OPENCLAW_DIR, 'openclaw.json');
+  try {
+    const stat = fs.lstatSync(nativeLink);
+    if (stat.isSymbolicLink()) {
+      const target = fs.readlinkSync(nativeLink);
+      if (target.includes('claw-company')) {
+        fs.unlinkSync(nativeLink);
+        log('[INFO] Removed symlink');
+      }
+    }
+  } catch (_) { /* no symlink */ }
+
+  // Remove install directory
+  fs.rmSync(INSTALL_DIR, { recursive: true, force: true });
+  log(`[INFO] Removed ${INSTALL_DIR}`);
+  log('');
+  log('Done. OpenClaw is back to its original state.');
+  process.exit(0);
+}
+
+// ============================================
+// Main Install Flow
+// ============================================
+async function main() {
+  // --uninstall flag
+  if (process.argv.includes('--uninstall') || process.argv.includes('uninstall')) {
+    await uninstall();
+    return;
+  }
+
+  // Safety: no root on Linux
+  if (process.platform === 'linux' && process.getuid && process.getuid() === 0) {
+    console.error('[ERROR] Do not run as root. Please use a normal user account.');
+    process.exit(1);
+  }
+
+  // Node.js version check (>= 16.7 for fs.cpSync)
+  const nodeVersion = process.versions.node.split('.').map(Number);
+  if (nodeVersion[0] < 16 || (nodeVersion[0] === 16 && nodeVersion[1] < 7)) {
+    console.error(`[ERROR] Node.js >= 16.7 required (current: ${process.versions.node})`);
+    process.exit(1);
+  }
+
+  log('');
+  log('==========================================');
+  log('  OpenClaw One-Person Company Installer');
+  log('==========================================');
+  log('');
+
+  const rl = createRl();
+
+  // ----------------------------------------
+  // Step 1: Language selection
+  // ----------------------------------------
+  log('Please select your language / 請選擇語言：');
+  log('');
+  log('  1) English');
+  log('  2) 繁體中文');
+  log('');
+
+  while (true) {
+    const choice = await ask(rl, 'Enter 1 or 2 / 輸入 1 或 2: ');
+    if (choice === '1') { langDir = 'en'; log('\n[INFO] Selected: English'); break; }
+    if (choice === '2') { langDir = 'zh'; log('\n[INFO] 已選擇：繁體中文'); break; }
+    log('Invalid input. Please enter 1 or 2. / 無效輸入，請輸入 1 或 2。');
+  }
+
+  const sourceDir = path.join(SCRIPT_DIR, langDir);
+  if (!fs.existsSync(sourceDir)) {
+    logError(
+      `Language directory not found: ${sourceDir}`,
+      `找不到語言目錄：${sourceDir}`
+    );
+    rl.close();
+    process.exit(1);
+  }
+  log('');
+
+  // ----------------------------------------
+  // Step 2: Prerequisites — openclaw CLI
+  // ----------------------------------------
+  const clawCheck = tryExec(['openclaw', '--version']);
+  if (!clawCheck.ok) {
+    logError(
+      'openclaw command not found. Please install OpenClaw first.',
+      '找不到 openclaw 指令，請先安裝 OpenClaw。'
+    );
+    log('  https://github.com/openclaw/openclaw');
+    rl.close();
+    process.exit(1);
+  }
+
+  // ----------------------------------------
+  // Step 3: Version check
+  // ----------------------------------------
+  const versionMatch = clawCheck.stdout.match(/(\d+\.\d+\.\d+)/);
+  if (versionMatch) {
+    const currentVersion = versionMatch[1];
+    if (!versionGte(currentVersion, REQUIRED_MIN_VERSION)) {
+      logError(
+        `OpenClaw version too old: ${currentVersion} (requires >= ${REQUIRED_MIN_VERSION})`,
+        `OpenClaw 版本過舊：${currentVersion}（需要 >= ${REQUIRED_MIN_VERSION}）`
+      );
+      log(msg('  Please upgrade: npm update -g openclaw', '  請先升級：npm update -g openclaw'));
+      rl.close();
+      process.exit(1);
+    }
+    logInfo(`OpenClaw version: ${currentVersion}`, `OpenClaw 版本：${currentVersion}`);
+  } else {
+    logWarn(
+      `Could not detect version, proceeding (recommended >= ${REQUIRED_MIN_VERSION})`,
+      `無法偵測版本，繼續安裝（建議 >= ${REQUIRED_MIN_VERSION}）`
+    );
+  }
+  log('');
+
+  // ----------------------------------------
+  // Step 4: Check native openclaw.json
+  // ----------------------------------------
+  const nativeJsonPath = path.join(OPENCLAW_DIR, 'openclaw.json');
+
+  // If it's a symlink to claw-company (from old install), resolve to backup or real file
+  let configPath = nativeJsonPath;
+  try {
+    const stat = fs.lstatSync(nativeJsonPath);
+    if (stat.isSymbolicLink()) {
+      const target = fs.readlinkSync(nativeJsonPath);
+      if (target.includes('claw-company')) {
+        // Old symlink — look for backup
+        const files = fs.readdirSync(OPENCLAW_DIR)
+          .filter(f => f.startsWith('openclaw.json.backup.'))
+          .sort()
+          .reverse();
+        if (files.length > 0) {
+          configPath = path.join(OPENCLAW_DIR, files[0]);
+          logInfo(
+            `Found old symlink, using backup: ${configPath}`,
+            `偵測到舊版 symlink，使用備份：${configPath}`
+          );
+        } else {
+          logError(
+            'Old claw-company symlink found but no backup. Please restore your original openclaw.json.',
+            '偵測到舊版 claw-company symlink，但找不到備份檔。請手動恢復原生 openclaw.json。'
+          );
+          rl.close();
+          process.exit(1);
+        }
+      }
+    }
+  } catch (_) { /* not a symlink or doesn't exist */ }
+
+  if (!fs.existsSync(configPath)) {
+    logError(
+      `${OPENCLAW_DIR}/openclaw.json not found. Please run: openclaw onboard`,
+      `找不到 ${OPENCLAW_DIR}/openclaw.json，請先執行：openclaw onboard`
+    );
+    rl.close();
+    process.exit(1);
+  }
+
+  let nativeJson;
+  try {
+    nativeJson = readJsonc(configPath);
+  } catch (err) {
+    logError(
+      `Failed to parse ${configPath}: ${err.message}`,
+      `解析 ${configPath} 失敗：${err.message}`
+    );
+    rl.close();
+    process.exit(1);
+  }
+
+  // ----------------------------------------
+  // Step 5: Detect models
+  // ----------------------------------------
+  const modelsSet = new Set();
+
+  // Extract from agents.defaults.models keys
+  if (nativeJson.agents?.defaults?.models) {
+    for (const key of Object.keys(nativeJson.agents.defaults.models)) {
+      if (key.includes('/')) modelsSet.add(key);
+    }
+  }
+
+  // Extract from agents.list[].model (if it looks like provider/model)
+  if (nativeJson.agents?.list) {
+    for (const agent of nativeJson.agents.list) {
+      if (agent.model && agent.model.includes('/')) modelsSet.add(agent.model);
+    }
+  }
+
+  // Extract from agents.defaults.model.primary
+  if (nativeJson.agents?.defaults?.model?.primary) {
+    const p = nativeJson.agents.defaults.model.primary;
+    if (p.includes('/')) modelsSet.add(p);
+  }
+
+  // Fallback: try CLI
+  if (modelsSet.size === 0) {
+    const modelsCmd = tryExec(['openclaw', 'models', 'list']);
+    if (modelsCmd.ok) {
+      const lines = modelsCmd.stdout.split('\n');
+      for (const line of lines) {
+        const match = line.match(/([a-z][a-z0-9_-]*\/[a-z0-9._-]+)/i);
+        if (match) modelsSet.add(match[1]);
+      }
+    }
+  }
+
+  const availableModels = [...modelsSet].sort();
+
+  if (availableModels.length === 0) {
+    logError(
+      'No models found. Please configure at least one model: openclaw models set <model-id>',
+      '找不到任何模型。請先配置至少一個模型：openclaw models set <model-id>'
+    );
+    rl.close();
+    process.exit(1);
+  }
+
+  // ----------------------------------------
+  // Step 6: Detect channels
+  // ----------------------------------------
+  const channelsFound = [];
+
+  // From native json
+  if (nativeJson.channels) {
+    for (const [chName, chConfig] of Object.entries(nativeJson.channels)) {
+      if (typeof chConfig === 'object' && chConfig !== null) {
+        // Channels with accounts (like telegram)
+        if (chConfig.accounts) {
+          for (const accName of Object.keys(chConfig.accounts)) {
+            channelsFound.push(`${chName}:${accName}`);
+          }
+        } else {
+          channelsFound.push(chName);
+        }
+      }
+    }
+  }
+
+  // Fallback: try CLI
+  if (channelsFound.length === 0) {
+    const chCmd = tryExec(['openclaw', 'channels', 'list']);
+    if (chCmd.ok) {
+      const lines = chCmd.stdout.split('\n').filter(l => l.trim());
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('-')) {
+          channelsFound.push(trimmed);
+        }
+      }
+    }
+  }
+
+  if (channelsFound.length === 0) {
+    logError(
+      'No channels found. Please configure at least one channel first.',
+      '找不到任何通道。請先配置至少一個通道。'
+    );
+    log(msg(
+      '  Set up a channel (e.g. Telegram): openclaw channels add',
+      '  設定通道（例如 Telegram）：openclaw channels add'
+    ));
+    rl.close();
+    process.exit(1);
+  }
+
+  logInfo(
+    `Found ${availableModels.length} model(s) and ${channelsFound.length} channel(s)`,
+    `偵測到 ${availableModels.length} 個模型和 ${channelsFound.length} 個通道`
+  );
+  log('');
+
+  // ----------------------------------------
+  // Step 7: Check if already installed
+  // ----------------------------------------
+  if (fs.existsSync(INSTALL_DIR)) {
+    logWarn(
+      `Existing installation found: ${INSTALL_DIR}`,
+      `偵測到已安裝版本：${INSTALL_DIR}`
+    );
+    log('');
+    log(msg(
+      '  1) Overwrite (keep memory/, output/ and auth data)\n  2) Clean reinstall\n  3) Cancel',
+      '  1) 覆蓋安裝（保留 memory/、output/ 和驗證資料）\n  2) 全新安裝\n  3) 取消'
+    ));
+    log('');
+
+    while (true) {
+      const choice = await ask(rl, msg('Select: ', '請選擇：'));
+      if (choice === '1') {
+        logInfo('Overwriting...', '覆蓋安裝中...');
+        break;
+      }
+      if (choice === '2') {
+        logInfo(`Removing ${INSTALL_DIR}...`, `移除 ${INSTALL_DIR}...`);
+        fs.rmSync(INSTALL_DIR, { recursive: true, force: true });
+        break;
+      }
+      if (choice === '3') {
+        log(msg('Cancelled.', '已取消。'));
+        rl.close();
+        process.exit(0);
+      }
+      log(msg('Invalid input.', '無效輸入。'));
+    }
+    log('');
+  }
+
+  // ----------------------------------------
+  // Step 8: Model selection (smart / fast)
+  // ----------------------------------------
+  log('==========================================');
+  log(msg('  Model Configuration', '  模型配置'));
+  log('==========================================');
+  log('');
+  log(msg('  Available models:', '  可用模型：'));
+  log('');
+  for (let i = 0; i < availableModels.length; i++) {
+    log(`    ${i + 1}) ${availableModels[i]}`);
+  }
+  log('');
+  log(msg(
+    '  smart = high capability, fast = lightweight',
+    '  smart = 高效能模型, fast = 輕量模型'
+  ));
+  log('');
+
+  async function pickModel(aliasName) {
+    log(msg(`  --- Select ${aliasName} model ---`, `  --- 選擇 ${aliasName} 模型 ---`));
+    while (true) {
+      const input = await ask(rl, msg(
+        `  Enter number (1-${availableModels.length}): `,
+        `  輸入編號 (1-${availableModels.length})：`
+      ));
+      const idx = parseInt(input, 10);
+      if (idx >= 1 && idx <= availableModels.length) {
+        log('');
+        return availableModels[idx - 1];
+      }
+      log(msg('  Invalid input.', '  無效輸入。'));
+    }
+  }
+
+  modelPrimary = await pickModel('smart');
+  modelLight = await pickModel('fast');
+
+  log('');
+  logInfo(
+    `Model aliases:\n       smart -> ${modelPrimary}\n       fast  -> ${modelLight}`,
+    `模型別名：\n       smart -> ${modelPrimary}\n       fast  -> ${modelLight}`
+  );
+  if (modelPrimary === modelLight) {
+    logWarn(
+      'smart and fast point to the same model.',
+      'smart 和 fast 指向同一個模型。'
+    );
+  }
+  log('');
+
+  // ----------------------------------------
+  // Step 9: Per-agent tier selection
+  // ----------------------------------------
+  log('==========================================');
+  log(msg('  Per-Agent Model Tier', '  各角色模型配置'));
+  log('==========================================');
+  log('');
+  log(msg('  Default assignment:', '  預設配置：'));
+  log('       CEO=smart  CFO=smart  CIO=smart  COO=fast');
+  log('       CTO=smart  CTO_SUB=fast  CHRO=fast  CAO=smart');
+  log('');
+  log(msg(
+    '  1) Use defaults\n  2) Customize',
+    '  1) 使用預設\n  2) 自訂配置'
+  ));
+  log('');
+
+  while (true) {
+    const choice = await ask(rl, msg('Select 1 or 2: ', '請選擇 1 或 2：'));
+    if (choice === '1') break;
+    if (choice === '2') {
+      log('');
+      log(msg(
+        '  Choose smart or fast for each agent:',
+        '  為每個角色選擇 smart 或 fast：'
+      ));
+      log('');
+      for (const role of ['CEO', 'CFO', 'CIO', 'COO', 'CTO', 'CTO_SUB', 'CHRO', 'CAO']) {
+        while (true) {
+          const input = await ask(rl, `  ${role} [${tiers[role]}]: `);
+          const val = input || tiers[role];
+          if (val === 'smart' || val === 'fast') {
+            tiers[role] = val;
+            break;
+          }
+          log(msg('    Please enter smart or fast', '    請輸入 smart 或 fast'));
+        }
+      }
+      break;
+    }
+    log(msg('Invalid input.', '無效輸入。'));
+  }
+
+  log('');
+  logInfo(
+    'Agent model tiers:',
+    '各角色模型配置：'
+  );
+  log(`       CEO=${tiers.CEO}  CFO=${tiers.CFO}  CIO=${tiers.CIO}  COO=${tiers.COO}`);
+  log(`       CTO=${tiers.CTO}  CTO_SUB=${tiers.CTO_SUB}  CHRO=${tiers.CHRO}  CAO=${tiers.CAO}`);
+  log('');
+
+  rl.close();
+
+  // ============================================
+  // Deploy
+  // ============================================
+  logInfo(
+    `Installing to ${INSTALL_DIR}...`,
+    `安裝至 ${INSTALL_DIR}...`
+  );
+  log('');
+  fs.mkdirSync(INSTALL_DIR, { recursive: true });
+
+  // ----------------------------------------
+  // Deploy shared/
+  // ----------------------------------------
+  const sharedSrc = path.join(sourceDir, 'shared');
+  const sharedDst = path.join(INSTALL_DIR, 'shared');
+
+  // company-rules, tools-policy, USER.md
+  fs.mkdirSync(path.join(sharedDst, 'policies'), { recursive: true });
+  for (const f of ['company-rules.md', 'tools-policy.md', 'USER.md']) {
+    const src = path.join(sharedSrc, f);
+    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(sharedDst, f));
+  }
+
+  // policies/
+  const policiesSrc = path.join(sharedSrc, 'policies');
+  if (fs.existsSync(policiesSrc)) {
+    deployDir(policiesSrc, path.join(sharedDst, 'policies'));
+  }
+
+  // setup-guides/
+  deployDir(path.join(sharedSrc, 'setup-guides'), path.join(sharedDst, 'setup-guides'));
+
+  // templates/
+  deployDir(path.join(sharedSrc, 'templates'), path.join(sharedDst, 'templates'));
+
+  // standards/ (with {{INSTALL_DIR}} substitution)
+  deployDir(path.join(sharedSrc, 'standards'), path.join(sharedDst, 'standards'), { substituteInstallDir: true });
+
+  // tasks/
+  deployDir(path.join(sharedSrc, 'tasks'), path.join(sharedDst, 'tasks'));
+
+  // principles/
+  deployDir(path.join(sharedSrc, 'principles'), path.join(sharedDst, 'principles'));
+
+  // brain-methods.csv
+  const brainSrc = path.join(sharedSrc, 'brain-methods.csv');
+  if (fs.existsSync(brainSrc)) fs.copyFileSync(brainSrc, path.join(sharedDst, 'brain-methods.csv'));
+
+  logOk('shared/');
+
+  // ----------------------------------------
+  // Deploy workspaces
+  // ----------------------------------------
+  for (const agent of AGENTS) {
+    const wsSrc = path.join(sourceDir, `workspace-${agent}`);
+    const wsDst = path.join(INSTALL_DIR, `workspace-${agent}`);
+    fs.mkdirSync(path.join(wsDst, 'memory'), { recursive: true });
+    fs.mkdirSync(path.join(wsDst, 'policies'), { recursive: true });
+
+    // Core files
+    for (const f of ['SOUL.md', 'IDENTITY.md']) {
+      const src = path.join(wsSrc, f);
+      if (fs.existsSync(src)) fs.copyFileSync(src, path.join(wsDst, f));
+    }
+
+    // AGENTS.md with {{INSTALL_DIR}} substitution
+    const agentsMdSrc = path.join(wsSrc, 'AGENTS.md');
+    if (fs.existsSync(agentsMdSrc)) {
+      const content = fs.readFileSync(agentsMdSrc, 'utf-8');
+      fs.writeFileSync(path.join(wsDst, 'AGENTS.md'), replaceInstallDir(content));
+    }
+
+    // MEMORY.md — preserve existing on overwrite
+    const memDst = path.join(wsDst, 'MEMORY.md');
+    if (!fs.existsSync(memDst)) {
+      const memSrc = path.join(wsSrc, 'MEMORY.md');
+      if (fs.existsSync(memSrc)) fs.copyFileSync(memSrc, memDst);
+    }
+
+    // HEARTBEAT.md
+    const hbSrc = path.join(wsSrc, 'HEARTBEAT.md');
+    if (fs.existsSync(hbSrc)) fs.copyFileSync(hbSrc, path.join(wsDst, 'HEARTBEAT.md'));
+
+    // TOOLS.md with {{INSTALL_DIR}} substitution
+    const toolsSrc = path.join(wsSrc, 'TOOLS.md');
+    if (fs.existsSync(toolsSrc)) {
+      const content = fs.readFileSync(toolsSrc, 'utf-8');
+      fs.writeFileSync(path.join(wsDst, 'TOOLS.md'), replaceInstallDir(content));
+    }
+
+    // Extra files
+    for (const extra of ['briefing-template.md', 'status.md', 'issues.md']) {
+      const src = path.join(wsSrc, extra);
+      if (fs.existsSync(src)) fs.copyFileSync(src, path.join(wsDst, extra));
+    }
+
+    // Link or copy shared files into workspace
+    symlinkOrCopy(path.join(sharedDst, 'USER.md'), path.join(wsDst, 'USER.md'));
+
+    const policiesDstDir = path.join(sharedDst, 'policies');
+    if (fs.existsSync(policiesDstDir)) {
+      for (const pf of fs.readdirSync(policiesDstDir)) {
+        symlinkOrCopy(path.join(policiesDstDir, pf), path.join(wsDst, 'policies', pf));
+      }
+    }
+
+    // Subdirectories: engineers, rules, skills (all need {{INSTALL_DIR}} substitution in .md)
+    for (const subdir of ['engineers', 'rules', 'skills']) {
+      deployDir(path.join(wsSrc, subdir), path.join(wsDst, subdir), { substituteInstallDir: true });
+    }
+
+    // Templates
+    deployDir(path.join(wsSrc, 'templates'), path.join(wsDst, 'templates'));
+
+    // Workflows (with {{INSTALL_DIR}} substitution in .md files)
+    deployDir(path.join(wsSrc, 'workflows'), path.join(wsDst, 'workflows'), { substituteInstallDir: true });
+
+    // Output (preserve existing, only create structure)
+    deployDir(path.join(wsSrc, 'output'), path.join(wsDst, 'output'), { preserveExisting: true });
+
+    logOk(`workspace-${agent}`);
+  }
+
+  // ----------------------------------------
+  // Deploy skills
+  // ----------------------------------------
+  const skillsSrc = path.join(sourceDir, 'skills');
+  if (fs.existsSync(skillsSrc)) {
+    deployDir(skillsSrc, path.join(INSTALL_DIR, 'skills'), { substituteInstallDir: true });
+    logOk('skills/');
+  }
+
+  // ----------------------------------------
+  // Auth — copy existing auth-profiles.json
+  // ----------------------------------------
+  let existingAuthFile = '';
+  // Search for existing auth profiles
+  const authSearchPaths = [
+    path.join(OPENCLAW_DIR, 'auth-profiles.json'),
+  ];
+  for (const ap of authSearchPaths) {
+    if (fs.existsSync(ap)) { existingAuthFile = ap; break; }
+  }
+  // Also check inside existing agent dirs
+  if (!existingAuthFile) {
+    try {
+      const agentsDir = path.join(OPENCLAW_DIR, 'agents');
+      if (fs.existsSync(agentsDir)) {
+        for (const d of fs.readdirSync(agentsDir)) {
+          const ap = path.join(agentsDir, d, 'agent', 'auth-profiles.json');
+          if (fs.existsSync(ap)) { existingAuthFile = ap; break; }
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (existingAuthFile) {
+    logInfo('Copying existing auth config...', '複製現有驗證設定...');
+    for (const agent of AGENTS) {
+      const agentDir = path.join(INSTALL_DIR, 'agents', agent, 'agent');
+      fs.mkdirSync(agentDir, { recursive: true });
+      const dst = path.join(agentDir, 'auth-profiles.json');
+      if (!fs.existsSync(dst)) {
+        fs.copyFileSync(existingAuthFile, dst);
+      }
+    }
+  }
+
+  log('');
+
+  // ============================================
+  // Inject settings into native openclaw.json
+  // ============================================
+  logInfo(
+    'Injecting settings into native openclaw.json...',
+    '注入設定到原生 openclaw.json...'
+  );
+
+  // If configPath was a backup (old symlink scenario), restore it first
+  if (configPath !== nativeJsonPath) {
+    // Remove old symlink
+    try {
+      const stat = fs.lstatSync(nativeJsonPath);
+      if (stat.isSymbolicLink()) fs.unlinkSync(nativeJsonPath);
+    } catch (_) {}
+    // Copy backup as the new native json
+    fs.copyFileSync(configPath, nativeJsonPath);
+    logInfo(
+      'Restored native openclaw.json from backup',
+      '已從備份恢復原生 openclaw.json'
+    );
+    nativeJson = readJsonc(nativeJsonPath);
+  }
+
+  // Build injection payload
+  const injection = {
+    agents: {
+      defaults: {
+        models: {
+          [modelPrimary]: { alias: 'smart' },
+          [modelLight]: { alias: 'fast' },
+        },
+        subagents: {
+          maxSpawnDepth: 2,
+          maxChildrenPerAgent: 5,
+          maxConcurrent: 8,
+          runTimeoutSeconds: 900,
+        },
+        heartbeat: {
+          every: '30m',
+          target: 'last',
+          activeHours: { start: '06:00', end: '23:00' },
+        },
+        model: {
+          primary: 'smart',
+          fallbacks: ['fast'],
+        },
+      },
+    },
+    tools: {
+      agentToAgent: {
+        enabled: true,
+        allow: AGENTS.map(a => `${AGENT_PREFIX}${a}`),
+      },
+      loopDetection: {
+        enabled: true,
+        historySize: 30,
+        warningThreshold: 10,
+        criticalThreshold: 20,
+      },
+    },
+    hooks: {
+      internal: { enabled: true },
+    },
+    cron: {
+      enabled: true,
+      maxConcurrentRuns: 3,
+    },
+  };
+
+  // Deep merge — preserves channels, gateway, session, bindings
+  deepMerge(nativeJson, injection);
+
+  // Backup original before writing
+  const backupPath = `${nativeJsonPath}.backup.${Date.now()}`;
+  try {
+    fs.copyFileSync(nativeJsonPath, backupPath);
+    logInfo(
+      `Backed up -> ${path.basename(backupPath)}`,
+      `已備份 -> ${path.basename(backupPath)}`
+    );
+  } catch (_) {}
+
+  fs.writeFileSync(nativeJsonPath, JSON.stringify(nativeJson, null, 2) + '\n');
+  logOk(msg('native openclaw.json updated', '原生 openclaw.json 已更新'));
+  log('');
+
+  // ============================================
+  // Register agents via CLI
+  // ============================================
+  logInfo('Registering agents...', '註冊 Agent...');
+
+  const agentDefs = [
+    { id: 'ceo', tier: tiers.CEO },
+    { id: 'cfo', tier: tiers.CFO },
+    { id: 'cio', tier: tiers.CIO },
+    { id: 'coo', tier: tiers.COO },
+    { id: 'cto', tier: tiers.CTO },
+    { id: 'chro', tier: tiers.CHRO },
+    { id: 'cao', tier: tiers.CAO },
+  ];
+
+  const failedAgentCmds = [];
+  for (const def of agentDefs) {
+    const agentId = `${AGENT_PREFIX}${def.id}`;
+    const workspace = path.join(INSTALL_DIR, `workspace-${def.id}`);
+    const cmdArgs = ['openclaw', 'agents', 'add', agentId, '--workspace', workspace, '--model', def.tier];
+    const result = tryExec(cmdArgs);
+    if (result.ok) {
+      logOk(agentId);
+    } else {
+      failedAgentCmds.push(cmdToString(cmdArgs));
+      logWarn(
+        `Failed to register ${agentId}: ${result.stderr}`,
+        `註冊 ${agentId} 失敗：${result.stderr}`
+      );
+    }
+  }
+
+  log('');
+
+  // ============================================
+  // Bind channels
+  // ============================================
+  logInfo('Binding channels...', '綁定通道...');
+
+  const failedBindCmds = [];
+  // Bind CEO to all detected channels
+  for (const ch of channelsFound) {
+    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}ceo`, '--bind', ch];
+    const result = tryExec(cmdArgs);
+    if (result.ok) {
+      logOk(`${AGENT_PREFIX}ceo -> ${ch}`);
+    } else {
+      failedBindCmds.push(cmdToString(cmdArgs));
+      // Non-blocking: channel binding failure doesn't stop install
+    }
+  }
+
+  // Bind CAO to telegram:audit if it exists
+  if (channelsFound.includes('telegram:audit')) {
+    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cao`, '--bind', 'telegram:audit'];
+    const result = tryExec(cmdArgs);
+    if (result.ok) {
+      logOk(`${AGENT_PREFIX}cao -> telegram:audit`);
+    } else {
+      failedBindCmds.push(cmdToString(cmdArgs));
+    }
+  }
+
+  log('');
+
+  // ============================================
+  // Register cron jobs
+  // ============================================
+  logInfo('Registering cron jobs...', '註冊排程任務...');
+
+  const cronJobs = [
+    {
+      name: 'morning-briefing',
+      cron: '30 6 * * *',
+      agent: `${AGENT_PREFIX}ceo`,
+      model: tiers.CEO,
+      message: 'Execute morning briefing: use sessions_send to request 12-hour summaries from CFO, CIO, COO, CTO. Compile into briefing with action items for Chairman. Refer to briefing-template.md',
+    },
+    {
+      name: 'investment-monitor',
+      cron: '0 9-16 * * 1-5',
+      agent: `${AGENT_PREFIX}cio`,
+      model: tiers.CIO,
+      message: 'Check portfolio data. Only notify CEO via sessions_send if any position moves >5%, otherwise silently log to memory/',
+    },
+    {
+      name: 'memory-cleanup',
+      cron: '0 3 1 * *',
+      agent: `${AGENT_PREFIX}chro`,
+      model: tiers.CHRO,
+      message: 'Audit MEMORY.md health across all agents: check line counts vs 200-line limit, duplicates, stale entries, archive logs >30 days. Send health report to CEO via sessions_send',
+    },
+    {
+      name: 'weekly-org-review',
+      cron: '0 8 * * 1',
+      agent: `${AGENT_PREFIX}chro`,
+      model: tiers.CHRO,
+      message: 'Produce weekly org health report: agent performance summary, capability gaps, model config suggestions, skill usage stats. Send to CEO via sessions_send',
+    },
+    {
+      name: 'security-scan',
+      cron: '0 2 * * 3',
+      agent: `${AGENT_PREFIX}cao`,
+      model: tiers.CAO,
+      message: 'Run full security scan: verify SOUL.md integrity, check recent session logs for anomalies, validate security rules compliance. Push security report directly to Chairman',
+    },
+    {
+      name: 'cto-memory-cleanup',
+      cron: '0 3 * * 0',
+      agent: `${AGENT_PREFIX}cto`,
+      model: tiers.CTO,
+      message: 'Execute weekly memory cleanup: remove stale entries, promote recurring patterns to principles, archive completed tasks >7 days in status.md, ensure MEMORY.md <=200 lines, check for contradictions. Write cleanup summary to memory/ log',
+    },
+  ];
+
+  const failedCronCmds = [];
+  for (const job of cronJobs) {
+    const cmdArgs = ['openclaw', 'cron', 'add', '--name', job.name, '--cron', job.cron, '--agent', job.agent, '--model', job.model, '--message', job.message];
+    const result = tryExec(cmdArgs);
+    if (result.ok) {
+      logOk(job.name);
+    } else {
+      failedCronCmds.push(cmdToString(cmdArgs));
+      logWarn(
+        `Failed: ${job.name}`,
+        `失敗：${job.name}`
+      );
+    }
+  }
+
+  log('');
+
+  // ============================================
+  // Summary
+  // ============================================
+  log('==========================================');
+  log(msg('  Installation complete!', '  安裝完成！'));
+  log('==========================================');
+  log('');
+  log(`  ${msg('Installed to', '安裝路徑')}：${INSTALL_DIR}`);
+  log(`  ${msg('Compatible with', '相容版本')}：OpenClaw >= ${REQUIRED_MIN_VERSION}`);
+  log('');
+  log(msg('  Architecture:', '  架構：'));
+  log(`  - ${msg('Company rules', '公司規範')}：${path.join(INSTALL_DIR, 'shared', 'company-rules.md')}`);
+  log(`  - ${msg('Tool policies', '工具策略')}：${path.join(INSTALL_DIR, 'shared', 'tools-policy.md')}`);
+  log(`  - ${msg('Each Agent loads rules at session start (runtime read)', '每個 Agent 在 session 啟動時載入規範（運行時讀取）')}`);
+  log(`  - ${msg('Settings injected into native openclaw.json (no symlink)', '設定已注入原生 openclaw.json（無 symlink）')}`);
+  log('');
+
+  // Show failed commands for manual execution
+  const allFailed = [...failedAgentCmds, ...failedBindCmds, ...failedCronCmds];
+  if (allFailed.length > 0) {
+    log(msg(
+      '  Some CLI commands failed. Run them manually:',
+      '  部分 CLI 指令執行失敗，請手動執行：'
+    ));
+    log('');
+    for (const cmd of allFailed) {
+      log(`  ${cmd}`);
+    }
+    log('');
+  }
+
+  // Unbound channels warning
+  const unboundChannels = channelsFound.filter(ch => {
+    // CEO should be bound to all, CAO to telegram:audit
+    return failedBindCmds.some(cmd => cmd.includes(ch));
+  });
+  if (unboundChannels.length > 0) {
+    logWarn(
+      `Some channels could not be auto-bound: ${unboundChannels.join(', ')}`,
+      `部分通道無法自動綁定：${unboundChannels.join(', ')}`
+    );
+    log(msg(
+      '  Bind manually: openclaw agents bind --agent <id> --bind <channel>',
+      '  手動綁定：openclaw agents bind --agent <id> --bind <channel>'
+    ));
+    log('');
+  }
+
+  log(msg('Next steps:', '下一步：'));
+  log('  1. openclaw gateway start');
+  log(msg(
+    '  2. Send a test message to CEO Bot via your configured platform',
+    '  2. 透過已配置的平台發送測試訊息給 CEO Bot'
+  ));
+  log('');
+  log(msg('Management:', '管理指令：'));
+  log(`  ${msg('Uninstall', '卸載')}：node install.js --uninstall`);
+  log(`  ${msg('Reinstall', '重新安裝')}：node install.js`);
+  log('');
+}
+
+main().catch((err) => {
+  console.error(`[FATAL] ${err.message}`);
+  process.exit(1);
+});
