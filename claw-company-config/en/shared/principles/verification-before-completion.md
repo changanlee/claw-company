@@ -24,3 +24,7 @@ Common examples:
 - Schedule confirmations
 - Audit findings
 - Any deliverable containing factual claims that must be verified
+
+## Relationship to CTO Iron Law
+
+The CTO development domain has a stricter, comprehensive version at `workspace-cto/rules/verification.md` (includes anti-rationalization table and red flag checklist). This principle is the company-wide simplified version.

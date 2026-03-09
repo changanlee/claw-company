@@ -74,6 +74,8 @@
 | 「這很急，先做再說」 | 急迫不等於可以跳過流程，錯誤比延遲更貴 |
 | 「上次查過了/記得結果」 | 記憶不是證據，重新查詢 |
 | 「這太小不用走流程」 | 規則已定義界線，你的判斷不能取代規則 |
+| 「這個情境不需要讀準則」 | 情境觸發表已定義界線，你的判斷不能取代觸發條件 |
+| 「準則我都知道了，不用再讀」 | 知道概念 ≠ 執行到位，每次重讀確保不遺漏 |
 
 「覺得不需要遵守規則」本身就是最大的紅旗。
 
@@ -97,3 +99,26 @@
 - 政策變更完成時 → policies/changelog.md（遵循三級通知機制）
 
 如果沒有觸發以上情境，不需要讀取 policies/ 目錄。
+
+## 營運準則觸發規則
+
+當你即將進入以下情境時，讀取對應的營運準則（位於 `{{INSTALL_DIR}}/shared/principles/`）：
+
+| 情境 | 讀取準則 |
+|------|----------|
+| 收到模糊需求、需要創意發想 | `brainstorming.md` |
+| 任務超過 2-3 步 | `writing-plans.md` |
+| 執行多步計畫 | `executing-plans.md` |
+| 多任務交叉進行 | `context-isolation.md` |
+| 定義新功能或新流程 | `define-success-first.md` |
+| 遇到異常或錯誤需要排查 | `systematic-problem-solving.md` |
+| 處理多個獨立子任務 | `parallel-dispatch.md` |
+| 委派任務給其他 Agent 或 Sub-Agent | `delegation-with-review.md` |
+| 重要產出完成待審 | `request-independent-review.md` |
+| 收到審查回饋或他人意見 | `receiving-feedback.md` |
+| 工作收尾、準備交付 | `structured-completion.md` |
+| 即將宣佈任務完成 | `verification-before-completion.md` |
+| 開始新任務前 | `check-for-process.md` |
+| 流程建議即將變成正式政策 | `test-before-codifying.md` |
+
+準則索引：`{{INSTALL_DIR}}/shared/principles/index.md`。如果不確定該讀哪條，先讀索引。

@@ -74,6 +74,8 @@ When you catch yourself thinking any of the following, that is your signal to fo
 | "This is urgent, just do it" | Urgency does not justify skipping process. Mistakes cost more than delays |
 | "I checked this before / remember the result" | Memory is not evidence. Re-verify |
 | "This is too small for the full process" | Rules define the boundaries, not your judgment |
+| "This situation doesn't need a principle" | The trigger table defines boundaries, not your judgment |
+| "I already know the principle, no need to re-read" | Knowing the concept ≠ executing it; re-read to ensure nothing is missed |
 
 "Feeling like you don't need to follow the rules" is the biggest red flag of all.
 
@@ -97,3 +99,26 @@ Before executing any of the following operations, you must first read the corres
 - Upon completing a policy change -> policies/changelog.md (follow the three-tier notification mechanism)
 
 If none of the above contexts are triggered, there is no need to read the policies/ directory.
+
+## Operating Principles Trigger Rules
+
+When you are about to enter any of the following contexts, read the corresponding operating principle (located at `{{INSTALL_DIR}}/shared/principles/`):
+
+| Context | Read Principle |
+|---------|---------------|
+| Receiving vague requirements, need creative exploration | `brainstorming.md` |
+| Task involves more than 2-3 steps | `writing-plans.md` |
+| Executing a multi-step plan | `executing-plans.md` |
+| Multiple tasks running in parallel | `context-isolation.md` |
+| Defining a new feature or process | `define-success-first.md` |
+| Encountering anomalies or errors to troubleshoot | `systematic-problem-solving.md` |
+| Handling multiple independent subtasks | `parallel-dispatch.md` |
+| Delegating tasks to other Agents or Sub-Agents | `delegation-with-review.md` |
+| Important deliverable ready for review | `request-independent-review.md` |
+| Receiving review feedback or opinions | `receiving-feedback.md` |
+| Wrapping up work, preparing for delivery | `structured-completion.md` |
+| About to claim task completion | `verification-before-completion.md` |
+| Starting a new task | `check-for-process.md` |
+| A process suggestion is about to become formal policy | `test-before-codifying.md` |
+
+Principles index: `{{INSTALL_DIR}}/shared/principles/index.md`. When unsure which to read, check the index first.
