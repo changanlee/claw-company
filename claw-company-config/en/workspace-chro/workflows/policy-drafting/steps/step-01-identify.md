@@ -20,6 +20,10 @@ Confirm the type of policy need and its trigger reason, and define the policy sc
 - 🚫 Do not pre-read subsequent steps
 - 🚫 Do not skip steps
 
+## Reference Principle
+
+Read `{{INSTALL_DIR}}/shared/principles/test-before-codifying.md` — Validate policies on a small scale first; formalize only after confirming effectiveness.
+
 ## Instructions
 
 ### 1. Confirm Need Type

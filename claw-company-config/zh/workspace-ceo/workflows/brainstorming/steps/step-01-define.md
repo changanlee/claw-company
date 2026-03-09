@@ -20,6 +20,10 @@ template: null
 - 🚫 不預讀後續步驟
 - 🚫 不跳步
 
+## 參考原則
+
+讀取 `{{INSTALL_DIR}}/shared/principles/brainstorming.md` — 行動前先釐清問題，探索多種可能性再收斂。
+
 ## 執行指令
 
 ### 1. 議題定義

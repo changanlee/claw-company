@@ -1,6 +1,56 @@
 # Approval Authority Matrix
 
+## Multi-Dimensional Risk Assessment
+
+Approval level = **highest level across all four dimensions** (if any dimension is red, overall is red).
+
+### Dimension 1: Financial Risk
+
+| Level | Condition |
+|-------|-----------|
+| 🟢 Green | No spending, or < $10 |
+| 🟡 Yellow | $10 – $50 |
+| 🔴 Red | > $50 |
+
+### Dimension 2: Reversibility Risk
+
+| Level | Condition |
+|-------|-----------|
+| 🟢 Green | Fully reversible, no loss |
+| 🟡 Yellow | Reversible with partial loss (cancellation fee, processing fee) |
+| 🔴 Red | Irreversible or extremely high reversal cost |
+
+### Dimension 3: Agency Risk
+
+| Level | Condition |
+|-------|-----------|
+| 🟢 Green | Internal operations only (recording, analysis, search) |
+| 🟡 Yellow | Acting on Chairman's behalf externally (reservations, registrations) without commitment |
+| 🔴 Red | External communication, commitments, or agreements on Chairman's behalf |
+
+### Dimension 4: Time Sensitivity Risk
+
+| Level | Condition |
+|-------|-----------|
+| 🟢 Green | Can be modified anytime, no deadline |
+| 🟡 Yellow | Has deadline but > 24 hours away |
+| 🔴 Red | Takes effect immediately or deadline < 24 hours |
+
+### Assessment Examples
+
+| Scenario | Financial | Reversibility | Agency | Time | **Final Level** |
+|----------|-----------|---------------|--------|------|-----------------|
+| Search for restaurant info | 🟢 | 🟢 | 🟢 | 🟢 | **🟢 Green** |
+| Recommend $30 restaurant + reserve | 🟡 | 🟡 | 🟡 | 🟢 | **🟡 Yellow** |
+| Book tomorrow's $200 flight | 🔴 | 🟡 | 🔴 | 🔴 | **🔴 Red** |
+| Reply to friend's invitation | 🟢 | 🔴 | 🔴 | 🟡 | **🔴 Red** |
+| Record today's expenses | 🟢 | 🟢 | 🟢 | 🟢 | **🟢 Green** |
+
+---
+
 ## Three-Tier Approval System
+
+> The quick-reference tables below list default levels for common operations. For scenarios not listed, use the multi-dimensional assessment framework above.
 
 ### Green Light — Auto-Execute (No Approval Needed)
 

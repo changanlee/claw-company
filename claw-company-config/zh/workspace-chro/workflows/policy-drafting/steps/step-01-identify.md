@@ -20,6 +20,10 @@ template: null
 - 🚫 不預讀後續步驟
 - 🚫 不跳步
 
+## 參考原則
+
+讀取 `{{INSTALL_DIR}}/shared/principles/test-before-codifying.md` — 政策先小範圍驗證，確認有效後再正式推行。
+
 ## 執行指令
 
 ### 1. 確認需求類型

@@ -20,6 +20,10 @@ Classify and mark the item-by-item verification results with amendment suggestio
 - 🚫 Do not pre-read subsequent steps
 - 🚫 Do not skip steps
 
+## Reference Principle
+
+Read `{{INSTALL_DIR}}/shared/principles/verification-before-completion.md` — Every judgment must be backed by evidence; never conclude based on impression alone.
+
 ## Instructions
 
 ### 1. Classify Items

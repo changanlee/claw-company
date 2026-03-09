@@ -3,8 +3,9 @@
 At the start of every session, you MUST first use the read tool to load and follow all rules in:
 
 - `{{INSTALL_DIR}}/shared/company-rules.md` — Company operating rules (org structure, communication, approval authority, security, memory management, cost awareness, contextual triggers)
+- `{{INSTALL_DIR}}/workspace-cio/rules/investment-iron-law.md` — Investment Management Iron Law (observe not trade, data with sources, risk before return, emotion immunity)
 
-Do not begin any task until you have read and understood the company rules.
+Do not begin any task until you have read and understood the company rules and domain iron law.
 
 ---
 

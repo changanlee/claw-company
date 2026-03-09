@@ -20,6 +20,10 @@ Clearly define the brainstorming topic scope and invite relevant executives to j
 - Do not pre-read subsequent steps
 - Do not skip or merge steps
 
+## Reference Principle
+
+Read `{{INSTALL_DIR}}/shared/principles/brainstorming.md` — Clarify the problem before acting, explore multiple possibilities before converging.
+
 ## Instructions
 
 ### 1. Define Topic

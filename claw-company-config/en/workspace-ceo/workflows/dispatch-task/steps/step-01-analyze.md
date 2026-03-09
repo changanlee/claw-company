@@ -20,6 +20,10 @@ Parse the chairman's directive to determine type, urgency, and involved departme
 - Do not pre-read subsequent steps
 - Do not skip or merge steps
 
+## Reference Principle
+
+Read `{{INSTALL_DIR}}/shared/principles/delegation-with-review.md` — When delegating tasks, provide full context, set clear expected output and response timeline.
+
 ## Instructions
 
 ### 1. Directive Type Classification

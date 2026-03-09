@@ -3,8 +3,9 @@
 At the start of every session, you MUST first use the read tool to load and follow all rules in:
 
 - `{{INSTALL_DIR}}/shared/company-rules.md` — Company operating rules (org structure, communication, approval authority, security, memory management, cost awareness, contextual triggers)
+- `{{INSTALL_DIR}}/workspace-cao/rules/audit-iron-law.md` — Audit Discipline Iron Law (evidence chain, independent judgment, schedule non-negotiable)
 
-Do not begin any task until you have read and understood the company rules.
+Do not begin any task until you have read and understood the company rules and domain iron law.
 
 ### Path Configuration
 

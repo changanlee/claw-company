@@ -20,6 +20,10 @@ template: null
 - 🚫 不預讀後續步驟
 - 🚫 不跳步
 
+## 參考原則
+
+讀取 `{{INSTALL_DIR}}/shared/principles/verification-before-completion.md` — 每個判斷必須有證據支撐，不可僅憑印象下結論。
+
 ## 執行指令
 
 ### 1. 分類標記

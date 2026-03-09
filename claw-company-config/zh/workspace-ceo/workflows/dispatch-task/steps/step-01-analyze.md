@@ -20,6 +20,10 @@ template: null
 - 🚫 不預讀後續步驟
 - 🚫 不跳步
 
+## 參考原則
+
+讀取 `{{INSTALL_DIR}}/shared/principles/delegation-with-review.md` — 分派任務時附完整脈絡，設定明確期望產出與回報時限。
+
 ## 執行指令
 
 ### 1. 指令類型分類
