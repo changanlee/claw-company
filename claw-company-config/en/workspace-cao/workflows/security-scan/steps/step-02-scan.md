@@ -46,7 +46,14 @@ Analyze each Agent's recent behavior logs:
 - Operations outside role responsibilities
 - Red-level operations without proper approval
 
-### 4. Record Findings
+### 4. Global Skill Scan
+
+List all installed Skills in `~/.openclaw/skills/` and compare against all registered names in `{{INSTALL_DIR}}/skill-allowlist.json`:
+
+- **Unregistered Skills** (present in directory but not in any agent's allowlist) → record as finding, recommend following `policies/skill-development.md` approval process
+- **Skills in allowlist but missing from directory** (Skill uninstalled or removed but allowlist not updated) → record as configuration inconsistency
+
+### 5. Record Findings
 
 Record all findings (both normal and abnormal) as a scan results list for the next step's assessment.
 
@@ -55,6 +62,7 @@ Record all findings (both normal and abnormal) as a scan results list for the ne
 - [ ] Completed SOUL.md tampering check for all Agents
 - [ ] Completed prompt injection detection
 - [ ] Completed abnormal behavior detection
+- [ ] Completed global Skill scan
 - [ ] Recorded all findings
 
 ## Next Step

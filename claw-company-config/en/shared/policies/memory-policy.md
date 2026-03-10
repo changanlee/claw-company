@@ -27,6 +27,7 @@
 ### Layer 3: LanceDB (Cold Memory) — memory-lancedb-pro Plugin
 - **Load timing**: autoRecall automatically injects relevant memories at session start (up to 3 entries)
 - **Writer**: autoCapture automatically captures and settles memories at agent_end; Agents do not need to write manually
+- **Settling granularity**: At each session end, the plugin automatically extracts key summaries (decisions, errors and solutions, important discoveries) from the conversation, not the raw conversation transcript. Settling is handled by the plugin's built-in summarization mechanism; Agents do not need to intervene
 - **Content**: Conversation context, errors and solutions, discussion threads, historical experience
 - **Role**: Automatic settling pool (supplementary layer, not source of truth)
 - **Capacity**: Unlimited
@@ -109,7 +110,7 @@ When a `[FEATURE-REQ]` recurs 2+ times, notify CHRO to assess whether a new Skil
 - On the first day of each month, CHRO reviews the health of each Agent's MEMORY.md and LanceDB cold layer statistics (`memory stats`)
 - memory/ logs older than 30 days are moved to archive (or deleted, depending on data value)
 - For duplicate or contradictory memory entries, the newer entry takes precedence
-- The cold layer is automatically managed by Time Decay + access reinforcement; CHRO monitors autoRecall hit rate as a signal-to-noise ratio metric
+- The cold layer is automatically managed by Time Decay + access reinforcement; CHRO monitors autoRecall hit rate as a signal-to-noise ratio metric (obtained via the `memory stats` command and recorded in CHRO's monthly report)
 
 ## Contingency & Rollback
 

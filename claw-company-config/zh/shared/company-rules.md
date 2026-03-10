@@ -48,6 +48,8 @@
 - 需要通知其他 Agent → 寫入 `output/` 檔案，由目標 Agent 的 heartbeat 掃描
 - 需要收集其他 Agent 資訊 → 直接讀取目標 Agent 的 `MEMORY.md` 和 `output/` 檔案
 
+**Cron 環境限制**：Cron 無法即時推送緊急通知。若 Cron 任務發現 P0 等級事件，應寫入 `output/URGENT-<timestamp>.md` 標記檔案，CAO heartbeat 優先掃描 URGENT 前綴檔案以縮短回應時間。
+
 ## 核決權限（情境觸發時請讀取 policies/approval-matrix.md）
 
 - 綠燈（自動執行）：資料收集、記錄、內部日誌、例行心跳巡視

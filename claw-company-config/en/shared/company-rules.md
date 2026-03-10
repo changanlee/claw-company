@@ -48,6 +48,8 @@ Choose the correct communication method based on your execution environment:
 - Need to notify another Agent → write to `output/` files; target Agent's heartbeat scans for them
 - Need to collect info from other Agents → directly read their `MEMORY.md` and `output/` files
 
+**Cron environment limitation**: Cron cannot push urgent notifications in real-time. If a cron task discovers a P0-level event, it should write an `output/URGENT-<timestamp>.md` marker file. CAO heartbeat prioritizes scanning URGENT-prefixed files to reduce response time.
+
 ## Approval Authority (Read policies/approval-matrix.md when triggered)
 
 - Green Light (Auto-execute): Data collection, logging, internal journals, routine heartbeat checks

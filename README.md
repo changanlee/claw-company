@@ -158,6 +158,16 @@ graph LR
 | Warm | memory/*.md | Daily logs, topics, decisions |
 | Cold | Vector Search | LanceDB + BM25 hybrid search (memory-lancedb-pro) |
 
+#### Skill Management
+
+Each agent has a per-agent **skill allowlist** (`skill-allowlist.json`) that controls which OpenClaw Skills it can access. Policy-sensitive agents (CHRO, CAO) are fully blocked with empty arrays.
+
+New skills must pass a security review (CTO) and compliance check (CAO) before deployment — installing external skills is a red-light action requiring Chairman approval.
+
+#### Post-Compaction Survival
+
+When OpenClaw compresses context, the system re-injects critical sections from each agent's `AGENTS.md` — specifically the **Session Startup** and **Red Lines** headings (< 3000 chars each). This ensures safety rules survive context compression.
+
 #### Other Principles
 
 | Principle | Description |
@@ -171,7 +181,7 @@ graph LR
 
 #### Prerequisites
 
-- [OpenClaw](https://github.com/openclaw/openclaw) >= 2026.3.7
+- [OpenClaw](https://github.com/openclaw/openclaw) >= 2026.3.8
 - At least one LLM API Key configured in OpenClaw (Anthropic recommended)
 - A messaging platform Bot Token (Telegram recommended; WhatsApp/Discord also supported)
 - [Node.js](https://nodejs.org/) >= 18
@@ -200,6 +210,8 @@ The installer will interactively guide you through:
 - Deploying workspace files to `~/.openclaw/claw-company/`
 - Injecting agent configurations into your native OpenClaw setup
 - Registering all 7 agents and 6 cron schedules
+- Installing memory-lancedb-pro plugin (optional, `--skip-memory-plugin` to skip)
+- Injecting per-agent skill allowlist from `skill-allowlist.json`
 
 #### Step 4 — Start
 
@@ -210,6 +222,12 @@ openclaw gateway start
 #### Step 5 — Test
 
 Send a message to your CEO Bot via Telegram, e.g., "Hello, please introduce yourself."
+
+For automated validation:
+
+```bash
+node tests/smoke-test.js
+```
 
 ### Agent ID Reference
 
@@ -255,6 +273,8 @@ The installer reads available models and lets you assign them to two tiers:
 
 **Upgrade**: Re-run `node install.js`. The following data is preserved automatically: `MEMORY.md`, `output/`, `auth-profiles.json`.
 
+**Update skills only**: Run `node install.js --update-skills` to update the skill allowlist without re-deploying workspace files.
+
 **Uninstall**: Run `node install.js --uninstall` to remove installed files at `~/.openclaw/claw-company/`.
 
 ### Project Structure
@@ -263,6 +283,11 @@ The installer reads available models and lets you assign them to two tiers:
 claw-company/
 ├── claw-company-config/           # OpenClaw deployment configuration
 │   ├── install.js                 # Cross-platform deployment script (Node.js)
+│   ├── skill-allowlist.json       # Per-agent skill access control
+│   ├── tests/                     # Smoke tests & verification plans
+│   │   ├── smoke-test.js          # Automated validation (9 test suites)
+│   │   ├── VERIFICATION-PLAN.md   # Manual verification checklist
+│   │   └── MVP-PLAYBOOK.md        # End-to-end validation playbook
 │   ├── en/                        # English version
 │   └── zh/                        # Chinese version
 │       ├── shared/                # Shared policies & rules across all agents
@@ -271,10 +296,10 @@ claw-company/
 │       │   ├── brain-methods.csv  # 60 brainstorming techniques
 │       │   ├── USER.md            # Chairman preferences
 │       │   ├── policies/          # On-demand policy files
+│       │   ├── principles/        # 15 engineering principles (context-triggered)
 │       │   ├── standards/         # Format standards (agent, workflow)
 │       │   ├── tasks/             # 8 shared task descriptions
 │       │   └── setup-guides/      # Database & plugin setup guides
-│       ├── skills/                # Custom OpenClaw Skills per agent
 │       └── workspace-{agent}/     # Per-agent workspace
 │           ├── IDENTITY.md        # Role identity
 │           ├── SOUL.md            # Role personality & boundaries
@@ -282,6 +307,7 @@ claw-company/
 │           ├── TOOLS.md           # Tool policies + domain operations
 │           ├── HEARTBEAT.md       # Heartbeat logic
 │           ├── MEMORY.md          # Hot memory (200-line cap)
+│           ├── rules/             # Iron laws (per agent)
 │           ├── workflows/         # Structured workflows
 │           ├── templates/         # Output templates
 │           └── output/            # Agent work output (preserved on upgrade)
@@ -455,6 +481,16 @@ graph LR
 | 溫 | memory/*.md | 日誌、主題、決策 |
 | 冷 | 向量搜尋 | LanceDB + BM25 混合搜尋（memory-lancedb-pro） |
 
+#### Skill 管理
+
+每個 Agent 擁有獨立的 **Skill 白名單**（`skill-allowlist.json`），控制可存取的 OpenClaw Skill。政策敏感角色（CHRO、CAO）以空陣列完全封鎖。
+
+新 Skill 必須通過安全審查（CTO）和合規覆核（CAO）才能部署——安裝外部 Skill 是紅燈操作，需董事長核決。
+
+#### Post-Compaction 存活設計
+
+當 OpenClaw 壓縮 context 時，系統會從每個 Agent 的 `AGENTS.md` 重新注入關鍵段落——特別是**啟動必讀**和**安全紅線**（各 < 3000 字元）。確保安全規則在 context 壓縮後仍然存活。
+
 #### 其他原則
 
 | 原則 | 說明 |
@@ -468,7 +504,7 @@ graph LR
 
 #### 前置條件
 
-- 已安裝 [OpenClaw](https://github.com/openclaw/openclaw) >= 2026.3.7
+- 已安裝 [OpenClaw](https://github.com/openclaw/openclaw) >= 2026.3.8
 - 至少一組已在 OpenClaw 中配置的 LLM API Key（推薦 Anthropic）
 - 一組通訊平台 Bot Token（推薦 Telegram；WhatsApp / Discord 也支援）
 - [Node.js](https://nodejs.org/) >= 18
@@ -497,6 +533,8 @@ node install.js
 - 部署 workspace 檔案到 `~/.openclaw/claw-company/`
 - 注入 Agent 設定到你的原生 OpenClaw 配置
 - 註冊全部 7 個 Agent 和 6 個排程任務
+- 安裝 memory-lancedb-pro 插件（可選，`--skip-memory-plugin` 跳過）
+- 注入各 Agent 的 Skill 白名單（來自 `skill-allowlist.json`）
 
 #### 步驟四 — 啟動
 
@@ -507,6 +545,12 @@ openclaw gateway start
 #### 步驟五 — 測試
 
 透過 Telegram 向 CEO Bot 發送訊息，例如：「你好，請自我介紹。」
+
+自動化驗證：
+
+```bash
+node tests/smoke-test.js
+```
 
 ### Agent ID 對照表
 
@@ -552,6 +596,8 @@ openclaw gateway start
 
 **升級**：重新執行 `node install.js`。以下資料會自動保留：`MEMORY.md`、`output/`、`auth-profiles.json`。
 
+**僅更新 Skill 白名單**：執行 `node install.js --update-skills`，只更新 Skill 白名單，不重跑完整安裝。
+
 **移除**：執行 `node install.js --uninstall`，移除安裝在 `~/.openclaw/claw-company/` 的檔案。
 
 ### 專案結構
@@ -560,6 +606,11 @@ openclaw gateway start
 claw-company/
 ├── claw-company-config/           # OpenClaw 部署配置
 │   ├── install.js                 # 跨平台部署腳本（Node.js）
+│   ├── skill-allowlist.json       # 各 Agent Skill 存取控制
+│   ├── tests/                     # 煙霧測試與驗證計畫
+│   │   ├── smoke-test.js          # 自動化驗證（9 個測試套件）
+│   │   ├── VERIFICATION-PLAN.md   # 手動驗證清單
+│   │   └── MVP-PLAYBOOK.md        # 端對端驗證劇本
 │   ├── en/                        # 英文版
 │   └── zh/                        # 中文版
 │       ├── shared/                # 跨 Agent 共用政策與規範
@@ -568,10 +619,10 @@ claw-company/
 │       │   ├── brain-methods.csv  # 60 個腦力激盪技法
 │       │   ├── USER.md            # 董事長偏好
 │       │   ├── policies/          # 按需載入政策文件
+│       │   ├── principles/        # 15 個工程原則（情境觸發）
 │       │   ├── standards/         # 格式標準（Agent、工作流程）
 │       │   ├── tasks/             # 8 個共用任務描述
 │       │   └── setup-guides/      # 資料庫與插件安裝指南
-│       ├── skills/                # 自定義 OpenClaw Skill（各 Agent 專用）
 │       └── workspace-{agent}/     # 各 Agent 工作區
 │           ├── IDENTITY.md        # 角色身份
 │           ├── SOUL.md            # 角色人格與邊界
@@ -579,6 +630,7 @@ claw-company/
 │           ├── TOOLS.md           # 工具規範 + 領域操作
 │           ├── HEARTBEAT.md       # 心跳巡檢邏輯
 │           ├── MEMORY.md          # 熱記憶（上限 200 行）
+│           ├── rules/             # 鐵律（各角色）
 │           ├── workflows/         # 結構化工作流程
 │           ├── templates/         # 產出範本
 │           └── output/            # Agent 工作產出（升級時保留）

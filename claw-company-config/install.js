@@ -943,6 +943,11 @@ async function main() {
         fs.copyFileSync(existingAuthFile, dst);
       }
     }
+  } else {
+    logWarn(
+      'No auth-profiles.json found — agents will use default authentication. Run `openclaw auth` to configure.',
+      '未找到 auth-profiles.json — Agent 將使用預設驗證。執行 `openclaw auth` 進行設定。'
+    );
   }
 
   log('');

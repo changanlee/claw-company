@@ -94,3 +94,5 @@ Approval level = **highest level across all four dimensions** (if any dimension 
 If the situation is urgent and Chairman cannot be reached immediately (no response after 30 minutes of waiting):
 - CEO may temporarily approve yellow-light items, with post-hoc reporting
 - Red-light items have no exceptions — Chairman approval must be awaited
+
+**Post-hoc reporting procedure**: Within 30 minutes of Chairman becoming available, CEO submits a post-hoc report (including: temporarily approved items, approval rationale, timestamps), recorded in policies/changelog.md. CAO verifies report completeness during the next heartbeat.

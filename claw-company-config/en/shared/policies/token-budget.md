@@ -24,7 +24,7 @@
 
 - CFO compiles weekly token usage statistics (if OpenClaw provides usage data)
 - If any Agent's daily token usage exceeds 3x the daily average, notify CEO to investigate the cause
-- When sub-agent spawn count is abnormal (more than 5 per single task), CTO must explain the reason
+- Sub-Agent spawn anomalies monitored by CAO heartbeat (lean workflow ≤ 4 / full workflow ≤ 12, exceeding notifies CEO)
 
 ## Budget Allocation Ratios (#49)
 

@@ -19,6 +19,9 @@ CLAUDE.md
 # Snapshot (auto-generated)
 SNAPSHOT.md
 
+# Temporary mermaid diagrams
+.tmp-mermaid/
+
 # Local tools
 tools/
 

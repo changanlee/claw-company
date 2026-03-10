@@ -7,7 +7,7 @@
 
 ## 前置條件
 
-- [ ] OpenClaw >= 2026.3.7 已安裝
+- [ ] OpenClaw >= 2026.3.8 已安裝
 - [ ] 至少一個通道已設定（Telegram 或其他）
 - [ ] 至少一個模型已設定（smart/fast）
 - [ ] `node install.js` 成功執行
@@ -147,6 +147,24 @@ node tests/smoke-test.js --test cron-jobs
 
 ---
 
+## 測試 8：Skill Allowlist 驗證
+
+**驗證目標**：per-agent skill 白名單正確注入且隔離有效
+
+```bash
+node tests/smoke-test.js --test skill-allowlist
+```
+
+**手動驗證方式**：
+1. 確認 `skill-allowlist.json` 中 7 個 Agent 均有定義
+2. 確認 CHRO 和 CAO 為空陣列（完全封鎖）
+3. 確認 openclaw.json 的 `agents.list` 中每個 Agent 都有 `skills` 欄位
+4. 手動對 CAO 說「使用 github skill」→ 應被拒絕
+
+**預期結果**：skill 路由按 `skill-allowlist.json` 定義生效，封鎖的 Agent 無法使用 skill
+
+---
+
 ## 結果記錄模板
 
 | 測試 | 結果 | 備註 | 日期 |
@@ -158,6 +176,7 @@ node tests/smoke-test.js --test cron-jobs
 | T5 Heartbeat | | | |
 | T6 Timeout 驗證 | | | |
 | T7 Cron 排程 | | | |
+| T8 Skill Allowlist | | | |
 
 ---
 

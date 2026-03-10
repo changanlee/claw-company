@@ -24,7 +24,7 @@
 
 - CFO 每週統計 Token 使用量（如 OpenClaw 提供用量數據）
 - 如某 Agent 單日 Token 使用量超過日均 3 倍，通知 CEO 調查原因
-- Sub-Agent spawn 數量異常（單任務超過 5 個）時，CTO 需說明原因
+- Sub-Agent spawn 數量異常時，由 CAO heartbeat 監控（精簡流程 ≤ 4 / 完整流程 ≤ 12，超限通知 CEO）
 
 ## 預算分配比例（#49）
 

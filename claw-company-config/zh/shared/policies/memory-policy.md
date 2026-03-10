@@ -27,6 +27,7 @@
 ### 第三層：LanceDB（冷記憶）— memory-lancedb-pro 插件
 - **載入時機**：autoRecall 在 session 開始時自動注入相關記憶（最多 3 條）
 - **寫入者**：autoCapture 在 agent_end 自動沉澱，Agent 不需手動操作
+- **沉澱粒度**：每次 session 結束時，插件自動擷取對話中的關鍵摘要（決策、錯誤與解法、重要發現），而非整段對話原文。沉澱由插件內建的摘要機制處理，Agent 無需介入
 - **內容**：對話語境、錯誤與解法、討論脈絡、歷史經驗
 - **角色**：自動沉澱池（補充層，非 source of truth）
 - **容量**：無限制
@@ -109,7 +110,7 @@
 - 每月第一天，CHRO 審視各 Agent 的 MEMORY.md 健康度及 LanceDB 冷層統計（`memory stats`）
 - 超過 30 天的 memory/ 日誌，移至歸檔（或刪除，視資料價值而定）
 - 重複或矛盾的記憶條目，以較新的為準
-- 冷層由 Time Decay + 存取強化自動管理，CHRO 監控 autoRecall 命中率作為信噪比指標
+- 冷層由 Time Decay + 存取強化自動管理，CHRO 監控 autoRecall 命中率作為信噪比指標（透過 `memory stats` 指令取得，記錄於 CHRO 月報中）
 
 ## 備案與回退
 

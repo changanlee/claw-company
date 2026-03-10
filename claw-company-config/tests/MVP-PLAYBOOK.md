@@ -10,7 +10,7 @@
 
 ```bash
 # 1. 確認 OpenClaw 版本
-openclaw --version    # 需要 >= 2026.3.7
+openclaw --version    # 需要 >= 2026.3.8
 
 # 2. 確認通道已設定
 openclaw channels list

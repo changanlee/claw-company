@@ -3,6 +3,7 @@
 // Claw Company — OpenClaw Smoke Test
 // 驗證安裝完整性和基本功能
 // 來源：2026-03-09 Party Mode 架構審查
+// 更新：2026-03-10 Skill 管理 + 屬性路徑修正
 // ============================================
 
 'use strict';
@@ -346,19 +347,29 @@ function testOpenclawJson() {
   // Check key injected settings
   const checks = [
     {
-      path: 'agents.defaults.subAgents.maxSpawnDepth',
+      path: 'agents.defaults.subagents.maxSpawnDepth',
       expected: 2,
-      get: () => config?.agents?.defaults?.subAgents?.maxSpawnDepth,
+      get: () => config?.agents?.defaults?.subagents?.maxSpawnDepth,
     },
     {
-      path: 'agents.defaults.subAgents.maxChildrenPerAgent',
+      path: 'agents.defaults.subagents.maxChildrenPerAgent',
       expected: 10,
-      get: () => config?.agents?.defaults?.subAgents?.maxChildrenPerAgent,
+      get: () => config?.agents?.defaults?.subagents?.maxChildrenPerAgent,
     },
     {
-      path: 'agents.defaults.loopDetection.enabled',
+      path: 'agents.defaults.subagents.runTimeoutSeconds',
+      expected: 900,
+      get: () => config?.agents?.defaults?.subagents?.runTimeoutSeconds,
+    },
+    {
+      path: 'tools.loopDetection.enabled',
       expected: true,
-      get: () => config?.agents?.defaults?.loopDetection?.enabled,
+      get: () => config?.tools?.loopDetection?.enabled,
+    },
+    {
+      path: 'tools.agentToAgent.enabled',
+      expected: true,
+      get: () => config?.tools?.agentToAgent?.enabled,
     },
     {
       path: 'hooks.internal.enabled',
@@ -435,21 +446,14 @@ function testContextSize() {
   const ctoDir = path.join(INSTALL_DIR, langDir, 'workspace-cto');
 
   // Files auto-injected to Sub-Agent (promptMode=minimal)
+  // 研究結論：只注入 AGENTS.md + TOOLS.md，SOUL/IDENTITY/USER/HEARTBEAT/MEMORY 不注入
   const autoInjected = {
     'AGENTS.md': path.join(ctoDir, 'AGENTS.md'),
     'TOOLS.md': path.join(ctoDir, 'TOOLS.md'),
-    'SOUL.md': path.join(ctoDir, 'SOUL.md'),
-    'IDENTITY.md': path.join(ctoDir, 'IDENTITY.md'),
   };
 
-  // USER.md from shared
-  const userMd = path.join(INSTALL_DIR, langDir, 'shared', 'USER.md');
-  if (fs.existsSync(userMd)) {
-    autoInjected['USER.md'] = userMd;
-  }
-
   let autoTotal = 0;
-  console.log('\n  自動注入檔案（bootstrapMaxChars 上限 20,000）:');
+  console.log('\n  自動注入檔案（promptMode=minimal，僅 AGENTS.md + TOOLS.md）:');
   for (const [name, filePath] of Object.entries(autoInjected)) {
     if (fs.existsSync(filePath)) {
       const size = fs.statSync(filePath).size;
@@ -596,6 +600,87 @@ function testPostCompactionHeadings() {
 }
 
 // ============================================
+// Test 9: Per-Agent Skill Allowlist Validation
+// ============================================
+function testSkillAllowlist() {
+  heading('Test 9: Skill Allowlist 驗證');
+
+  // Check skill-allowlist.json source file
+  const skillAllowlistPath = path.join(__dirname, '..', 'skill-allowlist.json');
+  if (!fs.existsSync(skillAllowlistPath)) {
+    fail('skill-allowlist.json 不存在');
+    return;
+  }
+
+  let allowlist;
+  try {
+    allowlist = JSON.parse(fs.readFileSync(skillAllowlistPath, 'utf-8'));
+  } catch (e) {
+    fail(`skill-allowlist.json 解析失敗: ${e.message}`);
+    return;
+  }
+  ok('skill-allowlist.json 解析成功');
+
+  // Validate all agents are covered
+  for (const agent of AGENTS) {
+    const agentId = `${AGENT_PREFIX}${agent}`;
+    if (allowlist[agentId] === undefined) {
+      fail(`${agentId} 未在 skill-allowlist.json 中定義`);
+    } else if (Array.isArray(allowlist[agentId])) {
+      ok(`${agentId}: ${allowlist[agentId].length === 0 ? '[] (封鎖)' : allowlist[agentId].join(', ')}`);
+    } else {
+      fail(`${agentId} 的值不是陣列`);
+    }
+  }
+
+  // Validate CHRO and CAO are blocked (empty array)
+  if (Array.isArray(allowlist['cc-chro']) && allowlist['cc-chro'].length === 0) {
+    ok('cc-chro 正確封鎖（空陣列）');
+  } else {
+    fail('cc-chro 應為空陣列（完全封鎖）');
+  }
+
+  if (Array.isArray(allowlist['cc-cao']) && allowlist['cc-cao'].length === 0) {
+    ok('cc-cao 正確封鎖（空陣列）');
+  } else {
+    fail('cc-cao 應為空陣列（完全封鎖）');
+  }
+
+  // Check injection into openclaw.json
+  const jsonPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
+  if (!fs.existsSync(jsonPath)) {
+    skip('openclaw.json 不存在，跳過注入驗證');
+    return;
+  }
+
+  try {
+    const raw = fs.readFileSync(jsonPath, 'utf-8');
+    const stripped = raw.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    const config = JSON.parse(stripped);
+    const agentList = config?.agents?.list || [];
+
+    let injectedCount = 0;
+    for (const agent of AGENTS) {
+      const agentId = `${AGENT_PREFIX}${agent}`;
+      const entry = agentList.find(a => a.id === agentId);
+      if (entry && Array.isArray(entry.skills)) {
+        injectedCount++;
+      }
+    }
+
+    if (injectedCount === AGENTS.length) {
+      ok(`openclaw.json 中 ${injectedCount}/${AGENTS.length} 個 Agent 已注入 skills`);
+    } else if (injectedCount > 0) {
+      fail(`openclaw.json 中只有 ${injectedCount}/${AGENTS.length} 個 Agent 已注入 skills`);
+    } else {
+      fail('openclaw.json 中沒有 Agent 被注入 skills（未執行 install.js？）');
+    }
+  } catch (e) {
+    skip(`openclaw.json 解析失敗: ${e.message}`);
+  }
+}
+
+// ============================================
 // Main
 // ============================================
 function main() {
@@ -605,7 +690,7 @@ function main() {
 
   console.log('╔══════════════════════════════════════════════════════════╗');
   console.log('║     Claw Company — OpenClaw Smoke Test                  ║');
-  console.log('║     Party Mode 架構審查驗證 (2026-03-09)               ║');
+  console.log('║     架構審查驗證 (2026-03-10)                          ║');
   console.log('╚══════════════════════════════════════════════════════════╝');
   console.log(`\n安裝目錄: ${INSTALL_DIR}`);
   console.log(`測試時間: ${new Date().toISOString()}`);
@@ -650,6 +735,7 @@ function main() {
       skip('手動測試 — 請在 gateway 運行時執行以上步驟');
     },
     'compaction-headings': testPostCompactionHeadings,
+    'skill-allowlist': testSkillAllowlist,
     'subagent-spawn': () => {
       heading('Test: Sub-Agent Spawn 全流程（需手動驗證）');
       info('此測試需要在 OpenClaw gateway 運行時手動執行');

@@ -24,17 +24,18 @@ Based on the requirement's complexity and risk, determine whether to follow the 
 
 ### 1. Assess Requirement Scale
 
-Based on the technical design document, assess complexity and recommend a workflow to the Chairman:
+Based on the technical design document, assess complexity and recommend a workflow to the superior (CEO or Chairman, depending on session source):
 
-> "For this requirement, I recommend the **lean/full** workflow. Which would you prefer?"
+> "For this requirement, I recommend the **lean/full** workflow, estimating N engineer spawns."
 
 ### 2. Lean Workflow
 
 Applicable to: Small features, bug fixes, straightforward tasks.
 
 - Skip PRD and architecture design phases.
-- Atlas directly breaks down tasks and dispatches.
+- CTO directly breaks down tasks and dispatches.
 - Subsequent Step 3 follows lean path, Step 5 follows lean review.
+- **Spawn limit: 4** (Dev + CR + rework + buffer)
 
 ### 3. Full Workflow
 
@@ -42,16 +43,17 @@ Applicable to: Complex products, multi-component systems, new architectures, hig
 
 - Execute full PRD → Architecture Design → Task Breakdown → Development → Review.
 - Subsequent Step 3 follows full path, Step 5 follows full review.
+- **Spawn limit: 12** (PM + Architect + SM + readiness + Dev + SR + CR + TEA + rework)
 
 ### 4. Record Decision
 
-Record the workflow choice (lean/full) for subsequent steps to branch accordingly.
+Record the workflow choice (lean/full) + estimated spawn count in `status.md` for subsequent steps to branch accordingly. CAO heartbeat scans this record for spawn monitoring.
 
 ## Completion Criteria
 
-- [ ] Explained recommended workflow scale and reasoning to Chairman
-- [ ] Chairman confirmed workflow choice (lean or full)
-- [ ] Recorded workflow decision for subsequent steps
+- [ ] Explained recommended workflow scale, reasoning, and estimated spawn count to superior
+- [ ] Superior confirmed workflow choice (lean or full) — yellow light, CEO can approve
+- [ ] Recorded workflow decision and estimated spawn count in status.md
 
 ## Next Step
 

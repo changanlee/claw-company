@@ -8,7 +8,7 @@ CEO generates the briefing daily at 06:30 using the following structure:
 - Finance: (CFO summary)
 - Investments: (CIO summary)
 - Lifestyle: (COO summary)
-- Development: (CTO summary, if tasks are in progress)
+- Development: (CTO summary, if tasks are in progress. Include spawn stats: N engineers yesterday, lean X / full Y)
 - Organization: (CHRO summary, if weekly report is available)
 
 [Corporate Governance Updates]
