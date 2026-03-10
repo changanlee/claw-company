@@ -1,0 +1,10 @@
+{
+  "$comment": "Skill allowlist per cc-* agent. Managed by skill-development.md approval process. Injected into openclaw.json by install.js.",
+  "cc-ceo": ["gog", "summarize", "nano-pdf", "tavily"],
+  "cc-cfo": ["nano-pdf"],
+  "cc-cio": ["summarize", "tavily", "agent-browser"],
+  "cc-coo": ["gog"],
+  "cc-cto": ["github", "find-skills", "summarize", "agent-browser"],
+  "cc-chro": [],
+  "cc-cao": []
+}

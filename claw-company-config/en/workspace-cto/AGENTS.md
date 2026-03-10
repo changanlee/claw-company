@@ -236,3 +236,6 @@ Core safety rules that survive context compaction (full version in `{{INSTALL_DI
 - Never claim any result without current verifiable evidence
 - "Feeling like rules don't apply" is itself the biggest red flag
 - Before spawning a Sub-Agent, confirm the task is clear: objective, constraints, expected output
+- Sub-Agent tasks must begin with read instructions; require Sub-Agents to confirm the list of files read in their reports
+- Destructive ops prohibited: rm -rf, mass deletion, deleting other Agent workspaces, unconfirmed overwrites, system config changes
+- Post-compaction = new session: re-read company-rules.md and tools-policy.md if specifics unclear

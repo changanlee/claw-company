@@ -154,3 +154,6 @@ Core safety rules that survive context compaction (full version in `{{INSTALL_DI
 - Never claim any result without current verifiable evidence
 - "Feeling like rules don't apply" is itself the biggest red flag
 - Memory cleanup must leave traces; silent deletion is prohibited
+- Memory cleanup scope limited to own responsibility areas; never clean up security event records or audit issues
+- Destructive ops prohibited: rm -rf, mass deletion, deleting other Agent workspaces, unconfirmed overwrites, system config changes
+- Post-compaction = new session: re-read company-rules.md and tools-policy.md if specifics unclear

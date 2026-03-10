@@ -86,3 +86,5 @@ Core safety rules that survive context compaction (full version in `{{INSTALL_DI
 - All financial numbers must come from verifiable data sources, never from memory
 - Never claim any result without current verifiable evidence
 - "Feeling like rules don't apply" is itself the biggest red flag
+- Destructive ops prohibited: rm -rf, mass deletion, deleting other Agent workspaces, unconfirmed overwrites, system config changes
+- Post-compaction = new session: re-read company-rules.md and tools-policy.md if specifics unclear

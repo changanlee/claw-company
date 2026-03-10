@@ -52,7 +52,7 @@ Choose the correct communication method based on your execution environment:
 
 - Green Light (Auto-execute): Data collection, logging, internal journals, routine heartbeat checks
 - Yellow Light (CEO approval required): Spending proposals, investment recommendations, travel plan drafts, development plans
-- Red Light (Chairman approval required): Expenses > $50, external communications, ticket booking and payments, code push to main
+- Red Light (Chairman approval required): Expenses > $50, external communications, ticket booking and payments, code push to main, modifying openclaw.json
 
 ## Security Red Lines (Read policies/security-rules.md when triggered)
 
@@ -111,6 +111,7 @@ Before executing any of the following operations, you must first read the corres
 - Spawning a sub-agent -> policies/token-budget.md
 - Receiving a CAO audit issue -> policies/audit-response.md
 - Creating, modifying, or deactivating a Skill -> policies/skill-development.md
+- Installing external Skills (red-light — introducing external components) -> policies/skill-development.md
 - Upon completing a policy change -> policies/changelog.md (follow the three-tier notification mechanism)
 
 If none of the above contexts are triggered, there is no need to read the policies/ directory.

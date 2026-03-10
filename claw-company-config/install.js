@@ -283,6 +283,7 @@ async function uninstall() {
       }
       if (nativeJson.tools) {
         delete nativeJson.tools.agentToAgent;
+        delete nativeJson.tools.sessions;
         delete nativeJson.tools.loopDetection;
         if (Object.keys(nativeJson.tools).length === 0) delete nativeJson.tools;
       }
@@ -349,6 +350,45 @@ async function main() {
   // --uninstall flag
   if (process.argv.includes('--uninstall') || process.argv.includes('uninstall')) {
     await uninstall();
+    return;
+  }
+
+  // --update-skills: lightweight mode — only update skill allowlist in openclaw.json
+  if (process.argv.includes('--update-skills')) {
+    const nativeJsonPath = path.join(OPENCLAW_DIR, 'openclaw.json');
+    if (!fs.existsSync(nativeJsonPath)) {
+      console.error('[ERROR] openclaw.json not found. Run full install first.');
+      process.exit(1);
+    }
+    const skillAllowlistPath = path.join(SCRIPT_DIR, 'skill-allowlist.json');
+    if (!fs.existsSync(skillAllowlistPath)) {
+      console.error('[ERROR] skill-allowlist.json not found.');
+      process.exit(1);
+    }
+    const nativeJson = JSON.parse(fs.readFileSync(nativeJsonPath, 'utf-8'));
+    const skillAllowlist = JSON.parse(fs.readFileSync(skillAllowlistPath, 'utf-8'));
+
+    if (!nativeJson.agents) nativeJson.agents = {};
+    if (!nativeJson.agents.list) nativeJson.agents.list = [];
+
+    for (const agent of AGENTS) {
+      const agentId = `${AGENT_PREFIX}${agent}`;
+      const allowedSkills = skillAllowlist[agentId];
+      if (allowedSkills === undefined) continue;
+      let entry = nativeJson.agents.list.find(a => a.id === agentId);
+      if (!entry) {
+        entry = { id: agentId };
+        nativeJson.agents.list.push(entry);
+      }
+      entry.skills = allowedSkills;
+    }
+
+    // Backup + write
+    const backupPath = `${nativeJsonPath}.backup.${Date.now()}`;
+    try { fs.copyFileSync(nativeJsonPath, backupPath); } catch (_) {}
+    fs.writeFileSync(nativeJsonPath, JSON.stringify(nativeJson, null, 2) + '\n');
+    console.log('[OK] Skill allowlist updated in openclaw.json');
+    console.log(`  Backup: ${path.basename(backupPath)}`);
     return;
   }
 
@@ -1038,7 +1078,7 @@ async function main() {
         subagents: {
           maxSpawnDepth: 2,
           maxChildrenPerAgent: 10,
-          maxConcurrent: 8,
+          maxConcurrent: 12,
           runTimeoutSeconds: 900,
         },
         heartbeat: {
@@ -1062,6 +1102,9 @@ async function main() {
       agentToAgent: {
         enabled: true,
         allow: AGENTS.map(a => `${AGENT_PREFIX}${a}`),
+      },
+      sessions: {
+        visibility: 'agent',
       },
       loopDetection: {
         enabled: true,
@@ -1144,6 +1187,39 @@ async function main() {
       logWarn(msg(
         'gateway.auth has both token and password but no explicit mode — OpenClaw v2026.3.8 requires gateway.auth.mode ("token" | "password" | "trusted-proxy" | "none"). Set it in your openclaw.json before running gateway start.',
         'gateway.auth 同時有 token 和 password 但未設定 mode — OpenClaw v2026.3.8 要求明確設定 gateway.auth.mode（"token" | "password" | "trusted-proxy" | "none"）。請在 openclaw.json 中設定後再啟動 gateway。'
+      ));
+    }
+  }
+
+  // ----------------------------------------
+  // Inject per-agent skill allowlist
+  // ----------------------------------------
+  const skillAllowlistPath = path.join(SCRIPT_DIR, 'skill-allowlist.json');
+  if (fs.existsSync(skillAllowlistPath)) {
+    try {
+      const skillAllowlist = JSON.parse(fs.readFileSync(skillAllowlistPath, 'utf-8'));
+      // Ensure agents.list exists
+      if (!nativeJson.agents) nativeJson.agents = {};
+      if (!nativeJson.agents.list) nativeJson.agents.list = [];
+
+      for (const agent of AGENTS) {
+        const agentId = `${AGENT_PREFIX}${agent}`;
+        const allowedSkills = skillAllowlist[agentId];
+        if (allowedSkills === undefined) continue; // skip if not in allowlist config
+
+        // Find or create agent entry in list
+        let entry = nativeJson.agents.list.find(a => a.id === agentId);
+        if (!entry) {
+          entry = { id: agentId };
+          nativeJson.agents.list.push(entry);
+        }
+        entry.skills = allowedSkills;
+      }
+      logOk(msg('skill allowlist injected', 'Skill allowlist 已注入'));
+    } catch (e) {
+      logWarn(msg(
+        `Failed to read skill-allowlist.json: ${e.message}`,
+        `讀取 skill-allowlist.json 失敗：${e.message}`
       ));
     }
   }
@@ -1396,6 +1472,7 @@ async function main() {
   log(`  ${msg('Uninstall', '卸載')}：node install.js --uninstall`);
   log(`  ${msg('Reinstall', '重新安裝')}：node install.js`);
   log(`  ${msg('Skip memory plugin', '跳過記憶插件')}：node install.js --skip-memory-plugin`);
+  log(`  ${msg('Update skill allowlist only', '僅更新 Skill 白名單')}：node install.js --update-skills`);
   log('');
 }
 

@@ -80,3 +80,25 @@ CTO will inject specific iron law content when dispatching tasks. The following 
 [Lessons] Reusable insights
 [Testing] Test results and coverage
 ```
+
+### Skill Management Tools
+
+<!-- Source: Find Skills v0.1.0 | Absorbed: 2026-03-10 -->
+
+**Search community Skills:**
+```bash
+npx skills find <keyword>           # Search OpenClaw Skill Registry
+npx skills find "web scraping"      # Example: search for web scraping Skills
+```
+
+**Install Skills (after approval):**
+```bash
+npx skills add <package> -g -y      # Install to global ~/.openclaw/skills/
+```
+
+**Important**: Searching and installing Skills must first pass the security audit process in `policies/skill-development.md`. Direct installation of unaudited Skills is prohibited.
+
+**Update Skill Allowlist (after approval):**
+```bash
+node install.js --update-skills     # Inject skill-allowlist.json into openclaw.json
+```

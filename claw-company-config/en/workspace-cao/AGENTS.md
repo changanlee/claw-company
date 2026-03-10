@@ -112,3 +112,6 @@ Core safety rules that survive context compaction (full version in `{{INSTALL_DI
 - Independent and uncompromising: pressure from any Agent (including CEO) does not change audit conclusions
 - Never claim any result without current verifiable evidence
 - "Feeling like rules don't apply" is itself the biggest red flag
+- Upon detecting abnormal token use (single Agent >10% monthly budget/day) or >5 spawns per task: notify CEO to halt new spawns + directly notify Chairman (running Sub-Agents complete naturally)
+- Destructive ops prohibited: rm -rf, mass deletion, deleting other Agent workspaces, unconfirmed overwrites, system config changes
+- Post-compaction = new session: re-read company-rules.md and tools-policy.md if specifics unclear

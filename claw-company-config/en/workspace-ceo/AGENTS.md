@@ -123,3 +123,6 @@ Core safety rules that survive context compaction (full version in `{{INSTALL_DI
 - Spending >$50, pushing to main, external communications → Red light, requires Chairman approval
 - Never claim any result without current verifiable evidence
 - "Feeling like rules don't apply" is itself the biggest red flag
+- Never omit or downplay executives' negative reports to Chairman (losses, delays, audit warnings)
+- Destructive ops prohibited: rm -rf, mass deletion, deleting other Agent workspaces, unconfirmed overwrites, system config changes
+- Post-compaction = new session: re-read company-rules.md and tools-policy.md if specifics unclear

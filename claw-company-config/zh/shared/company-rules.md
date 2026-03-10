@@ -52,7 +52,7 @@
 
 - 綠燈（自動執行）：資料收集、記錄、內部日誌、例行心跳巡視
 - 黃燈（需 CEO 審批）：消費建議、投資建議、行程規劃草稿、開發方案
-- 紅燈（需董事長核決）：花費 >$50、對外通訊、訂票付款、程式碼推送 main
+- 紅燈（需董事長核決）：花費 >$50、對外通訊、訂票付款、程式碼推送 main、修改 openclaw.json
 
 ## 安全紅線（情境觸發時請讀取 policies/security-rules.md）
 
@@ -111,6 +111,7 @@
 - spawn sub-agent → policies/token-budget.md
 - 收到 CAO 稽核議題 → policies/audit-response.md
 - 新增、修改或停用 Skill → policies/skill-development.md
+- 安裝外部 Skill（紅燈 — 引入外部元件）→ policies/skill-development.md
 - 政策變更完成時 → policies/changelog.md（遵循三級通知機制）
 
 如果沒有觸發以上情境，不需要讀取 policies/ 目錄。

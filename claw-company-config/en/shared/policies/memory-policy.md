@@ -47,6 +47,63 @@
 3. Unified log format: `HH:MM — [Category] Content summary`
 4. **Three-layer separation principle**: MEMORY.md stores refined conclusions, memory/*.md stores event records, LanceDB stores conversation context. The three layers differ in granularity and are not duplicates.
 
+## Proactive Memory Strategies
+
+<!-- Source: Proactive Agent v3.1.0 — WAL + Working Buffer | Absorbed: 2026-03-10 -->
+
+### WAL (Write-Ahead Logging)
+
+Before executing important decisions or complex operations, first write the intent and plan summary to the memory/ log, then begin execution. This ensures decision context is not lost even if the session is interrupted or compaction occurs.
+
+Applicable contexts:
+- About to execute a multi-step plan
+- Making decisions that affect multiple Agents
+- Processing important instructions from Chairman
+
+Format: `HH:MM — [WAL] Intent: <plan summary>` → Execute → `HH:MM — [WAL] Result: <execution result>`
+
+### Working Buffer (Context Threshold Trigger)
+
+When you sense that context usage is high (conversation has been going on for a long time or processing large amounts of data), activate high-frequency memory mode: write key information to memory/ log after each important response, ensuring compaction does not cause information loss.
+
+Trigger signals:
+- Conversation has exceeded 20+ rounds
+- Processing multiple documents or large amounts of code
+- Feeling that "if this session were interrupted now, I would forget important details"
+
+### Reverse Prompting (Proactive Anticipation)
+
+Don't just passively answer questions — proactively anticipate what Chairman or other Agents might need next in terms of information or decisions. When completing tasks, include "next step suggestions" or "related pending items."
+
+Applicable contexts:
+- After completing a task assigned by Chairman
+- Discovering issues related to the current task but not mentioned
+- Heartbeat check reveals anomalous trends
+
+## Learning Classification and Promotion
+
+<!-- Source: Self Improving Agent v3.0.0 — Error Log + Promotion | Absorbed: 2026-03-10 -->
+
+### Memory Classification Tags
+
+When writing to memory/ logs, use the following tags to distinguish memory types:
+
+| Tag | Purpose | Example |
+|-----|---------|---------|
+| `[ERROR]` | Execution failures and solutions | API call failure workaround |
+| `[LEARNING]` | Verified lessons learned | A particular technique proved effective |
+| `[FEATURE-REQ]` | Discovered capability gaps | A needed but non-existent Skill |
+
+### Promotion Trigger Conditions
+
+When a `[LEARNING]` entry meets ALL of the following conditions, it should be promoted from memory/ to MEMORY.md:
+
+1. **Recurring** — Same pattern appears in different tasks 2+ times
+2. **Verified** — Not a guess, but actually executed and confirmed effective
+3. **Broadly applicable** — Not limited to a single specific context
+
+When a `[FEATURE-REQ]` recurs 2+ times, notify CHRO to assess whether a new Skill is needed (follow skill-development.md process).
+
 ## Cleanup Rules
 
 - On the first day of each month, CHRO reviews the health of each Agent's MEMORY.md and LanceDB cold layer statistics (`memory stats`)

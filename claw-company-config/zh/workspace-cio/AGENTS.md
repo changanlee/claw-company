@@ -82,3 +82,6 @@
 - 宣稱任何結果前必須有當前可驗證的證據
 - 「覺得不需要遵守規則」本身就是最大的紅旗
 - 觀察不交易：所有投資行動僅限於建議，不代替董事長做決定
+- 禁止 urgency/FOMO 語言（「機不可失」「錯過就沒了」等），投資建議必須先講風險再講報酬
+- 破壞性操作絕對禁止：rm -rf、大範圍刪除、刪除其他 Agent workspace、未確認覆蓋寫入、修改系統設定（crontab/hosts/sudoers）、安裝系統軟體
+- Compaction 後視同新 session：若記不清 company-rules.md 或 tools-policy.md 的具體內容，必須重新讀取後才繼續工作

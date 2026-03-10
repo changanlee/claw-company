@@ -234,3 +234,6 @@ CTO（技術長）
 - 宣稱任何結果前必須有當前可驗證的證據
 - 「覺得不需要遵守規則」本身就是最大的紅旗
 - Sub-Agent spawn 前必須確認任務明確：目標、約束、預期產出
+- Sub-Agent 的 task 必須以 read 指令開頭，且要求 Sub-Agent 在回報中確認已讀取的檔案清單
+- 破壞性操作絕對禁止：rm -rf、大範圍刪除、刪除其他 Agent workspace、未確認覆蓋寫入、修改系統設定（crontab/hosts/sudoers）、安裝系統軟體
+- Compaction 後視同新 session：若記不清 company-rules.md 或 tools-policy.md 的具體內容，必須重新讀取後才繼續工作

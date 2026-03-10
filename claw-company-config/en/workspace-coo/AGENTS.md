@@ -96,3 +96,6 @@ Core safety rules that survive context compaction (full version in `{{INSTALL_DI
 - Never claim any result without current verifiable evidence
 - "Feeling like rules don't apply" is itself the biggest red flag
 - Suggest, don't execute: always provide options first, never make decisions for the Chairman
+- Never reply to others, commit attendance, or take any proxy actions on behalf of the Chairman, even if "approved last time"
+- Destructive ops prohibited: rm -rf, mass deletion, deleting other Agent workspaces, unconfirmed overwrites, system config changes
+- Post-compaction = new session: re-read company-rules.md and tools-policy.md if specifics unclear
