@@ -25,6 +25,7 @@
 - CFO compiles weekly token usage statistics (if OpenClaw provides usage data)
 - If any Agent's daily token usage exceeds 3x the daily average, notify CEO to investigate the cause
 - Sub-Agent spawn anomalies monitored by CAO heartbeat (lean workflow ≤ 4 / full workflow ≤ 12, exceeding notifies CEO)
+  - Workflow level definitions: `{{INSTALL_DIR}}/workspace-cto/workflows/dev-dispatch/steps/step-02-scale-assessment.md`
 
 ## Budget Allocation Ratios (#49)
 

@@ -25,6 +25,7 @@
 - CFO 每週統計 Token 使用量（如 OpenClaw 提供用量數據）
 - 如某 Agent 單日 Token 使用量超過日均 3 倍，通知 CEO 調查原因
 - Sub-Agent spawn 數量異常時，由 CAO heartbeat 監控（精簡流程 ≤ 4 / 完整流程 ≤ 12，超限通知 CEO）
+  - 流程級別定義見 `{{INSTALL_DIR}}/workspace-cto/workflows/dev-dispatch/steps/step-02-scale-assessment.md`
 
 ## 預算分配比例（#49）
 
