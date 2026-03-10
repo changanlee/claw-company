@@ -493,6 +493,109 @@ function testContextSize() {
 }
 
 // ============================================
+// Test 8: Post-Compaction Heading Validation
+// ============================================
+function testPostCompactionHeadings() {
+  heading('Test 8: Post-Compaction Heading 驗證');
+
+  const langConfigs = {
+    zh: {
+      sections: ['啟動必讀', '安全紅線'],
+      configSections: ['啟動必讀 — 公司規範', '安全紅線'],
+    },
+    en: {
+      sections: ['Session Startup', 'Red Lines'],
+      configSections: ['Session Startup', 'Red Lines'],
+    },
+  };
+
+  const MAX_CHARS = 3000;
+
+  for (const [lang, cfg] of Object.entries(langConfigs)) {
+    const langBase = path.join(INSTALL_DIR, lang);
+    if (!fs.existsSync(langBase)) {
+      // Also check source dir (pre-install)
+      const srcBase = path.join(__dirname, '..', lang);
+      if (!fs.existsSync(srcBase)) {
+        skip(`${lang}/ 目錄不存在，跳過`);
+        continue;
+      }
+    }
+
+    // Use installed dir if available, fall back to source
+    const baseDir = fs.existsSync(langBase)
+      ? langBase
+      : path.join(__dirname, '..', lang);
+
+    for (const agent of AGENTS) {
+      const agentsFile = path.join(baseDir, `workspace-${agent}`, 'AGENTS.md');
+      if (!fs.existsSync(agentsFile)) {
+        fail(`${lang}/workspace-${agent}/AGENTS.md 不存在`);
+        continue;
+      }
+
+      const content = fs.readFileSync(agentsFile, 'utf-8');
+
+      for (const section of cfg.sections) {
+        // Match ## or ### heading containing the section name
+        const headingPattern = new RegExp(`^#{2,3}\\s+.*${section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'm');
+        const match = content.match(headingPattern);
+
+        if (!match) {
+          fail(`${lang}/workspace-${agent}: 缺少 "${section}" heading`);
+          continue;
+        }
+
+        // Extract section content (from heading to next ## heading or EOF)
+        const startIdx = match.index;
+        const afterHeading = content.slice(startIdx);
+        const nextHeadingMatch = afterHeading.match(/\n#{2}\s+/);
+        const sectionContent = nextHeadingMatch && nextHeadingMatch.index > 0
+          ? afterHeading.slice(0, nextHeadingMatch.index)
+          : afterHeading;
+
+        if (sectionContent.length <= MAX_CHARS) {
+          ok(`${lang}/workspace-${agent}: "${section}" (${sectionContent.length} chars <= ${MAX_CHARS})`);
+        } else {
+          fail(`${lang}/workspace-${agent}: "${section}" 超過 ${MAX_CHARS} chars (${sectionContent.length})`);
+        }
+      }
+    }
+  }
+
+  // Check openclaw.json compaction config
+  const jsonPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
+  if (fs.existsSync(jsonPath)) {
+    try {
+      const raw = fs.readFileSync(jsonPath, 'utf-8');
+      const stripped = raw.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+      const config = JSON.parse(stripped);
+      const pcs = config?.agents?.defaults?.compaction?.postCompactionSections;
+      if (Array.isArray(pcs) && pcs.length >= 2) {
+        ok(`compaction.postCompactionSections = [${pcs.map(s => `"${s}"`).join(', ')}]`);
+      } else if (pcs) {
+        fail(`compaction.postCompactionSections 格式不正確: ${JSON.stringify(pcs)}`);
+      } else {
+        fail('compaction.postCompactionSections 未設定');
+      }
+
+      const cm = config?.agents?.defaults?.compaction?.model;
+      if (cm === 'fast') {
+        ok('compaction.model = "fast"');
+      } else if (cm) {
+        info(`compaction.model = "${cm}"（非預設 "fast"）`);
+      } else {
+        fail('compaction.model 未設定');
+      }
+    } catch (e) {
+      skip(`openclaw.json 解析失敗: ${e.message}`);
+    }
+  } else {
+    skip('openclaw.json 不存在，跳過 compaction 配置檢查');
+  }
+}
+
+// ============================================
 // Main
 // ============================================
 function main() {
@@ -546,6 +649,7 @@ function main() {
       info('步驟 4: 確認 autoRecall 在新 session 時注入冷層記憶');
       skip('手動測試 — 請在 gateway 運行時執行以上步驟');
     },
+    'compaction-headings': testPostCompactionHeadings,
     'subagent-spawn': () => {
       heading('Test: Sub-Agent Spawn 全流程（需手動驗證）');
       info('此測試需要在 OpenClaw gateway 運行時手動執行');

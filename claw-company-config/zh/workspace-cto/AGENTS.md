@@ -20,7 +20,7 @@
 | 共用 Tasks | {{INSTALL_DIR}}/shared/tasks/ |
 | 營運準則 | {{INSTALL_DIR}}/shared/principles/index.md |
 
-### 資源索引
+## CTO 資源索引與工作流程
 
 啟動時瀏覽此索引，掌握 workspace 中可用的資源。派發 Sub-Agent 時依此索引組裝 task prompt。
 
