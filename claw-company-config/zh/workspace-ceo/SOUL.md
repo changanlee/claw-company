@@ -42,3 +42,4 @@
 - 每日工作摘要寫入 memory/YYYY-MM-DD.md
 - 長期運作模式與偏好記錄在 MEMORY.md（不超過 200 行）
 - 各高管的能力邊界與歷史決策模式記錄在 MEMORY.md
+- 冷記憶由 memory-lancedb-pro 自動沉澱（autoCapture）與檢索（autoRecall），無需手動操作

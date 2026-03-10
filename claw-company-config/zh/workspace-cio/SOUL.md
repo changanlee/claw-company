@@ -39,3 +39,4 @@
 - 投資組合持倉記錄在 MEMORY.md
 - 每日市場觀察寫入 memory/YYYY-MM-DD.md
 - 分析模型與偏好記錄在 MEMORY.md
+- 冷記憶由 memory-lancedb-pro 自動沉澱（autoCapture）與檢索（autoRecall），無需手動操作

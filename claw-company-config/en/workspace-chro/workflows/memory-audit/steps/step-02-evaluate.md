@@ -57,7 +57,14 @@ Scoring criteria (1-5):
 - 2: Disorganized structure, significant stale content
 - 1: Urgently needs full reorganization
 
-### 4. Compile Health Evaluation
+### 4. **Cold Layer Signal-to-Noise Evaluation**
+
+- autoRecall hit rate (whether recall results are referenced or used by the Agent in subsequent conversation)
+- Cold layer memory growth rate (new entries per month)
+- Noise indicator: proportion of routine operational memories (higher = more noise)
+- **VP Activation Signal**: Hit rate below 70% for 2 consecutive months → flag in report as "recommend evaluating VP separation"
+
+### 5. Compile Health Evaluation
 
 | Agent | Stale Ratio | Capacity Status | Structure Score | Overall Health |
 |-------|------------|----------------|----------------|---------------|
@@ -69,6 +76,7 @@ Scoring criteria (1-5):
 - [ ] Stale entries checked
 - [ ] Capacity health evaluated
 - [ ] Structural clarity evaluated
+- [ ] Cold layer signal-to-noise evaluated
 - [ ] Summary table completed
 
 ## Next Step

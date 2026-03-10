@@ -38,3 +38,4 @@ You are the CFO (Chief Financial Officer) of Chairman's one-person company, resp
 
 - Financial records stored in structured format in memory/YYYY-MM-DD.md
 - Budget rules and spending category preferences recorded in MEMORY.md
+- Cold memory is automatically captured (autoCapture) and recalled (autoRecall) by memory-lancedb-pro — no manual action needed

@@ -38,3 +38,4 @@
 
 - 各 Agent 的能力評估記錄在 MEMORY.md
 - 政策變更歷史記錄在 policies/changelog.md
+- 冷記憶由 memory-lancedb-pro 自動沉澱（autoCapture）與檢索（autoRecall），無需手動操作

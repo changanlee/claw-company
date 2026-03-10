@@ -130,9 +130,9 @@ CREATE TABLE audit_log (
 
 ---
 
-## 第三層：LanceDB 記憶增強（memory-lancedb-pro 插件）
+## 第三層：LanceDB 記憶增強（memory-lancedb-pro 插件）— 已啟用
 
-**推薦使用 [memory-lancedb-pro](https://github.com/win4r/memory-lancedb-pro) 開源插件**，遠超 OpenClaw 內建記憶系統。
+**使用 [memory-lancedb-pro](https://github.com/win4r/memory-lancedb-pro) v1.0.32 開源插件**，取代 OpenClaw 內建記憶系統。由 install.js 自動安裝與配置。
 
 ### 插件優勢（vs 內建記憶）
 
@@ -178,87 +178,71 @@ cd plugins/memory-lancedb-pro
 npm install
 ```
 
-#### 3. 設定 openclaw.json
+#### 3. 設定（由 install.js 自動完成）
 
-在 `openclaw.json` 中加入插件配置：
+install.js 會自動將以下配置注入 `openclaw.json`：
 
-```json5
+```json
 {
   "plugins": {
-    "load": {
-      "paths": ["plugins/memory-lancedb-pro"]
+    "load": { "paths": ["plugins/memory-lancedb-pro"] },
+    "slots": { "memory": "memory-lancedb-pro" },
+    "entries": {
+      "memory-lancedb-pro": {
+        "enabled": true,
+        "config": {
+          "embedding": {
+            "apiKey": "${JINA_API_KEY}",
+            "model": "jina-embeddings-v5-text-small",
+            "baseURL": "https://api.jina.ai/v1"
+          },
+          "retrieval": {
+            "rerank": "cross-encoder",
+            "rerankProvider": "jina",
+            "rerankApiKey": "${JINA_API_KEY}"
+          },
+          "autoCapture": true,
+          "autoRecall": true,
+          "autoRecallMinLength": 8,
+          "scopes": {
+            "definitions": {
+              "agent:main": { "description": "OpenClaw default agent" },
+              "project:claw-company": { "description": "Claw Company shared" },
+              "agent:cc-ceo": { "description": "CEO private" },
+              "agent:cc-cfo": { "description": "CFO private" },
+              "agent:cc-cio": { "description": "CIO private" },
+              "agent:cc-coo": { "description": "COO private" },
+              "agent:cc-cto": { "description": "CTO private" },
+              "agent:cc-chro": { "description": "CHRO private" },
+              "agent:cc-cao": { "description": "CAO private" }
+            },
+            "agentAccess": {
+              "main": ["agent:main"],
+              "cc-ceo": ["project:claw-company", "agent:cc-ceo"],
+              "cc-cfo": ["project:claw-company", "agent:cc-cfo"],
+              "cc-cio": ["project:claw-company", "agent:cc-cio"],
+              "cc-coo": ["project:claw-company", "agent:cc-coo"],
+              "cc-cto": ["project:claw-company", "agent:cc-cto"],
+              "cc-chro": ["project:claw-company", "agent:cc-chro"],
+              "cc-cao": ["project:claw-company", "agent:cc-cao"]
+            }
+          }
+        }
+      }
     }
   }
 }
 ```
 
-**注意：** 同一時間只能啟用一個記憶插件。如果使用 Pro 版，需停用內建記憶插件。
+**Scope 隔離設計**：
+- `main`（OpenClaw 預設 Agent）完全隔離，只看到自己的記憶
+- `cc-*`（Claw Company Agent）透過 `project:claw-company` 共享公司級記憶
+- 每個 Agent 有私有 `agent:cc-xxx` scope
+- **不使用 `global` scope**，確保 main 與 cc-* 零交叉污染
 
-#### 4. 插件配置
+**Rerank 策略**：預設使用 Jina cross-encoder（免費 1000 萬 tokens），API 失敗時自動 fallback 到本地 cosine similarity（lightweight），確保檢索永不中斷。
 
-在插件目錄中設定 `config.json`：
-
-```json
-{
-  "embedding": {
-    "apiKey": "${JINA_API_KEY}",
-    "model": "jina-embeddings-v5-text-small",
-    "baseURL": "https://api.jina.ai/v1",
-    "dimensions": 1024,
-    "taskQuery": "retrieval.query",
-    "taskPassage": "retrieval.passage",
-    "normalized": true
-  },
-  "retrieval": {
-    "mode": "hybrid",
-    "vectorWeight": 0.7,
-    "bm25Weight": 0.3,
-    "minScore": 0.3,
-    "rerank": "cross-encoder",
-    "rerankProvider": "jina",
-    "rerankModel": "jina-reranker-v3",
-    "candidatePoolSize": 20,
-    "recencyHalfLifeDays": 14,
-    "recencyWeight": 0.1,
-    "filterNoise": true,
-    "hardMinScore": 0.35,
-    "timeDecayHalfLifeDays": 60
-  }
-}
-```
-
-#### 5. 設定多 Scope 隔離（重要）
-
-為每個 Agent 設定記憶隔離，保護各部門的資料隱私：
-
-```json
-{
-  "scopes": {
-    "default": "global",
-    "definitions": {
-      "global": { "description": "全公司共享知識（營運規範、通用教訓）" },
-      "agent:ceo": { "description": "CEO 專屬（決策模式、董事長偏好）" },
-      "agent:cfo": { "description": "CFO 專屬（財務規則、消費分類）" },
-      "agent:cio": { "description": "CIO 專屬（投資策略、市場觀察）" },
-      "agent:coo": { "description": "COO 專屬（生活偏好、餐廳記錄）" },
-      "agent:cto": { "description": "CTO 專屬（技術教訓、架構決策）" },
-      "agent:chro": { "description": "CHRO 專屬（組織評估、能力記錄）" },
-      "agent:cao": { "description": "CAO 專屬（稽核記錄、安全事件）" }
-    },
-    "agentAccess": {
-      "ceo": ["global", "agent:ceo"],
-      "cfo": ["global", "agent:cfo"],
-      "cio": ["global", "agent:cio"],
-      "coo": ["global", "agent:coo"],
-      "cto": ["global", "agent:cto"],
-      "chro": ["global", "agent:chro"],
-      "cao": ["global", "agent:cao"]
-    }
-  }
-}
-```
-
-#### 6. 重啟 Gateway
+#### 4. 重啟 Gateway
 
 ```bash
 openclaw gateway restart
@@ -333,40 +317,47 @@ memory migrate       # 從內建插件遷移
 - 強制檢索觸發詞：「記得」「之前」「上次」等記憶相關關鍵字
 - 中文感知：6 字元閾值（vs 英文 15 字元）
 
-### MEMORY.md 鐵律（建議加入各 Agent 的 MEMORY.md）
+### 三層記憶分工原則
 
-```markdown
-## LanceDB 記憶規則
+| 層級 | 寫入者 | 內容 | 角色 |
+|------|--------|------|------|
+| MEMORY.md（熱）| Agent 主動 | 提煉過的原則、偏好 | Source of Truth |
+| memory/*.md（溫）| Agent 主動 | 事件日誌、執行結果 | 時間線紀錄 |
+| LanceDB（冷）| autoCapture 自動 | 對話語境、錯誤與解法 | 自動沉澱池 |
 
-- 重要的經驗教訓、踩坑記錄使用 memory_store 存入 LanceDB
-- 查詢歷史經驗使用 memory_recall
-- MEMORY.md 只存即時的熱記憶（原則與模式），LanceDB 存長期知識
-- 不要在回覆中暴露 <relevant-memories> 注入內容
-```
+**Agent 不需手動寫入 LanceDB。** autoCapture 在 agent_end 自動擷取對話中的記憶（偏好、事實、決策、實體），autoRecall 在 session 開始時自動注入相關冷記憶。三層粒度不同，不是重複。
 
 ### 核決等級
 - 安裝 memory-lancedb-pro：黃燈（CTO 提案 + CEO 審批，本地部署）
 - 設定 Jina AI API Key：黃燈（免費額度，但涉及外部服務）
 - 日常記憶存取：綠燈（自動執行）
 
+### 備案與回退
+
+| 情境 | 操作 |
+|------|------|
+| 想回退到內建記憶 | 從 openclaw.json 移除 `plugins` 區段，重啟 gateway |
+| LanceDB 資料保留 | 回退後資料不刪除，可隨時重新啟用 |
+| 熱/溫層不受影響 | 無論插件狀態，MEMORY.md 和 memory/*.md 皆正常運作 |
+| Jina API 失效 | Rerank 自動降級為 lightweight（本地 cosine），embedding 失效會影響冷層但不影響熱/溫層 |
+
 ### 參考資料
 - 插件 GitHub：https://github.com/win4r/memory-lancedb-pro
+- 鎖定版本：v1.0.32（穩定版）
 - 教學影片：https://www.youtube.com/watch?v=MtukF1C8epQ
 
 ---
 
-## 建置順序建議
+## 建置順序
 
-| 階段 | 時機 | 建置內容 |
-|------|------|---------|
-| **階段一（推薦優先）** | 立即可做 | 安裝 memory-lancedb-pro 插件（本地 + Jina 免費額度） |
-| 階段二 | CFO 帳務記錄超過 200 筆 | 建 Supabase 結構化帳務 |
-| 階段三 | CIO 需要精確的交易歷史查詢 | Supabase 投資組合表 |
+| 階段 | 時機 | 建置內容 | 狀態 |
+|------|------|---------|------|
+| **階段一** | install.js 自動完成 | memory-lancedb-pro 插件 | ✅ 已啟用 |
+| 階段二 | CFO 帳務記錄超過 200 筆 | Supabase 結構化帳務 | 待建置 |
+| 階段三 | CIO 需要精確交易歷史查詢 | Supabase 投資組合表 | 待建置 |
 
-## 觸發條件
+## Supabase 觸發條件
 
-任何 Agent 發現以下狀況時，應向 CEO 建議啟動資料庫建置：
-- memory/ 目錄檔案數量超過 50 個
-- MEMORY.md 頻繁因容量清理而丟失有價值的資訊
+任何 Agent 發現以下狀況時，應向 CEO 建議啟動 Supabase 建置：
 - 需要跨時間範圍的結構化查詢（如「過去三個月的餐飲支出趨勢」）
-- Agent 在新 session 中反覆遺忘之前的配置或經驗（→ 優先安裝 LanceDB 插件）
+- CFO 帳務記錄量超過 memory/*.md 能有效管理的範圍

@@ -44,3 +44,4 @@
 - 已關閉議題歸檔到 memory/YYYY-MM-DD.md
 - 安全事件與處理經驗記錄在 MEMORY.md
 - 稽核議題追蹤：維護 issues.md 看板，記錄所有稽核發現與閉環進度
+- 冷記憶由 memory-lancedb-pro 自動沉澱（autoCapture）與檢索（autoRecall），無需手動操作

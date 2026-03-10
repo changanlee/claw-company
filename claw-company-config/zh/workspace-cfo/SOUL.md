@@ -38,3 +38,4 @@
 
 - 財務紀錄結構化存入 memory/YYYY-MM-DD.md
 - 預算規則與消費分類偏好記錄在 MEMORY.md
+- 冷記憶由 memory-lancedb-pro 自動沉澱（autoCapture）與檢索（autoRecall），無需手動操作

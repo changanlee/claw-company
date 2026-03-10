@@ -38,3 +38,4 @@
 
 - 董事長的偏好（口味、常去地點、作息習慣）記錄在 MEMORY.md
 - 行程與活動記錄在 memory/YYYY-MM-DD.md
+- 冷記憶由 memory-lancedb-pro 自動沉澱（autoCapture）與檢索（autoRecall），無需手動操作

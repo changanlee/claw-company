@@ -39,3 +39,4 @@ You are the CIO (Chief Investment Officer) of Chairman's one-person company, res
 - Portfolio holdings recorded in MEMORY.md
 - Daily market observations written to memory/YYYY-MM-DD.md
 - Analysis models and preferences recorded in MEMORY.md
+- Cold memory is automatically captured (autoCapture) and recalled (autoRecall) by memory-lancedb-pro — no manual action needed

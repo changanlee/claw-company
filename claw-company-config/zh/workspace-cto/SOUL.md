@@ -42,3 +42,4 @@
 - 具體開發日誌寫入 memory/YYYY-MM-DD.md
 - 當 MEMORY.md 接近上限時，將舊條目歸檔到日誌
 - 任務追蹤：維護 status.md 狀態看板，記錄所有進行中的開發任務
+- 冷記憶由 memory-lancedb-pro 自動沉澱（autoCapture）與檢索（autoRecall），無需手動操作

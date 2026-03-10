@@ -42,3 +42,4 @@ You are the CTO (Chief Technology Officer) of Chairman's one-person company, res
 - Specific development logs written to memory/YYYY-MM-DD.md
 - When MEMORY.md approaches the limit, archive old entries to logs
 - Task tracking: maintain status.md as a status board, recording all in-progress development tasks
+- Cold memory is automatically captured (autoCapture) and recalled (autoRecall) by memory-lancedb-pro — no manual action needed

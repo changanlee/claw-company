@@ -130,9 +130,9 @@ CREATE TABLE audit_log (
 
 ---
 
-## Layer 3: LanceDB Memory Enhancement (memory-lancedb-pro plugin)
+## Layer 3: LanceDB Memory Enhancement (memory-lancedb-pro plugin) — Active
 
-**Recommended: [memory-lancedb-pro](https://github.com/win4r/memory-lancedb-pro) open-source plugin**, far surpassing OpenClaw's built-in memory system.
+**Using [memory-lancedb-pro](https://github.com/win4r/memory-lancedb-pro) v1.0.32 open-source plugin**, replacing OpenClaw's built-in memory system. Automatically installed and configured by install.js.
 
 ### Plugin Advantages (vs Built-in Memory)
 
@@ -178,87 +178,71 @@ cd plugins/memory-lancedb-pro
 npm install
 ```
 
-#### 3. Configure openclaw.json
+#### 3. Configuration (Handled automatically by install.js)
 
-Add plugin configuration to `openclaw.json`:
+install.js automatically injects the following configuration into `openclaw.json`:
 
-```json5
+```json
 {
   "plugins": {
-    "load": {
-      "paths": ["plugins/memory-lancedb-pro"]
+    "load": { "paths": ["plugins/memory-lancedb-pro"] },
+    "slots": { "memory": "memory-lancedb-pro" },
+    "entries": {
+      "memory-lancedb-pro": {
+        "enabled": true,
+        "config": {
+          "embedding": {
+            "apiKey": "${JINA_API_KEY}",
+            "model": "jina-embeddings-v5-text-small",
+            "baseURL": "https://api.jina.ai/v1"
+          },
+          "retrieval": {
+            "rerank": "cross-encoder",
+            "rerankProvider": "jina",
+            "rerankApiKey": "${JINA_API_KEY}"
+          },
+          "autoCapture": true,
+          "autoRecall": true,
+          "autoRecallMinLength": 8,
+          "scopes": {
+            "definitions": {
+              "agent:main": { "description": "OpenClaw default agent" },
+              "project:claw-company": { "description": "Claw Company shared" },
+              "agent:cc-ceo": { "description": "CEO private" },
+              "agent:cc-cfo": { "description": "CFO private" },
+              "agent:cc-cio": { "description": "CIO private" },
+              "agent:cc-coo": { "description": "COO private" },
+              "agent:cc-cto": { "description": "CTO private" },
+              "agent:cc-chro": { "description": "CHRO private" },
+              "agent:cc-cao": { "description": "CAO private" }
+            },
+            "agentAccess": {
+              "main": ["agent:main"],
+              "cc-ceo": ["project:claw-company", "agent:cc-ceo"],
+              "cc-cfo": ["project:claw-company", "agent:cc-cfo"],
+              "cc-cio": ["project:claw-company", "agent:cc-cio"],
+              "cc-coo": ["project:claw-company", "agent:cc-coo"],
+              "cc-cto": ["project:claw-company", "agent:cc-cto"],
+              "cc-chro": ["project:claw-company", "agent:cc-chro"],
+              "cc-cao": ["project:claw-company", "agent:cc-cao"]
+            }
+          }
+        }
+      }
     }
   }
 }
 ```
 
-**Note:** Only one memory plugin can be active at a time. If using the Pro version, disable the built-in memory plugin.
+**Scope isolation design**:
+- `main` (OpenClaw default Agent) fully isolated — can only see its own memory
+- `cc-*` (Claw Company Agents) share company-level memory via `project:claw-company`
+- Each Agent has a private `agent:cc-xxx` scope
+- **No `global` scope used** — ensures zero cross-contamination between main and cc-*
 
-#### 4. Plugin Configuration
+**Rerank strategy**: Defaults to Jina cross-encoder (10M tokens free), automatically falls back to local cosine similarity (lightweight) on API failure, ensuring retrieval never breaks.
 
-Set up `config.json` in the plugin directory:
-
-```json
-{
-  "embedding": {
-    "apiKey": "${JINA_API_KEY}",
-    "model": "jina-embeddings-v5-text-small",
-    "baseURL": "https://api.jina.ai/v1",
-    "dimensions": 1024,
-    "taskQuery": "retrieval.query",
-    "taskPassage": "retrieval.passage",
-    "normalized": true
-  },
-  "retrieval": {
-    "mode": "hybrid",
-    "vectorWeight": 0.7,
-    "bm25Weight": 0.3,
-    "minScore": 0.3,
-    "rerank": "cross-encoder",
-    "rerankProvider": "jina",
-    "rerankModel": "jina-reranker-v3",
-    "candidatePoolSize": 20,
-    "recencyHalfLifeDays": 14,
-    "recencyWeight": 0.1,
-    "filterNoise": true,
-    "hardMinScore": 0.35,
-    "timeDecayHalfLifeDays": 60
-  }
-}
-```
-
-#### 5. Configure Multi-Scope Isolation (Important)
-
-Set up memory isolation for each Agent to protect departmental data privacy:
-
-```json
-{
-  "scopes": {
-    "default": "global",
-    "definitions": {
-      "global": { "description": "Company-wide shared knowledge (operating guidelines, universal lessons)" },
-      "agent:ceo": { "description": "CEO-exclusive (decision patterns, Chairman preferences)" },
-      "agent:cfo": { "description": "CFO-exclusive (financial rules, spending categories)" },
-      "agent:cio": { "description": "CIO-exclusive (investment strategies, market observations)" },
-      "agent:coo": { "description": "COO-exclusive (lifestyle preferences, restaurant records)" },
-      "agent:cto": { "description": "CTO-exclusive (technical lessons, architecture decisions)" },
-      "agent:chro": { "description": "CHRO-exclusive (organizational assessments, capability records)" },
-      "agent:cao": { "description": "CAO-exclusive (audit records, security incidents)" }
-    },
-    "agentAccess": {
-      "ceo": ["global", "agent:ceo"],
-      "cfo": ["global", "agent:cfo"],
-      "cio": ["global", "agent:cio"],
-      "coo": ["global", "agent:coo"],
-      "cto": ["global", "agent:cto"],
-      "chro": ["global", "agent:chro"],
-      "cao": ["global", "agent:cao"]
-    }
-  }
-}
-```
-
-#### 6. Restart Gateway
+#### 4. Restart Gateway
 
 ```bash
 openclaw gateway restart
@@ -333,40 +317,47 @@ The plugin automatically skips queries that don't need memory:
 - Forced retrieval trigger words: "remember," "before," "last time," and other memory-related keywords
 - CJK awareness: 6-character threshold (vs 15 characters for English)
 
-### MEMORY.md Rule (Recommended for each Agent's MEMORY.md)
+### Three-Layer Memory Separation Principle
 
-```markdown
-## LanceDB Memory Rules
+| Layer | Writer | Content | Role |
+|-------|--------|---------|------|
+| MEMORY.md (hot) | Agent actively | Distilled principles, preferences | Source of Truth |
+| memory/*.md (warm) | Agent actively | Event logs, execution results | Timeline record |
+| LanceDB (cold) | autoCapture automatically | Conversation context, errors & solutions | Auto-sedimentation pool |
 
-- Use memory_store to save important lessons learned and pitfall records to LanceDB
-- Use memory_recall to query historical experience
-- MEMORY.md stores only immediate hot memory (principles and patterns); LanceDB stores long-term knowledge
-- Do not expose <relevant-memories> injection content in responses
-```
+**Agents do not need to manually write to LanceDB.** autoCapture automatically extracts memories (preferences, facts, decisions, entities) at agent_end; autoRecall automatically injects relevant cold memories at session start. The three layers have different granularity — they are not duplicates.
 
 ### Approval Levels
 - Installing memory-lancedb-pro: Yellow Light (CTO proposes + CEO approves; local deployment)
 - Setting up Jina AI API Key: Yellow Light (free tier, but involves external service)
 - Routine memory access: Green Light (auto-execute)
 
+### Contingency & Rollback
+
+| Scenario | Action |
+|----------|--------|
+| Revert to built-in memory | Remove `plugins` section from openclaw.json, restart gateway |
+| LanceDB data preserved | Data is not deleted on revert; can re-enable anytime |
+| Hot/warm layers unaffected | MEMORY.md and memory/*.md work normally regardless of plugin state |
+| Jina API failure | Rerank auto-degrades to lightweight (local cosine); embedding failure affects cold layer only, not hot/warm |
+
 ### References
 - Plugin GitHub: https://github.com/win4r/memory-lancedb-pro
+- Locked version: v1.0.32 (stable)
 - Tutorial video: https://www.youtube.com/watch?v=MtukF1C8epQ
 
 ---
 
-## Recommended Setup Order
+## Setup Order
 
-| Phase | Timing | What to Build |
-|-------|--------|--------------|
-| **Phase 1 (Recommended first)** | Can be done immediately | Install memory-lancedb-pro plugin (local + Jina free tier) |
-| Phase 2 | CFO accounting records exceed 200 entries | Set up Supabase structured accounting |
-| Phase 3 | CIO needs precise trade history queries | Supabase investment portfolio tables |
+| Phase | Timing | What to Build | Status |
+|-------|--------|--------------|--------|
+| **Phase 1** | Handled by install.js | memory-lancedb-pro plugin | ✅ Active |
+| Phase 2 | CFO accounting records exceed 200 entries | Supabase structured accounting | Pending |
+| Phase 3 | CIO needs precise trade history queries | Supabase investment portfolio tables | Pending |
 
-## Trigger Conditions
+## Supabase Trigger Conditions
 
-When any Agent notices the following situations, they should recommend to CEO that database setup be initiated:
-- memory/ directory has more than 50 files
-- MEMORY.md frequently loses valuable information due to capacity cleanup
+When any Agent notices the following situations, they should recommend to CEO that Supabase setup be initiated:
 - Structured queries across time ranges are needed (e.g., "dining expense trend over the past three months")
-- Agent repeatedly forgets prior configurations or experiences in new sessions (-> prioritize installing LanceDB plugin)
+- CFO accounting records exceed what memory/*.md can effectively manage

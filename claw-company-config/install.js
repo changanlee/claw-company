@@ -22,6 +22,9 @@ const INSTALL_DIR = path.join(OPENCLAW_DIR, 'claw-company');
 const AGENTS = ['ceo', 'cfo', 'cio', 'coo', 'cto', 'chro', 'cao'];
 const AGENT_PREFIX = 'cc-';
 const REQUIRED_MIN_VERSION = '2026.3.7';
+const MEMORY_PLUGIN_REPO = 'https://github.com/win4r/memory-lancedb-pro.git';
+const MEMORY_PLUGIN_VERSION = 'v1.0.32';
+const MEMORY_PLUGIN_DIR = 'plugins/memory-lancedb-pro';
 
 // State
 let langDir = '';
@@ -273,6 +276,9 @@ async function uninstall() {
         if (nativeJson.agents && Object.keys(nativeJson.agents).length === 0) {
           delete nativeJson.agents;
         }
+      }
+      if (nativeJson.plugins) {
+        delete nativeJson.plugins;
       }
       if (nativeJson.tools) {
         delete nativeJson.tools.agentToAgent;
@@ -901,6 +907,102 @@ async function main() {
   log('');
 
   // ============================================
+  // Install memory-lancedb-pro plugin
+  // ============================================
+  const skipMemoryPlugin = process.argv.includes('--skip-memory-plugin');
+  const pluginPath = path.join(OPENCLAW_DIR, MEMORY_PLUGIN_DIR);
+  let memoryPluginInstalled = false;
+
+  if (skipMemoryPlugin) {
+    logInfo(
+      'Skipping memory plugin installation (--skip-memory-plugin)',
+      '跳過記憶插件安裝（--skip-memory-plugin）'
+    );
+  } else {
+    // Check JINA_API_KEY
+    if (!process.env.JINA_API_KEY) {
+      logWarn(
+        'JINA_API_KEY not set. Memory plugin will be installed but embedding will not work until you set it.',
+        'JINA_API_KEY 未設定。記憶插件會被安裝，但 embedding 功能需設定 API Key 後才能使用。'
+      );
+      log(msg(
+        '  Get free API key: https://jina.ai → set: export JINA_API_KEY=your_key',
+        '  取得免費 API Key：https://jina.ai → 設定：export JINA_API_KEY=your_key'
+      ));
+      log('');
+    }
+
+    if (fs.existsSync(path.join(pluginPath, 'package.json'))) {
+      logInfo(
+        'memory-lancedb-pro already installed, skipping clone',
+        'memory-lancedb-pro 已安裝，跳過下載'
+      );
+      memoryPluginInstalled = true;
+    } else {
+      logInfo(
+        'Installing memory-lancedb-pro plugin...',
+        '安裝 memory-lancedb-pro 記憶插件...'
+      );
+
+      // Try git clone first
+      fs.mkdirSync(path.join(OPENCLAW_DIR, 'plugins'), { recursive: true });
+      const cloneResult = tryExec([
+        'git', 'clone', '--branch', MEMORY_PLUGIN_VERSION, '--depth', '1',
+        MEMORY_PLUGIN_REPO, pluginPath,
+      ]);
+
+      if (cloneResult.ok) {
+        logOk('git clone');
+      } else {
+        logWarn(
+          `git clone failed: ${cloneResult.stderr}. Trying npm install...`,
+          `git clone 失敗：${cloneResult.stderr}。嘗試 npm install...`
+        );
+        // Fallback: npm install into plugin directory
+        fs.mkdirSync(pluginPath, { recursive: true });
+        const npmInitResult = spawnSync('npm', ['init', '-y'], {
+          encoding: 'utf-8', timeout: 30000, cwd: pluginPath,
+        });
+        const npmInstallResult = spawnSync('npm', ['install', `memory-lancedb-pro@${MEMORY_PLUGIN_VERSION}`], {
+          encoding: 'utf-8', timeout: 120000, cwd: pluginPath,
+        });
+        if (npmInstallResult.status === 0) {
+          logOk('npm install (fallback)');
+        } else {
+          logWarn(
+            'Memory plugin installation failed. You can install it manually later.',
+            '記憶插件安裝失敗，稍後可手動安裝。'
+          );
+          log(msg(
+            `  Manual install: cd ${path.join(OPENCLAW_DIR, 'plugins')} && git clone ${MEMORY_PLUGIN_REPO}`,
+            `  手動安裝：cd ${path.join(OPENCLAW_DIR, 'plugins')} && git clone ${MEMORY_PLUGIN_REPO}`
+          ));
+          log('');
+        }
+      }
+
+      // npm install dependencies
+      if (fs.existsSync(path.join(pluginPath, 'package.json'))) {
+        logInfo('Installing plugin dependencies...', '安裝插件相依套件...');
+        const depResult = spawnSync('npm', ['install', '--production'], {
+          encoding: 'utf-8', timeout: 120000, cwd: pluginPath,
+        });
+        if (depResult.status === 0) {
+          logOk('npm install (dependencies)');
+          memoryPluginInstalled = true;
+        } else {
+          logWarn(
+            `npm install failed: ${(depResult.stderr || '').slice(0, 200)}`,
+            `npm install 失敗：${(depResult.stderr || '').slice(0, 200)}`
+          );
+        }
+      }
+    }
+  }
+
+  log('');
+
+  // ============================================
   // Inject settings into native openclaw.json
   // ============================================
   logInfo(
@@ -969,6 +1071,58 @@ async function main() {
       maxConcurrentRuns: 3,
     },
   };
+
+  // Inject memory plugin config if installed
+  if (memoryPluginInstalled && !skipMemoryPlugin) {
+    injection.plugins = {
+      load: { paths: [MEMORY_PLUGIN_DIR] },
+      slots: { memory: 'memory-lancedb-pro' },
+      entries: {
+        'memory-lancedb-pro': {
+          enabled: true,
+          config: {
+            embedding: {
+              apiKey: '${JINA_API_KEY}',
+              model: 'jina-embeddings-v5-text-small',
+              baseURL: 'https://api.jina.ai/v1',
+            },
+            retrieval: {
+              rerank: 'cross-encoder',
+              rerankProvider: 'jina',
+              rerankApiKey: '${JINA_API_KEY}',
+            },
+            autoCapture: true,
+            autoRecall: true,
+            autoRecallMinLength: 8,
+            scopes: {
+              definitions: {
+                'agent:main': { description: 'OpenClaw default agent' },
+                'project:claw-company': { description: 'Claw Company shared' },
+                'agent:cc-ceo': { description: 'CEO private' },
+                'agent:cc-cfo': { description: 'CFO private' },
+                'agent:cc-cio': { description: 'CIO private' },
+                'agent:cc-coo': { description: 'COO private' },
+                'agent:cc-cto': { description: 'CTO private' },
+                'agent:cc-chro': { description: 'CHRO private' },
+                'agent:cc-cao': { description: 'CAO private' },
+              },
+              agentAccess: {
+                main: ['agent:main'],
+                'cc-ceo': ['project:claw-company', 'agent:cc-ceo'],
+                'cc-cfo': ['project:claw-company', 'agent:cc-cfo'],
+                'cc-cio': ['project:claw-company', 'agent:cc-cio'],
+                'cc-coo': ['project:claw-company', 'agent:cc-coo'],
+                'cc-cto': ['project:claw-company', 'agent:cc-cto'],
+                'cc-chro': ['project:claw-company', 'agent:cc-chro'],
+                'cc-cao': ['project:claw-company', 'agent:cc-cao'],
+              },
+            },
+          },
+        },
+      },
+    };
+    logOk(msg('memory-lancedb-pro config injected', 'memory-lancedb-pro 配置已注入'));
+  }
 
   // Deep merge — preserves channels, gateway, session, bindings
   deepMerge(nativeJson, injection);
@@ -1167,16 +1321,40 @@ async function main() {
     log('');
   }
 
+  if (memoryPluginInstalled && !skipMemoryPlugin) {
+    log(msg('  Memory plugin:', '  記憶插件：'));
+    log(`  - memory-lancedb-pro ${MEMORY_PLUGIN_VERSION} ${msg('installed', '已安裝')}`);
+    log(`  - ${msg('Rerank: cross-encoder (Jina) with lightweight fallback', 'Rerank：cross-encoder（Jina）+ lightweight 自動降級')}`);
+    log(`  - ${msg('Scope isolation: main isolated, cc-* share project:claw-company', 'Scope 隔離：main 獨立，cc-* 共享 project:claw-company')}`);
+    if (!process.env.JINA_API_KEY) {
+      log(`  - ${msg('⚠ Set JINA_API_KEY before starting gateway', '⚠ 啟動 gateway 前請設定 JINA_API_KEY')}`);
+    }
+    log('');
+  }
+
   log(msg('Next steps:', '下一步：'));
-  log('  1. openclaw gateway start');
-  log(msg(
-    '  2. Send a test message to CEO Bot via your configured platform',
-    '  2. 透過已配置的平台發送測試訊息給 CEO Bot'
-  ));
+  if (!process.env.JINA_API_KEY && memoryPluginInstalled) {
+    log(msg(
+      '  1. export JINA_API_KEY=your_key  (get free key: https://jina.ai)',
+      '  1. export JINA_API_KEY=your_key  （取得免費 Key：https://jina.ai）'
+    ));
+    log('  2. openclaw gateway start');
+    log(msg(
+      '  3. Send a test message to CEO Bot via your configured platform',
+      '  3. 透過已配置的平台發送測試訊息給 CEO Bot'
+    ));
+  } else {
+    log('  1. openclaw gateway start');
+    log(msg(
+      '  2. Send a test message to CEO Bot via your configured platform',
+      '  2. 透過已配置的平台發送測試訊息給 CEO Bot'
+    ));
+  }
   log('');
   log(msg('Management:', '管理指令：'));
   log(`  ${msg('Uninstall', '卸載')}：node install.js --uninstall`);
   log(`  ${msg('Reinstall', '重新安裝')}：node install.js`);
+  log(`  ${msg('Skip memory plugin', '跳過記憶插件')}：node install.js --skip-memory-plugin`);
   log('');
 }
 

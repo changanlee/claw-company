@@ -52,7 +52,13 @@ Check each Agent's memory/ directory:
 - Newest file date
 - Total size
 
-### 4. Compile Scan Results
+### 4. Scan LanceDB Cold Layer Statistics
+
+- Run `memory stats` to get each Agent's cold layer memory count
+- Record the most recent write time and total entry count
+- Record the number of autoRecall triggers in the past 30 days
+
+### 5. Compile Scan Results
 
 | Agent | MEMORY.md Lines | Utilization | Last Update | Monthly Updates | memory/ Files |
 |-------|----------------|-------------|-------------|----------------|--------------|
@@ -68,6 +74,7 @@ Check each Agent's memory/ directory:
 
 - [ ] All Agent MEMORY.md files scanned
 - [ ] memory/ directories scanned
+- [ ] LanceDB cold layer scanned
 - [ ] Scan results compiled into table
 
 ## Next Step

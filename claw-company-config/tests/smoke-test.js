@@ -370,6 +370,26 @@ function testOpenclawJson() {
       expected: true,
       get: () => config?.cron?.enabled,
     },
+    {
+      path: 'plugins.slots.memory',
+      expected: 'memory-lancedb-pro',
+      get: () => config?.plugins?.slots?.memory,
+    },
+    {
+      path: 'plugins.entries.memory-lancedb-pro.enabled',
+      expected: true,
+      get: () => config?.plugins?.entries?.['memory-lancedb-pro']?.enabled,
+    },
+    {
+      path: 'plugins.entries.memory-lancedb-pro.config.autoCapture',
+      expected: true,
+      get: () => config?.plugins?.entries?.['memory-lancedb-pro']?.config?.autoCapture,
+    },
+    {
+      path: 'plugins.entries.memory-lancedb-pro.config.autoRecall',
+      expected: true,
+      get: () => config?.plugins?.entries?.['memory-lancedb-pro']?.config?.autoRecall,
+    },
   ];
 
   for (const check of checks) {
@@ -507,6 +527,23 @@ function main() {
       info('');
       info('步驟 3: 向 CTO 發送「Sub-Agent 的執行時間上限是多少？」');
       info('  → 預期回答: 15 分鐘');
+      skip('手動測試 — 請在 gateway 運行時執行以上步驟');
+    },
+    'memory-plugin': () => {
+      heading('Test: memory-lancedb-pro Scope 隔離（需手動驗證）');
+      info('此測試需要在 OpenClaw gateway 運行時手動執行');
+      info('');
+      info('步驟 1: 對 main 說「記住我喜歡喝咖啡」');
+      info('  → 執行 memory list，確認只有 agent:main scope');
+      info('');
+      info('步驟 2: 對 cc-ceo 說「記住董事長偏好早上開會」');
+      info('  → 執行 memory list，確認有 agent:cc-ceo + project:claw-company scope');
+      info('');
+      info('步驟 3: 對 cc-cfo 說「查詢記憶」');
+      info('  → 確認 cc-cfo 看不到 main 的咖啡記憶');
+      info('  → 確認 cc-cfo 可看到 project:claw-company 的公司記憶');
+      info('');
+      info('步驟 4: 確認 autoRecall 在新 session 時注入冷層記憶');
       skip('手動測試 — 請在 gateway 運行時執行以上步驟');
     },
     'subagent-spawn': () => {
