@@ -141,7 +141,7 @@ graph TD
 
 Cold layer powered by [memory-lancedb-pro](https://github.com/win4r/memory-lancedb-pro): hybrid vector + BM25 retrieval, cross-encoder rerank, multi-scope isolation (each agent has a private scope; all `cc-*` agents share a company scope).
 
-### 54 Structured Workflows
+### 58 Structured Workflows
 
 Full lifecycle coverage from analysis to implementation, with interruption recovery via YAML frontmatter.
 
