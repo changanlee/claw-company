@@ -1130,7 +1130,7 @@ async function main() {
   // Inject memory plugin config if installed
   if (memoryPluginInstalled && !skipMemoryPlugin) {
     injection.plugins = {
-      load: { paths: [MEMORY_PLUGIN_DIR] },
+      load: { paths: [pluginPath] },
       slots: { memory: 'memory-lancedb-pro' },
       entries: {
         'memory-lancedb-pro': {
@@ -1177,6 +1177,15 @@ async function main() {
       },
     };
     logOk(msg('memory-lancedb-pro config injected', 'memory-lancedb-pro 配置已注入'));
+  }
+
+  // If skip-memory-plugin, remove any leftover memory plugin config from native json
+  if (skipMemoryPlugin && nativeJson.plugins) {
+    delete nativeJson.plugins.slots;
+    delete nativeJson.plugins.load;
+    if (nativeJson.plugins.entries) {
+      delete nativeJson.plugins.entries['memory-lancedb-pro'];
+    }
   }
 
   // Deep merge — preserves channels, gateway, session, bindings
@@ -1266,6 +1275,46 @@ async function main() {
     const result = tryExec(cmdArgs);
     if (result.ok) {
       logOk(agentId);
+    } else if (result.stderr.includes('already exists')) {
+      // Agent exists — check if workspace path needs updating via delete + re-add
+      logInfo(
+        `${agentId} already exists, re-registering with correct workspace...`,
+        `${agentId} 已存在，重新註冊以修正 workspace 路徑...`
+      );
+      // Backup workspace files before delete (OpenClaw deletes workspace dir on agent delete)
+      const backupDir = `${workspace}.bak`;
+      if (fs.existsSync(workspace)) {
+        try {
+          if (fs.existsSync(backupDir)) fs.rmSync(backupDir, { recursive: true });
+          fs.cpSync(workspace, backupDir, { recursive: true });
+        } catch (_) {}
+      }
+      const delResult = tryExec(['openclaw', 'agents', 'delete', agentId, '--force']);
+      if (delResult.ok) {
+        // Restore workspace from backup if it was deleted
+        if (!fs.existsSync(workspace) && fs.existsSync(backupDir)) {
+          fs.cpSync(backupDir, workspace, { recursive: true });
+        }
+        if (fs.existsSync(backupDir)) {
+          try { fs.rmSync(backupDir, { recursive: true }); } catch (_) {}
+        }
+        const reAddResult = tryExec(cmdArgs);
+        if (reAddResult.ok) {
+          logOk(`${agentId} (re-registered)`);
+        } else {
+          failedAgentCmds.push(cmdToString(cmdArgs));
+          logWarn(
+            `Failed to re-register ${agentId}: ${reAddResult.stderr}`,
+            `重新註冊 ${agentId} 失敗：${reAddResult.stderr}`
+          );
+        }
+      } else {
+        failedAgentCmds.push(cmdToString(cmdArgs));
+        logWarn(
+          `Failed to delete existing ${agentId}: ${delResult.stderr}`,
+          `刪除已存在的 ${agentId} 失敗：${delResult.stderr}`
+        );
+      }
     } else {
       failedAgentCmds.push(cmdToString(cmdArgs));
       logWarn(
@@ -1375,7 +1424,7 @@ async function main() {
   for (const job of cronJobs) {
     const cmdArgs = ['openclaw', 'cron', 'add', '--name', job.name, '--cron', job.cron, '--agent', job.agent, '--model', job.model, '--message', job.message];
     if (job.target) {
-      cmdArgs.push('--target', job.target);
+      cmdArgs.push('--channel', job.target, '--announce');
     }
     const result = tryExec(cmdArgs);
     if (result.ok) {
