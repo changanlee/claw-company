@@ -59,8 +59,11 @@ template: null
 
 ### 3. 發送報告
 
-- 送交 CEO，納入管理參考
-- 對記憶使用率超過 80% 的 Agent，透過 `sessions_send` 直接通知建議清理
+> **注意**：此流程由 cron 觸發，`sessions_send` 不可用（v2026.3.8 cron tight isolation）。報告由 cron delivery announce 機制自動推送到通道。
+
+- 報告作為最終輸出，由 cron announce 推送到通道（CEO 可見）
+- 同時將報告存入 `output/reports/memory-health-YYYY-MM-DD.md`
+- 對記憶使用率超過 80% 的 Agent，在報告中標記需清理（CEO heartbeat 會檢查並跟進）
 - CTO 有自己的週度記憶自清理機制（cron），可參照但不重複
 
 ### 4. 更新記錄

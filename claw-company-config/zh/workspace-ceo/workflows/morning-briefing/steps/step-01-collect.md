@@ -1,6 +1,6 @@
 ---
 name: collect
-description: "sessions_send 各高管請求狀態摘要"
+description: "讀取各高管 MEMORY.md 及 output/ 收集狀態"
 next-step: ./step-02-compile.md
 output-file: null
 template: null
@@ -12,38 +12,44 @@ template: null
 
 ## 目標
 
-透過 `sessions_send` 向各高管請求當前狀態摘要，收集即時資訊。
+讀取各高管的 MEMORY.md 和近期 output/ 檔案，收集最新狀態資訊。
+
+> **注意**：此流程由 cron 觸發，cron 環境下 `sessions_send` 不可用（v2026.3.8 cron tight isolation）。改為直接讀取各高管的檔案。
 
 ## 執行規則
 
 - 📖 讀完整個步驟檔案再開始行動
 - 🚫 不預讀後續步驟
 - 🚫 不跳步
+- 🚫 不使用 `sessions_send`（cron 環境不可用）
 
 ## 執行指令
 
-### 1. 發送狀態請求
+### 1. 讀取各高管狀態
 
-使用 `sessions_send` 向以下高管發送狀態請求：
+依序讀取以下檔案，提取各高管的最新狀態：
 
-| 高管 | 請求內容 |
-|------|---------|
-| CFO | 昨日支出摘要、預算使用率、異常項目 |
-| CIO | 持倉變化、市場警報、投資機會 |
-| COO | 今日行程、天氣概況、待辦提醒 |
-| CTO | 開發進度、阻塞項目、技術議題 |
-| CHRO | Agent 狀態、政策待辦、組織議題 |
-| CAO | 安全狀態、未結稽核議題、合規警報 |
+| 高管 | 讀取來源 | 提取內容 |
+|------|---------|---------|
+| CFO | MEMORY.md + output/reports/ 最新檔案 | 支出摘要、預算使用率、異常項目 |
+| CIO | MEMORY.md + output/alerts/ 最新檔案 | 持倉變化、市場警報、投資機會 |
+| COO | MEMORY.md | 今日行程、天氣概況、待辦提醒 |
+| CTO | MEMORY.md | 開發進度、阻塞項目、技術議題 |
+| CHRO | MEMORY.md + output/reports/ 最新檔案 | Agent 狀態、政策待辦、組織議題 |
+| CAO | MEMORY.md + output/scans/ 最新檔案 | 安全狀態、未結稽核議題、合規警報 |
 
-### 2. 等待回覆
+**路徑格式**：`{{INSTALL_DIR}}/workspace-{角色}/MEMORY.md` 和 `{{INSTALL_DIR}}/workspace-{角色}/output/`
 
-- 設定合理等待時間。
-- 記錄已回覆和未回覆的高管。
+### 2. 記錄收集結果
+
+- 記錄成功讀取和無資料的高管。
+- 若某高管 output/ 為空，改用 MEMORY.md 中的資訊。
 
 ## 完成標準
 
-- [ ] 已向所有高管發送狀態請求
-- [ ] 已收集到回覆（或標記超時）
+- [ ] 已讀取所有高管的 MEMORY.md
+- [ ] 已檢查各高管的 output/ 最新檔案
+- [ ] 已整理收集到的狀態資訊
 
 ## 下一步
 

@@ -59,8 +59,11 @@ For each Agent needing cleanup, list:
 
 ### 3. Submit Report
 
-- Submit to CEO for management reference
-- For Agents with memory utilization over 80%, directly notify via `sessions_send` with cleanup recommendations
+> **Note**: This workflow is triggered by cron. `sessions_send` is unavailable in cron environment (v2026.3.8 cron tight isolation). Report is auto-delivered via cron delivery announce mechanism.
+
+- Output the report as the final response; cron announce pushes to channel (visible to CEO)
+- Also save report to `output/reports/memory-health-YYYY-MM-DD.md`
+- For Agents with memory utilization over 80%, flag them in the report (CEO heartbeat will check and follow up)
 - CTO has its own weekly memory self-cleanup mechanism (cron) — can reference but do not duplicate
 
 ### 4. Update Records

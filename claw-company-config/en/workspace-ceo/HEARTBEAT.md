@@ -5,13 +5,15 @@
 ### Step 1: Collect Messages
 - Check for any unprocessed sessions_send messages
 - Check whether any executives have pending matters that need to be reported to the Chairman
+- Check CIO alert files: read `{{INSTALL_DIR}}/workspace-cio/output/alerts/` directory for unprocessed investment alert files
+- Check CAO scan reports: read `{{INSTALL_DIR}}/workspace-cao/output/scans/` directory for new security scan reports
 
 ### Step 2: Smart Silence Judgment (#16)
 Determine "Is there anything worth bothering the Chairman about this time":
 - If everything is normal → remain silent, only update internal logs (memory/), do not push any messages
 - Only proactively push if the following situations arise:
   - A sub-Agent is stuck beyond the expected time
-  - Portfolio alert triggered (reported by CIO)
+  - Portfolio alert triggered (CIO output/alerts/ new files)
   - Pending items overdue
   - Security incident (reported by CAO)
   - Red light level pending decision items

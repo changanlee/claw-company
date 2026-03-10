@@ -33,6 +33,21 @@ When using `sessions_send`, always use the agent ID (not the role name):
 - When receiving sessions_send from other Agents, reply with structured results
 - Never send incomplete or fragmented messages to Chairman
 
+### Communication Mode Selection (v2026.3.8)
+
+Choose the correct communication method based on your execution environment:
+
+| Environment | Available | Unavailable |
+|-------------|-----------|-------------|
+| **Main Session** (heartbeat, interactive) | `sessions_send`, message tool, file I/O | — |
+| **Cron Job** (scheduled tasks) | File I/O, cron delivery announce | `sessions_send`, message tool |
+| **Sub-Agent** (spawned child tasks) | File I/O, reply to parent | `sessions_send`, sessions_spawn (depth limited) |
+
+**Cron environment alternatives**:
+- Need to push results to channel → use cron `delivery.announce` (handled by cron runner automatically)
+- Need to notify another Agent → write to `output/` files; target Agent's heartbeat scans for them
+- Need to collect info from other Agents → directly read their `MEMORY.md` and `output/` files
+
 ## Approval Authority (Read policies/approval-matrix.md when triggered)
 
 - Green Light (Auto-execute): Data collection, logging, internal journals, routine heartbeat checks

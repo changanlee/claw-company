@@ -33,15 +33,17 @@ template: ../../templates/security-scan-report.md
 
 ### 2. Critical 處理
 
+> **注意**：此流程由 cron 觸發，`sessions_send` 不可用（v2026.3.8 cron tight isolation）。掃描報告由 cron delivery announce 機制自動推送到 CAO 獨立通道（董事長可見）。
+
 若有 Critical 等級發現：
-- 立即透過 CAO 獨立通道推送董事長
-- 同時透過 `sessions_send` 通知 CEO
+- 在報告中明確標記 **🔴 CRITICAL**，cron announce 會推送到 CAO 獨立通道（董事長直接可見）
+- 在報告結尾附上建議立即行動項目
 - 自動觸發 `workflows/audit-issue/workflow.md` 建立稽核議題
 
 ### 3. 一般處理
 
 非 Critical 發現：
-- High：建立稽核議題，透過 `sessions_send` 通知 CEO
+- High：建立稽核議題，在報告中標記需 CEO 關注（CEO heartbeat 會檢查 output/scans/ 目錄）
 - Medium/Low/Info：記錄報告，下次掃描追蹤
 
 ### 4. 歸檔

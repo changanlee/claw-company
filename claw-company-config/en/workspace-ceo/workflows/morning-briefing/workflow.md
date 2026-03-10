@@ -23,7 +23,7 @@ CEO (Nova) automatically collects status summaries from each executive every mor
 
 | Step | Name | Description | Approval |
 |------|------|-------------|----------|
-| 01 | Collect Status | sessions_send each executive for summaries | — |
+| 01 | Collect Status | Read each executive's MEMORY.md and output/ for summaries | — |
 | 02 | Compile & Sort | Compile replies, sort by urgency | — |
 | 03 | Format | Format using briefing template | — |
 | 04 | Deliver | Deliver to Chairman | — |

@@ -33,6 +33,21 @@
 - 收到其他 Agent 的 sessions_send 時，回覆結構化結果
 - 絕對不要發送未完成或片段式的訊息給董事長
 
+### 通訊模式選擇（v2026.3.8）
+
+根據執行環境選擇正確的通訊方式：
+
+| 環境 | 可用通訊方式 | 不可用 |
+|------|------------|--------|
+| **Main Session**（heartbeat、互動） | `sessions_send`、message tool、檔案讀寫 | — |
+| **Cron Job**（排程任務） | 檔案讀寫、cron delivery announce | `sessions_send`、message tool |
+| **Sub-Agent**（spawn 的子任務） | 檔案讀寫、回覆父 Agent | `sessions_send`、sessions_spawn（深度限制） |
+
+**Cron 環境通訊替代方案**：
+- 需要推送結果到通道 → 使用 cron `delivery.announce`（由 cron runner 自動處理）
+- 需要通知其他 Agent → 寫入 `output/` 檔案，由目標 Agent 的 heartbeat 掃描
+- 需要收集其他 Agent 資訊 → 直接讀取目標 Agent 的 `MEMORY.md` 和 `output/` 檔案
+
 ## 核決權限（情境觸發時請讀取 policies/approval-matrix.md）
 
 - 綠燈（自動執行）：資料收集、記錄、內部日誌、例行心跳巡視

@@ -22,21 +22,17 @@ Deliver the formatted morning briefing to the Chairman.
 
 ## Instructions
 
-### 1. Deliver Briefing
+### 1. Output Briefing
 
-Send the morning briefing to the Chairman in a refined, clear format.
+Output the formatted morning briefing as the final response.
+
+> **Note**: This workflow is triggered by cron. Briefing delivery is handled automatically by the cron delivery announce mechanism, which pushes to CEO's bound channel (visible to Chairman). No manual message tool push needed.
 
 ### 2. Archive
 
 Save the briefing to `output/briefings/morning-briefing-YYYY-MM-DD.md`.
 
-### 3. Await Response
-
-- If the Chairman has follow-up questions, immediately launch the corresponding workflow (dispatch-task or advisory-panel).
-- If no response, the workflow ends.
-
 ## Completion Criteria
 
-- [ ] Briefing delivered to Chairman
+- [ ] Briefing output as final response (cron announce auto-delivers)
 - [ ] Briefing archived
-- [ ] Chairman's follow-up directives handled (if any)

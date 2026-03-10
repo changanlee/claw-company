@@ -2,7 +2,7 @@
 // ============================================
 // One-Person Company — OpenClaw Supplement Pack Installer
 // Version: v0.3 (cross-platform Node.js)
-// Compatible with: OpenClaw >= 2026.3.7
+// Compatible with: OpenClaw >= 2026.3.8
 // ============================================
 
 'use strict';
@@ -21,7 +21,7 @@ const OPENCLAW_DIR = path.join(os.homedir(), '.openclaw');
 const INSTALL_DIR = path.join(OPENCLAW_DIR, 'claw-company');
 const AGENTS = ['ceo', 'cfo', 'cio', 'coo', 'cto', 'chro', 'cao'];
 const AGENT_PREFIX = 'cc-';
-const REQUIRED_MIN_VERSION = '2026.3.7';
+const REQUIRED_MIN_VERSION = '2026.3.8';
 const MEMORY_PLUGIN_REPO = 'https://github.com/win4r/memory-lancedb-pro.git';
 const MEMORY_PLUGIN_VERSION = 'v1.0.32';
 const MEMORY_PLUGIN_DIR = 'plugins/memory-lancedb-pro';
@@ -269,6 +269,7 @@ async function uninstall() {
         delete nativeJson.agents.defaults.subagents;
         delete nativeJson.agents.defaults.heartbeat;
         delete nativeJson.agents.defaults.model;
+        delete nativeJson.agents.defaults.compaction;
         // Clean up empty objects
         if (Object.keys(nativeJson.agents.defaults).length === 0) {
           delete nativeJson.agents.defaults;
@@ -1049,6 +1050,12 @@ async function main() {
           primary: 'smart',
           fallbacks: ['fast'],
         },
+        compaction: {
+          postCompactionSections: langDir === 'zh'
+            ? ['啟動必讀 — 公司規範', '安全紅線']
+            : ['Session Startup', 'Red Lines'],
+          model: 'fast',
+        },
       },
     },
     tools: {
@@ -1211,41 +1218,53 @@ async function main() {
   // ============================================
   logInfo('Registering cron jobs...', '註冊排程任務...');
 
+  // v2026.3.8: Cron tight isolation — cron jobs cannot use sessions_send or message tool.
+  // Delivery modes: 'announce' (push to channel), 'none' (silent, file-based relay).
+  // For 'announce' jobs, results are delivered to the agent's bound channel via cron runner.
+  // For 'none' jobs, results are written to output/ files; CEO heartbeat picks them up.
+  const primaryChannel = channelsFound[0] || null;
+  const caoChannel = channelsFound.includes('telegram:audit') ? 'telegram:audit' : primaryChannel;
+
   const cronJobs = [
     {
       name: 'morning-briefing',
       cron: '30 6 * * *',
       agent: `${AGENT_PREFIX}ceo`,
       model: tiers.CEO,
-      message: 'Execute morning briefing: use sessions_send to request 12-hour summaries from CFO, CIO, COO, CTO. Compile into briefing with action items for Chairman. Refer to briefing-template.md',
+      message: 'Execute morning briefing: read MEMORY.md and recent output/ files from all executives (CFO, CIO, COO, CTO, CHRO, CAO) to collect latest status. Compile into briefing with action items for Chairman. Refer to briefing-template.md. Do NOT use sessions_send (unavailable in cron).',
+      target: primaryChannel,
     },
     {
       name: 'investment-monitor',
       cron: '0 9-16 * * 1-5',
       agent: `${AGENT_PREFIX}cio`,
       model: tiers.CIO,
-      message: 'Check portfolio data. Only notify CEO via sessions_send if any position moves >5%, otherwise silently log to memory/',
+      message: 'Check portfolio data. If any position moves >5%, write alert file to output/alerts/ with analysis. Otherwise silently log to memory/. Do NOT use sessions_send (unavailable in cron). CEO heartbeat will pick up alert files.',
+      target: null,
     },
     {
       name: 'memory-cleanup',
       cron: '0 3 1 * *',
       agent: `${AGENT_PREFIX}chro`,
       model: tiers.CHRO,
-      message: 'Audit MEMORY.md health across all agents: check line counts vs 200-line limit, duplicates, stale entries, archive logs >30 days. Send health report to CEO via sessions_send',
+      message: 'Audit MEMORY.md health across all agents: check line counts vs 200-line limit, duplicates, stale entries, archive logs >30 days. Write health report to output/reports/. Do NOT use sessions_send (unavailable in cron).',
+      target: primaryChannel,
     },
     {
       name: 'weekly-org-review',
       cron: '0 8 * * 1',
       agent: `${AGENT_PREFIX}chro`,
       model: tiers.CHRO,
-      message: 'Produce weekly org health report: agent performance summary, capability gaps, model config suggestions, skill usage stats. Send to CEO via sessions_send',
+      message: 'Produce weekly org health report: agent performance summary, capability gaps, model config suggestions, skill usage stats. Write report to output/reports/. Do NOT use sessions_send (unavailable in cron).',
+      target: primaryChannel,
     },
     {
       name: 'security-scan',
       cron: '0 2 * * 3',
       agent: `${AGENT_PREFIX}cao`,
       model: tiers.CAO,
-      message: 'Run full security scan: verify SOUL.md integrity, check recent session logs for anomalies, validate security rules compliance. Push security report directly to Chairman',
+      message: 'Run full security scan: verify SOUL.md integrity, check recent session logs for anomalies, validate security rules compliance. Produce security scan report. Do NOT use sessions_send (unavailable in cron). Report is delivered via cron announce.',
+      target: caoChannel,
     },
     {
       name: 'cto-memory-cleanup',
@@ -1253,12 +1272,16 @@ async function main() {
       agent: `${AGENT_PREFIX}cto`,
       model: tiers.CTO,
       message: 'Execute weekly memory cleanup: remove stale entries, promote recurring patterns to principles, archive completed tasks >7 days in status.md, ensure MEMORY.md <=200 lines, check for contradictions. Write cleanup summary to memory/ log',
+      target: null,
     },
   ];
 
   const failedCronCmds = [];
   for (const job of cronJobs) {
     const cmdArgs = ['openclaw', 'cron', 'add', '--name', job.name, '--cron', job.cron, '--agent', job.agent, '--model', job.model, '--message', job.message];
+    if (job.target) {
+      cmdArgs.push('--target', job.target);
+    }
     const result = tryExec(cmdArgs);
     if (result.ok) {
       logOk(job.name);
@@ -1288,6 +1311,10 @@ async function main() {
   log(`  - ${msg('Tool policies', '工具策略')}：${path.join(INSTALL_DIR, 'shared', 'tools-policy.md')}`);
   log(`  - ${msg('Each Agent loads rules at session start (runtime read)', '每個 Agent 在 session 啟動時載入規範（運行時讀取）')}`);
   log(`  - ${msg('Settings injected into native openclaw.json (no symlink)', '設定已注入原生 openclaw.json（無 symlink）')}`);
+  log(`  - ${msg('Cron delivery: announce mode for briefings/reports, silent for monitors', 'Cron 推送：簡報/報告用 announce 模式，監控用靜默模式')}`);
+  log('');
+  log(msg('  Post-install:', '  安裝後步驟：'));
+  log(msg('  Run "openclaw doctor --fix" to migrate any legacy cron config', '  執行 "openclaw doctor --fix" 遷移舊版 cron 配置'));
   log('');
 
   // Show failed commands for manual execution

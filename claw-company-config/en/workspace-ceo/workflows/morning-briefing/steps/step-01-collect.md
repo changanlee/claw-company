@@ -1,6 +1,6 @@
 ---
 name: collect
-description: "sessions_send each executive requesting status summaries"
+description: "Read each executive's MEMORY.md and output/ for status"
 next-step: ./step-02-compile.md
 output-file: null
 template: null
@@ -12,38 +12,44 @@ template: null
 
 ## Objective
 
-Request current status summaries from each executive via `sessions_send` to collect real-time information.
+Read each executive's MEMORY.md and recent output/ files to collect their latest status information.
+
+> **Note**: This workflow is triggered by cron. `sessions_send` is unavailable in cron environment (v2026.3.8 cron tight isolation). Status is collected by directly reading executive files.
 
 ## Execution Rules
 
 - Read the entire step file before acting
 - Do not pre-read subsequent steps
 - Do not skip or merge steps
+- Do NOT use `sessions_send` (unavailable in cron)
 
 ## Instructions
 
-### 1. Send Status Requests
+### 1. Read Executive Status
 
-Use `sessions_send` to request status from the following executives:
+Read the following files in order to extract each executive's latest status:
 
-| Executive | Requested Information |
-|-----------|----------------------|
-| CFO | Yesterday's spending summary, budget utilization, anomalies |
-| CIO | Position changes, market alerts, investment opportunities |
-| COO | Today's schedule, weather overview, to-do reminders |
-| CTO | Development progress, blockers, technical issues |
-| CHRO | Agent status, policy to-dos, organizational issues |
-| CAO | Security status, open audit issues, compliance alerts |
+| Executive | Source Files | Extract |
+|-----------|-------------|---------|
+| CFO | MEMORY.md + latest file in output/reports/ | Spending summary, budget utilization, anomalies |
+| CIO | MEMORY.md + latest file in output/alerts/ | Position changes, market alerts, opportunities |
+| COO | MEMORY.md | Today's schedule, weather overview, reminders |
+| CTO | MEMORY.md | Development progress, blockers, technical issues |
+| CHRO | MEMORY.md + latest file in output/reports/ | Agent status, policy to-dos, org issues |
+| CAO | MEMORY.md + latest file in output/scans/ | Security status, open audit issues, compliance |
 
-### 2. Wait for Replies
+**Path format**: `{{INSTALL_DIR}}/workspace-{role}/MEMORY.md` and `{{INSTALL_DIR}}/workspace-{role}/output/`
 
-- Set a reasonable wait time.
-- Record which executives have and have not replied.
+### 2. Record Collection Results
+
+- Note which executives had data available and which did not.
+- If an executive's output/ is empty, fall back to MEMORY.md information.
 
 ## Completion Criteria
 
-- [ ] Status requests sent to all executives
-- [ ] Replies collected (or timeouts noted)
+- [ ] All executives' MEMORY.md files read
+- [ ] All executives' output/ latest files checked
+- [ ] Collected status information organized
 
 ## Next Step
 

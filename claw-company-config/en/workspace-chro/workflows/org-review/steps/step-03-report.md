@@ -59,7 +59,10 @@ Produce a structured org health weekly report and submit to CEO for inclusion in
 
 ### 3. Submit Report
 
-Via `sessions_send`, submit to CEO.
+> **Note**: This workflow is triggered by cron. `sessions_send` is unavailable in cron environment (v2026.3.8 cron tight isolation). Report is auto-delivered via cron delivery announce mechanism.
+
+- Output the report as the final response; cron announce pushes to channel (visible to CEO)
+- Also save report to `output/reports/org-health-weekly-YYYY-MM-DD.md`
 
 ### 4. Update Records
 

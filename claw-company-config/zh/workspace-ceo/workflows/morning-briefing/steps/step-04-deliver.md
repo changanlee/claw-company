@@ -22,21 +22,17 @@ template: null
 
 ## 執行指令
 
-### 1. 推送簡報
+### 1. 輸出簡報
 
-向董事長發送晨間簡報，格式精煉、重點明確。
+將格式化完成的晨間簡報作為最終輸出。
+
+> **注意**：此流程由 cron 觸發，簡報的推送由 cron delivery announce 機制自動處理，會推送到 CEO 綁定的通道（董事長可見）。不需要手動使用 message tool 推送。
 
 ### 2. 存檔
 
 將簡報存入 `output/briefings/morning-briefing-YYYY-MM-DD.md`。
 
-### 3. 等待回應
-
-- 若董事長對某項有追問，立即啟動對應 workflow（dispatch-task 或 advisory-panel）。
-- 若無回應，流程結束。
-
 ## 完成標準
 
-- [ ] 簡報已推送董事長
+- [ ] 簡報已作為最終輸出（cron announce 自動推送）
 - [ ] 簡報已存檔
-- [ ] 已處理董事長後續指令（若有）

@@ -59,7 +59,10 @@ template: null
 
 ### 3. 發送週報
 
-透過 `sessions_send` 送交 CEO。
+> **注意**：此流程由 cron 觸發，`sessions_send` 不可用（v2026.3.8 cron tight isolation）。週報由 cron delivery announce 機制自動推送到通道。
+
+- 週報作為最終輸出，由 cron announce 推送到通道（CEO 可見）
+- 同時將週報存入 `output/reports/org-health-weekly-YYYY-MM-DD.md`
 
 ### 4. 更新記錄
 

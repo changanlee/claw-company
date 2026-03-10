@@ -33,15 +33,17 @@ Read `{{INSTALL_DIR}}/workspace-cao/templates/security-scan-report.md` and produ
 
 ### 2. Critical Handling
 
+> **Note**: This workflow is triggered by cron. `sessions_send` is unavailable in cron environment (v2026.3.8 cron tight isolation). Scan report is auto-delivered via cron delivery announce to CAO's independent channel (visible to Chairman).
+
 If Critical findings exist:
-- Push directly to Chairman via CAO's independent channel
-- Simultaneously notify CEO via `sessions_send`
+- Mark clearly as **🔴 CRITICAL** in the report; cron announce pushes to CAO's independent channel (Chairman sees directly)
+- Append recommended immediate actions at the end of the report
 - Auto-trigger `workflows/audit-issue/workflow.md` to create an audit issue
 
 ### 3. General Handling
 
 Non-Critical findings:
-- High: Create audit issue, notify CEO via `sessions_send`
+- High: Create audit issue, flag in report for CEO attention (CEO heartbeat checks output/scans/ directory)
 - Medium/Low/Info: Record in report, track in next scan
 
 ### 4. Archive
