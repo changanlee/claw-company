@@ -1134,6 +1134,20 @@ async function main() {
   // Deep merge — preserves channels, gateway, session, bindings
   deepMerge(nativeJson, injection);
 
+  // v2026.3.8 breaking change: gateway.auth.mode must be explicit when both token and password are configured
+  const gwAuth = nativeJson.gateway?.auth;
+  if (gwAuth) {
+    const hasToken = gwAuth.token != null && gwAuth.token !== '';
+    const hasPassword = gwAuth.password != null && gwAuth.password !== '';
+    const hasMode = typeof gwAuth.mode === 'string' && gwAuth.mode.trim().length > 0;
+    if (hasToken && hasPassword && !hasMode) {
+      logWarn(msg(
+        'gateway.auth has both token and password but no explicit mode — OpenClaw v2026.3.8 requires gateway.auth.mode ("token" | "password" | "trusted-proxy" | "none"). Set it in your openclaw.json before running gateway start.',
+        'gateway.auth 同時有 token 和 password 但未設定 mode — OpenClaw v2026.3.8 要求明確設定 gateway.auth.mode（"token" | "password" | "trusted-proxy" | "none"）。請在 openclaw.json 中設定後再啟動 gateway。'
+      ));
+    }
+  }
+
   // Backup original before writing
   const backupPath = `${nativeJsonPath}.backup.${Date.now()}`;
   try {
