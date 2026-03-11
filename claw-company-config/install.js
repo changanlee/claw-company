@@ -985,7 +985,7 @@ async function main() {
   // ----------------------------------------
   const skillAllowlistSrc = path.join(SCRIPT_DIR, 'skill-allowlist.json');
   if (fs.existsSync(skillAllowlistSrc)) {
-    fs.copyFileSync(skillAllowlistSrc, path.join(sharedDir, 'skill-allowlist.json'));
+    fs.copyFileSync(skillAllowlistSrc, path.join(sharedDst, 'skill-allowlist.json'));
     logOk('shared/skill-allowlist.json');
   }
 
