@@ -490,20 +490,44 @@ async function main() {
       logInfo(msg('Not running under systemd, skipping', '非 systemd 環境，跳過'));
     }
 
-    // Verify by reindexing
+    // Verify by reindexing (use longer timeout for large memory stores)
     log('');
     log(msg('Reindexing memory...', '重建記憶索引...'));
-    const reindexResult = tryExec(['openclaw', 'memory', 'index', '--force']);
-    if (reindexResult.ok) {
+    const reindexResult = spawnSync('openclaw', ['memory', 'index', '--force'], { encoding: 'utf-8', timeout: 120000 });
+    if (reindexResult.status === 0) {
       logOk(msg('Memory reindex complete', '記憶索引重建完成'));
+    } else {
+      logWarn(
+        'Memory reindex failed or timed out. Run manually: openclaw memory index --force',
+        '記憶索引重建失敗或超時。請手動執行：openclaw memory index --force'
+      );
     }
 
     log('');
     if (systemdFixed) {
-      log(msg(
-        'Restart gateway to apply: sudo systemctl restart openclaw-gateway',
-        '重啟 gateway 生效：sudo systemctl restart openclaw-gateway'
+      // Ask user if they want to restart now
+      const rl2 = createRl();
+      const restart = await ask(rl2, msg(
+        'Restart gateway now to apply? (Y/n): ',
+        '立即重啟 gateway 生效？(Y/n)：'
       ));
+      rl2.close();
+      if (restart.toLowerCase() !== 'n') {
+        const restartResult = tryExec(['sudo', 'systemctl', 'restart', 'openclaw-gateway']);
+        if (restartResult.ok) {
+          logOk(msg('Gateway restarted', 'Gateway 已重啟'));
+        } else {
+          logWarn(
+            'Restart failed. Run manually: sudo systemctl restart openclaw-gateway',
+            '重啟失敗，請手動執行：sudo systemctl restart openclaw-gateway'
+          );
+        }
+      } else {
+        log(msg(
+          'Restart later: sudo systemctl restart openclaw-gateway',
+          '稍後重啟：sudo systemctl restart openclaw-gateway'
+        ));
+      }
     }
     logOk(msg('Memory plugin setup complete!', '記憶插件配置完成！'));
     return;
@@ -824,15 +848,23 @@ async function main() {
     }
   }
 
-  modelPrimary = await pickModel('smart');
-  modelLight = await pickModel('fast');
+  if (availableModels.length === 1) {
+    modelPrimary = modelLight = availableModels[0];
+    logInfo(
+      `Only one model available, using for both smart and fast: ${modelPrimary}`,
+      `只有一個模型，smart 和 fast 皆使用：${modelPrimary}`
+    );
+  } else {
+    modelPrimary = await pickModel('smart');
+    modelLight = await pickModel('fast');
+  }
 
   log('');
   logInfo(
     `Model aliases:\n       smart -> ${modelPrimary}\n       fast  -> ${modelLight}`,
     `模型別名：\n       smart -> ${modelPrimary}\n       fast  -> ${modelLight}`
   );
-  if (modelPrimary === modelLight) {
+  if (availableModels.length > 1 && modelPrimary === modelLight) {
     logWarn(
       'smart and fast point to the same model.',
       'smart 和 fast 指向同一個模型。'
@@ -991,15 +1023,20 @@ async function main() {
       fs.writeFileSync(path.join(wsDst, 'TOOLS.md'), replaceInstallDir(content));
     }
 
-    // Extra files (with {{INSTALL_DIR}} substitution for .md)
-    for (const extra of ['briefing-template.md', 'status.md', 'issues.md']) {
+    // Extra config files (always overwrite — these are templates)
+    for (const extra of ['briefing-template.md']) {
       const src = path.join(wsSrc, extra);
       if (!fs.existsSync(src)) continue;
-      if (extra.endsWith('.md')) {
-        fs.writeFileSync(path.join(wsDst, extra), replaceInstallDir(fs.readFileSync(src, 'utf-8')));
-      } else {
-        fs.copyFileSync(src, path.join(wsDst, extra));
-      }
+      fs.writeFileSync(path.join(wsDst, extra), replaceInstallDir(fs.readFileSync(src, 'utf-8')));
+    }
+
+    // Runtime state files (preserve existing on overwrite install)
+    for (const runtime of ['status.md', 'issues.md']) {
+      const dst = path.join(wsDst, runtime);
+      if (fs.existsSync(dst)) continue; // preserve existing runtime state
+      const src = path.join(wsSrc, runtime);
+      if (!fs.existsSync(src)) continue;
+      fs.writeFileSync(dst, replaceInstallDir(fs.readFileSync(src, 'utf-8')));
     }
 
     // Link or copy shared files into workspace
@@ -1044,7 +1081,14 @@ async function main() {
       const name = (fm.match(/^name:\s*"(.*)"/m) || [])[1] || '';
       const title = (fm.match(/^title:\s*"(.*)"/m) || [])[1] || '';
       const icon = (fm.match(/^icon:\s*"(.*)"/m) || [])[1] || '';
-      if (name) executives.push({ name, title, icon, id: `${AGENT_PREFIX}${agent}` });
+      if (name) {
+        executives.push({ name, title, icon, id: `${AGENT_PREFIX}${agent}` });
+      } else {
+        logWarn(
+          `workspace-${agent}/IDENTITY.md: name field is empty — will be missing from team-roster.md`,
+          `workspace-${agent}/IDENTITY.md：name 欄位為空，將不會出現在 team-roster.md 中`
+        );
+      }
     }
 
     const engineers = [];
@@ -1111,6 +1155,9 @@ async function main() {
 
   // ----------------------------------------
   // Auth — copy existing auth-profiles.json
+  // LEGACY: OpenClaw agents inherit auth from main agent automatically.
+  // This section writes to INSTALL_DIR/agents/ which may not match the
+  // actual agent dirs at ~/.openclaw/agents/cc-*/agent/. Kept as fallback.
   // ----------------------------------------
   let existingAuthFile = '';
   // Search for existing auth profiles
@@ -1172,8 +1219,8 @@ async function main() {
         'JINA_API_KEY 未設定。記憶插件會被安裝，但 embedding 功能需設定 API Key 後才能使用。'
       );
       log(msg(
-        '  Get free API key: https://jina.ai → set: export JINA_API_KEY=your_key',
-        '  取得免費 API Key：https://jina.ai → 設定：export JINA_API_KEY=your_key'
+        '  Get free API key: https://jina.ai → then run: node install.js --setup-memory',
+        '  取得免費 API Key：https://jina.ai → 設定後執行：node install.js --setup-memory'
       ));
       log('');
     }
@@ -1736,13 +1783,24 @@ async function main() {
   log(msg('Next steps:', '下一步：'));
   if (!process.env.JINA_API_KEY && memoryPluginInstalled) {
     log(msg(
-      '  1. export JINA_API_KEY=your_key  (get free key: https://jina.ai)',
-      '  1. export JINA_API_KEY=your_key  （取得免費 Key：https://jina.ai）'
+      '  1. Get free Jina API key: https://jina.ai',
+      '  1. 申請免費 Jina API Key：https://jina.ai'
     ));
-    log('  2. openclaw gateway start');
     log(msg(
-      '  3. Send a test message to CEO Bot via your configured platform',
-      '  3. 透過已配置的平台發送測試訊息給 CEO Bot'
+      '  2. export JINA_API_KEY=your_key && echo \'export JINA_API_KEY=your_key\' >> ~/.bashrc',
+      '  2. export JINA_API_KEY=your_key && echo \'export JINA_API_KEY=your_key\' >> ~/.bashrc'
+    ));
+    log(msg(
+      '  3. node install.js --setup-memory  (auto-configure systemd + verify)',
+      '  3. node install.js --setup-memory  （自動配置 systemd + 驗證）'
+    ));
+    log(msg(
+      '  4. openclaw gateway start (or: sudo systemctl restart openclaw-gateway)',
+      '  4. openclaw gateway start（或：sudo systemctl restart openclaw-gateway）'
+    ));
+    log(msg(
+      '  5. Send a test message to CEO Bot via your configured platform',
+      '  5. 透過已配置的平台發送測試訊息給 CEO Bot'
     ));
   } else {
     log('  1. openclaw gateway start');
