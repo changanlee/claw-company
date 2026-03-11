@@ -306,23 +306,45 @@ async function uninstall() {
     }
   }
 
-  // Remove agents via CLI
+  // Remove agents via CLI (correct verb is 'delete', not 'remove')
   for (const agent of AGENTS) {
-    tryExec(['openclaw', 'agents', 'remove', `${AGENT_PREFIX}${agent}`]);
+    tryExec(['openclaw', 'agents', 'delete', `${AGENT_PREFIX}${agent}`, '--force']);
   }
   log('[INFO] Removed agents via CLI');
 
-  // Remove cron jobs via CLI (by UUID, --name doesn't work)
+  // Remove cron jobs via CLI — try --json first, fall back to text parsing
   const uninstallCronNames = new Set([
     'morning-briefing', 'investment-monitor', 'memory-cleanup',
     'weekly-org-review', 'security-scan', 'cto-memory-cleanup',
   ]);
-  const cronListRes = tryExec(['openclaw', 'cron', 'list']);
-  if (cronListRes.ok && cronListRes.stdout) {
-    for (const line of cronListRes.stdout.split('\n')) {
-      const m = line.match(/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\s+(\S+)/);
-      if (m && uninstallCronNames.has(m[2])) {
-        tryExec(['openclaw', 'cron', 'remove', m[1]]);
+  let uninstallCronDone = false;
+  const cronJsonRes = tryExec(['openclaw', 'cron', 'list', '--json']);
+  if (cronJsonRes.ok && cronJsonRes.stdout) {
+    try {
+      const entries = JSON.parse(cronJsonRes.stdout);
+      if (Array.isArray(entries)) {
+        for (const entry of entries) {
+          if (entry.name && uninstallCronNames.has(entry.name) && entry.id) {
+            tryExec(['openclaw', 'cron', 'remove', entry.id]);
+          }
+        }
+        uninstallCronDone = true;
+      }
+    } catch (_) { /* fall through */ }
+  }
+  if (!uninstallCronDone) {
+    const cronListRes = tryExec(['openclaw', 'cron', 'list']);
+    if (cronListRes.ok && cronListRes.stdout) {
+      const UUID_RE = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/;
+      for (const line of cronListRes.stdout.split('\n')) {
+        const uuidMatch = line.match(UUID_RE);
+        if (!uuidMatch) continue;
+        for (const name of uninstallCronNames) {
+          if (line.includes(name)) {
+            tryExec(['openclaw', 'cron', 'remove', uuidMatch[1]]);
+            break;
+          }
+        }
       }
     }
   }
@@ -1484,10 +1506,22 @@ async function main() {
     }
   }
 
-  // Pre-clean: remove keys we are about to inject to prevent array duplication
-  // on re-install. deepMerge unions arrays, so without this cleanup, repeated
-  // installs would accumulate duplicate entries in array-typed fields.
-  const keysToPreClean = ['agents.defaults', 'tools', 'hooks', 'cron'];
+  // Pre-clean: remove only the specific keys we inject, to prevent array
+  // duplication on re-install. Delete at leaf level so user-added keys under
+  // the same parent (e.g. tools.customTool) are preserved.
+  const keysToPreClean = [
+    'agents.defaults.models',
+    'agents.defaults.subagents',
+    'agents.defaults.heartbeat',
+    'agents.defaults.model',
+    'agents.defaults.compaction',
+    'tools.agentToAgent',
+    'tools.sessions',
+    'tools.loopDetection',
+    'hooks.internal',
+    'cron.enabled',
+    'cron.maxConcurrentRuns',
+  ];
   for (const keyPath of keysToPreClean) {
     const parts = keyPath.split('.');
     let obj = nativeJson;
@@ -1496,13 +1530,8 @@ async function main() {
       obj = obj[parts[i]];
     }
     const lastKey = parts[parts.length - 1];
-    // Only pre-clean if injection has this key too (don't delete user-only config)
     if (obj && typeof obj === 'object' && obj[lastKey] !== undefined) {
-      let injObj = injection;
-      for (const p of parts) { injObj = injObj?.[p]; }
-      if (injObj !== undefined) {
-        delete obj[lastKey];
-      }
+      delete obj[lastKey];
     }
   }
 
