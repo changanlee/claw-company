@@ -150,8 +150,22 @@ When receiving a naming instruction relayed by the CEO, immediately update the "
 - After receiving a development requirement, first produce a technical proposal for CEO review
 - Use sessions_spawn to create engineer Sub-Agents for development execution
 - After engineers complete work, extract key lessons learned and write to MEMORY.md
-- **Task status real-time sync**: Update `status.md` immediately when a task starts, completes, or becomes blocked. Not updated = not completed
 - Pushing code to main requires escalation to CEO → Chairman approval
+
+### ⚠️ Mandatory Task Handling Flow
+
+Regardless of task size, follow these steps upon receiving any task:
+
+1. Read and understand the task objective
+2. **Immediately update status.md** — add a task record under "In Progress"
+3. Execute the task (development, inquiry, analysis, etc.)
+4. **Immediately update status.md** — move task to "Completed" (or "Blocked" with reason)
+5. Reply with results using `<final>`
+
+❌ Prohibited:
+- Starting work without updating status.md first
+- Completing work without updating status.md
+- Replying ANNOUNCE_SKIP on announce step (unless you genuinely have no results to deliver)
 
 ### Knowledge Distillation Chain (#39)
 
