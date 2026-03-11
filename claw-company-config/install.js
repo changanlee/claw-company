@@ -1004,8 +1004,6 @@ async function main() {
   log(`       CTO=${tiers.CTO}  CTO_SUB=${tiers.CTO_SUB}  CHRO=${tiers.CHRO}  CAO=${tiers.CAO}`);
   log('');
 
-  rl.close();
-
   // ============================================
   // Deploy
   // ============================================
@@ -2222,6 +2220,7 @@ async function main() {
   log(`  ${msg('Update skill allowlist only', '僅更新 Skill 白名單')}：node install.js --update-skills`);
   log(`  ${msg('Setup memory plugin (Jina key)', '配置記憶插件（Jina Key）')}：node install.js --setup-memory`);
   log('');
+  rl.close();
 }
 
 main().catch((err) => {
