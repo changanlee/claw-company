@@ -450,44 +450,55 @@ async function main() {
 
     logOk(msg('JINA_API_KEY detected', 'JINA_API_KEY 已偵測到'));
 
-    // Check systemd service
+    // Check service environment (systemd on Linux, launchd hint on macOS)
     let systemdFixed = false;
-    try {
-      const svcCheck = tryExec(['systemctl', 'show', 'openclaw-gateway', '--property=Environment']);
-      if (svcCheck.ok && svcCheck.stdout.includes('Environment=')) {
-        if (svcCheck.stdout.includes('JINA_API_KEY')) {
-          logOk(msg('systemd service already has JINA_API_KEY', 'systemd 服務已包含 JINA_API_KEY'));
-        } else {
-          logWarn(
-            'systemd service is missing JINA_API_KEY. Fixing...',
-            'systemd 服務缺少 JINA_API_KEY，修復中...'
-          );
-          const overrideDir = '/etc/systemd/system/openclaw-gateway.service.d';
-          const overridePath = path.join(overrideDir, 'jina-env.conf');
-          const overrideContent = `[Service]\nEnvironment=JINA_API_KEY=${process.env.JINA_API_KEY}\n`;
-          const mkdirResult = tryExec(['sudo', 'mkdir', '-p', overrideDir]);
-          if (mkdirResult.ok) {
-            const writeResult = spawnSync('sudo', ['tee', overridePath], { input: overrideContent, encoding: 'utf-8', timeout: 10000 });
-            if (writeResult.status === 0) {
-              tryExec(['sudo', 'systemctl', 'daemon-reload']);
-              logOk(msg(
-                'JINA_API_KEY added to systemd service',
-                'JINA_API_KEY 已加入 systemd 服務'
-              ));
-              systemdFixed = true;
-            } else {
-              logWarn(
-                'Failed to write systemd override. Fix manually:',
-                '寫入 systemd override 失敗，請手動修復：'
-              );
-              log(`  sudo systemctl edit openclaw-gateway`);
-              log(`  ${msg('Add:', '加入：')} Environment=JINA_API_KEY=${process.env.JINA_API_KEY}`);
+    if (process.platform === 'darwin') {
+      logInfo(msg(
+        'macOS detected — ensure JINA_API_KEY is available to the gateway process.',
+        'macOS 環境 — 請確保 gateway 程序可存取 JINA_API_KEY。'
+      ));
+      log(msg(
+        '  If using launchd: add EnvironmentVariables dict to your plist, or launch gateway from a shell with the env var set.',
+        '  若使用 launchd：在 plist 中加入 EnvironmentVariables，或在已設定環境變數的 shell 中啟動 gateway。'
+      ));
+    } else {
+      try {
+        const svcCheck = tryExec(['systemctl', 'show', 'openclaw-gateway', '--property=Environment']);
+        if (svcCheck.ok && svcCheck.stdout.includes('Environment=')) {
+          if (svcCheck.stdout.includes('JINA_API_KEY')) {
+            logOk(msg('systemd service already has JINA_API_KEY', 'systemd 服務已包含 JINA_API_KEY'));
+          } else {
+            logWarn(
+              'systemd service is missing JINA_API_KEY. Fixing...',
+              'systemd 服務缺少 JINA_API_KEY，修復中...'
+            );
+            const overrideDir = '/etc/systemd/system/openclaw-gateway.service.d';
+            const overridePath = path.join(overrideDir, 'jina-env.conf');
+            const overrideContent = `[Service]\nEnvironment=JINA_API_KEY=${process.env.JINA_API_KEY}\n`;
+            const mkdirResult = tryExec(['sudo', 'mkdir', '-p', overrideDir]);
+            if (mkdirResult.ok) {
+              const writeResult = spawnSync('sudo', ['tee', overridePath], { input: overrideContent, encoding: 'utf-8', timeout: 10000 });
+              if (writeResult.status === 0) {
+                tryExec(['sudo', 'systemctl', 'daemon-reload']);
+                logOk(msg(
+                  'JINA_API_KEY added to systemd service',
+                  'JINA_API_KEY 已加入 systemd 服務'
+                ));
+                systemdFixed = true;
+              } else {
+                logWarn(
+                  'Failed to write systemd override. Fix manually:',
+                  '寫入 systemd override 失敗，請手動修復：'
+                );
+                log(`  sudo systemctl edit openclaw-gateway`);
+                log(`  ${msg('Add:', '加入：')} Environment=JINA_API_KEY=${process.env.JINA_API_KEY}`);
+              }
             }
           }
         }
+      } catch (e) {
+        logInfo(msg('Not running under systemd, skipping', '非 systemd 環境，跳過'));
       }
-    } catch (e) {
-      logInfo(msg('Not running under systemd, skipping', '非 systemd 環境，跳過'));
     }
 
     // Verify by reindexing (use longer timeout for large memory stores)
@@ -613,9 +624,19 @@ async function main() {
     logInfo(`OpenClaw version: ${currentVersion}`, `OpenClaw 版本：${currentVersion}`);
   } else {
     logWarn(
-      `Could not detect version, proceeding (recommended >= ${REQUIRED_MIN_VERSION})`,
-      `無法偵測版本，繼續安裝（建議 >= ${REQUIRED_MIN_VERSION}）`
+      `Could not detect OpenClaw version from: ${(clawCheck.stdout || '').trim().slice(0, 80)}`,
+      `無法從輸出偵測 OpenClaw 版本：${(clawCheck.stdout || '').trim().slice(0, 80)}`
     );
+    log(msg(
+      `  This installer requires OpenClaw >= ${REQUIRED_MIN_VERSION}. Incompatible versions may cause runtime errors.`,
+      `  本安裝程式需要 OpenClaw >= ${REQUIRED_MIN_VERSION}，不相容的版本可能造成執行期錯誤。`
+    ));
+    const cont = await ask(rl, msg('  Continue anyway? (y/N): ', '  仍要繼續？(y/N)：'));
+    if (cont.toLowerCase() !== 'y') {
+      log(msg('Cancelled.', '已取消。'));
+      rl.close();
+      process.exit(0);
+    }
   }
   log('');
 
@@ -1078,9 +1099,16 @@ async function main() {
       const m = raw.match(/^---\s*\n([\s\S]*?)\n---/);
       if (!m) continue;
       const fm = m[1];
-      const name = (fm.match(/^name:\s*"(.*)"/m) || [])[1] || '';
-      const title = (fm.match(/^title:\s*"(.*)"/m) || [])[1] || '';
-      const icon = (fm.match(/^icon:\s*"(.*)"/m) || [])[1] || '';
+      // Support both quoted (name: "Foo") and unquoted (name: Foo) YAML values
+      const parseFmValue = (key) => {
+        const quoted = fm.match(new RegExp(`^${key}:\\s*"(.*)"`, 'm'));
+        if (quoted) return quoted[1];
+        const unquoted = fm.match(new RegExp(`^${key}:\\s*(.+)`, 'm'));
+        return unquoted ? unquoted[1].trim() : '';
+      };
+      const name = parseFmValue('name');
+      const title = parseFmValue('title');
+      const icon = parseFmValue('icon');
       if (name) {
         executives.push({ name, title, icon, id: `${AGENT_PREFIX}${agent}` });
       } else {
