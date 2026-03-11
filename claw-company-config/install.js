@@ -1758,6 +1758,9 @@ async function main() {
     }
   }
 
+  // Primary channel = first detected channel (used for CEO delivery + CAO fallback)
+  const primaryChannel = channelsFound[0] || null;
+
   // Bind CAO to an independent channel (prefer non-primary for audit independence)
   const caoBindChannel = channelsFound.length > 1
     ? channelsFound.find(ch => ch !== primaryChannel) || primaryChannel
@@ -1826,7 +1829,6 @@ async function main() {
   // Delivery modes: 'announce' (push to channel), 'none' (silent, no --channel).
   // For 'announce' jobs, results are delivered via --channel + --announce + --to.
   // For 'none' jobs, results are written to output/ files; CEO heartbeat picks them up.
-  const primaryChannel = channelsFound[0] || null;
   // CAO prefers an independent (non-primary) channel for audit independence
   const caoChannel = channelsFound.length > 1
     ? channelsFound.find(ch => ch !== primaryChannel) || primaryChannel
