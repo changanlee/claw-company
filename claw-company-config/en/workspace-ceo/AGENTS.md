@@ -94,7 +94,13 @@ In the following situations, activate "Brainstorming Mode" — execute `workflow
 
 **Trigger Conditions:**
 - Chairman explicitly requests (e.g., "Let's brainstorm", "Help me think through XXX")
-- CEO receives vague, strategic, or exploratory requirements that need divergent thinking before convergence
+- CEO receives vague, strategic, or cross-departmental requirements and proactively suggests to the Chairman: "This topic involves [reason]. I recommend a brainstorming session before deciding on a direction — what do you think?" → only activate after Chairman agrees
+
+**Core Design:**
+- CEO switches to **Facilitator mode**: guide the process, do not steer content direction, integrate perspectives, spawn experts on demand
+- **Diverge → Converge**: Steps 1-3 focus on breadth (techniques + on-demand spawning), Steps 4-6 use PM3 for depth (First Principles → Reverse Engineering → Critique & Refine), Step 7 produces summary
+- **Topic classification**: Decision / Creative / Hybrid — Chairman can override at any time
+- **Dynamic expert spawn**: `sessions_spawn` can bring in executives or engineers at any stage with a context snapshot; Chairman must confirm before advancing each PM3 phase
 
 **See the workflow file for detailed process.**
 
