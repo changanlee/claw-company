@@ -1251,17 +1251,34 @@ async function main() {
           `git clone failed: ${cloneResult.stderr}. Trying npm install...`,
           `git clone 失敗：${cloneResult.stderr}。嘗試 npm install...`
         );
-        // Fallback: npm install into plugin directory
-        fs.mkdirSync(pluginPath, { recursive: true });
-        const npmInitResult = spawnSync('npm', ['init', '-y'], {
-          encoding: 'utf-8', timeout: 30000, cwd: pluginPath,
+        // Fallback: npm install into a temp dir, then hoist to pluginPath
+        // (npm puts the package under node_modules/ — OpenClaw plugin loader
+        //  expects entry point at pluginPath root, matching git clone layout)
+        const npmTmpDir = `${pluginPath}.__npm_tmp__`;
+        try { fs.rmSync(npmTmpDir, { recursive: true, force: true }); } catch (_) {}
+        fs.mkdirSync(npmTmpDir, { recursive: true });
+        spawnSync('npm', ['init', '-y'], {
+          encoding: 'utf-8', timeout: 30000, cwd: npmTmpDir,
         });
         const npmInstallResult = spawnSync('npm', ['install', `memory-lancedb-pro@${MEMORY_PLUGIN_VERSION}`], {
-          encoding: 'utf-8', timeout: 120000, cwd: pluginPath,
+          encoding: 'utf-8', timeout: 120000, cwd: npmTmpDir,
         });
         if (npmInstallResult.status === 0) {
-          logOk('npm install (fallback)');
+          // Hoist: move node_modules/memory-lancedb-pro/* → pluginPath/
+          const hoistSrc = path.join(npmTmpDir, 'node_modules', 'memory-lancedb-pro');
+          if (fs.existsSync(hoistSrc)) {
+            fs.mkdirSync(pluginPath, { recursive: true });
+            fs.cpSync(hoistSrc, pluginPath, { recursive: true });
+            logOk('npm install + hoist (fallback)');
+          } else {
+            logWarn(
+              'npm install succeeded but package not found in node_modules. Check package name.',
+              'npm install 成功但 node_modules 中找不到套件，請確認套件名稱。'
+            );
+          }
+          try { fs.rmSync(npmTmpDir, { recursive: true, force: true }); } catch (_) {}
         } else {
+          try { fs.rmSync(npmTmpDir, { recursive: true, force: true }); } catch (_) {}
           logWarn(
             'Memory plugin installation failed. You can install it manually later.',
             '記憶插件安裝失敗，稍後可手動安裝。'
@@ -1436,6 +1453,28 @@ async function main() {
     }
   }
 
+  // Pre-clean: remove keys we are about to inject to prevent array duplication
+  // on re-install. deepMerge unions arrays, so without this cleanup, repeated
+  // installs would accumulate duplicate entries in array-typed fields.
+  const keysToPreClean = ['agents.defaults', 'tools', 'hooks', 'cron'];
+  for (const keyPath of keysToPreClean) {
+    const parts = keyPath.split('.');
+    let obj = nativeJson;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!obj || typeof obj !== 'object') break;
+      obj = obj[parts[i]];
+    }
+    const lastKey = parts[parts.length - 1];
+    // Only pre-clean if injection has this key too (don't delete user-only config)
+    if (obj && typeof obj === 'object' && obj[lastKey] !== undefined) {
+      let injObj = injection;
+      for (const p of parts) { injObj = injObj?.[p]; }
+      if (injObj !== undefined) {
+        delete obj[lastKey];
+      }
+    }
+  }
+
   // Deep merge — preserves channels, gateway, session, bindings
   deepMerge(nativeJson, injection);
 
@@ -1493,44 +1532,74 @@ async function main() {
     if (result.ok) {
       logOk(agentId);
     } else if (result.stderr.includes('already exists')) {
-      // Agent exists — check if workspace path needs updating via delete + re-add
-      logInfo(
-        `${agentId} already exists, re-registering with correct workspace...`,
-        `${agentId} 已存在，重新註冊以修正 workspace 路徑...`
-      );
-      // Backup workspace files before delete (OpenClaw deletes workspace dir on agent delete)
-      const backupDir = `${workspace}.bak`;
-      if (fs.existsSync(workspace)) {
-        try {
-          if (fs.existsSync(backupDir)) fs.rmSync(backupDir, { recursive: true });
-          fs.cpSync(workspace, backupDir, { recursive: true });
-        } catch (_) {}
-      }
-      const delResult = tryExec(['openclaw', 'agents', 'delete', agentId, '--force']);
-      if (delResult.ok) {
-        // Restore workspace from backup if it was deleted
-        if (!fs.existsSync(workspace) && fs.existsSync(backupDir)) {
-          fs.cpSync(backupDir, workspace, { recursive: true });
-        }
-        if (fs.existsSync(backupDir)) {
-          try { fs.rmSync(backupDir, { recursive: true }); } catch (_) {}
-        }
-        const reAddResult = tryExec(cmdArgs);
-        if (reAddResult.ok) {
-          logOk(`${agentId} (re-registered)`);
-        } else {
-          failedAgentCmds.push(cmdToString(cmdArgs));
-          logWarn(
-            `Failed to re-register ${agentId}: ${reAddResult.stderr}`,
-            `重新註冊 ${agentId} 失敗：${reAddResult.stderr}`
-          );
-        }
+      // Agent exists — check if workspace path actually needs updating
+      const showResult = tryExec(['openclaw', 'agents', 'show', agentId]);
+      const currentWorkspace = showResult.ok && showResult.stdout
+        ? (showResult.stdout.match(/workspace[:\s]+(.+)/i) || [])[1]?.trim()
+        : null;
+
+      if (currentWorkspace === workspace) {
+        // Workspace path is already correct — no need to re-register
+        logOk(`${agentId} (already registered, workspace OK)`);
       } else {
-        failedAgentCmds.push(cmdToString(cmdArgs));
-        logWarn(
-          `Failed to delete existing ${agentId}: ${delResult.stderr}`,
-          `刪除已存在的 ${agentId} 失敗：${delResult.stderr}`
+        logInfo(
+          `${agentId} workspace mismatch (${currentWorkspace || '?'} -> ${workspace}), re-registering...`,
+          `${agentId} workspace 路徑不一致（${currentWorkspace || '?'} -> ${workspace}），重新註冊...`
         );
+        // Backup workspace files before delete (OpenClaw may delete workspace dir on agent delete)
+        const backupDir = `${workspace}.bak.${Date.now()}`;
+        let backupOk = false;
+        if (fs.existsSync(workspace)) {
+          try {
+            fs.cpSync(workspace, backupDir, { recursive: true });
+            // Verify backup contains critical files
+            const memoryBackup = path.join(backupDir, 'MEMORY.md');
+            if (fs.existsSync(path.join(workspace, 'MEMORY.md')) && !fs.existsSync(memoryBackup)) {
+              throw new Error('MEMORY.md not found in backup');
+            }
+            backupOk = true;
+          } catch (backupErr) {
+            logWarn(
+              `Backup failed for ${agentId}: ${backupErr.message}. Skipping re-registration to protect data.`,
+              `${agentId} 備份失敗：${backupErr.message}。跳過重新註冊以保護資料。`
+            );
+            failedAgentCmds.push(cmdToString(cmdArgs));
+          }
+        } else {
+          backupOk = true; // No workspace yet, nothing to lose
+        }
+
+        if (backupOk) {
+          const delResult = tryExec(['openclaw', 'agents', 'delete', agentId, '--force']);
+          if (delResult.ok) {
+            // Restore workspace from backup if it was deleted
+            if (!fs.existsSync(workspace) && fs.existsSync(backupDir)) {
+              fs.cpSync(backupDir, workspace, { recursive: true });
+            }
+            try { fs.rmSync(backupDir, { recursive: true, force: true }); } catch (_) {}
+            const reAddResult = tryExec(cmdArgs);
+            if (reAddResult.ok) {
+              logOk(`${agentId} (re-registered)`);
+            } else {
+              failedAgentCmds.push(cmdToString(cmdArgs));
+              logWarn(
+                `Failed to re-register ${agentId}: ${reAddResult.stderr}`,
+                `重新註冊 ${agentId} 失敗：${reAddResult.stderr}`
+              );
+            }
+          } else {
+            // Delete failed — restore backup if workspace was damaged
+            if (!fs.existsSync(workspace) && fs.existsSync(backupDir)) {
+              try { fs.cpSync(backupDir, workspace, { recursive: true }); } catch (_) {}
+            }
+            try { fs.rmSync(backupDir, { recursive: true, force: true }); } catch (_) {}
+            failedAgentCmds.push(cmdToString(cmdArgs));
+            logWarn(
+              `Failed to delete existing ${agentId}: ${delResult.stderr}`,
+              `刪除已存在的 ${agentId} 失敗：${delResult.stderr}`
+            );
+          }
+        }
       }
     } else {
       failedAgentCmds.push(cmdToString(cmdArgs));
@@ -1580,19 +1649,44 @@ async function main() {
   logInfo('Registering cron jobs...', '註冊排程任務...');
 
   // Remove existing cron jobs by UUID before re-adding (prevent duplicates on re-install)
-  // openclaw cron remove --name doesn't work; must parse list and remove by UUID
   const managedCronNames = new Set([
     'morning-briefing', 'investment-monitor', 'memory-cleanup',
     'weekly-org-review', 'security-scan', 'cto-memory-cleanup',
   ]);
-  const cronListResult = tryExec(['openclaw', 'cron', 'list']);
-  if (cronListResult.ok && cronListResult.stdout) {
-    const lines = cronListResult.stdout.split('\n');
-    for (const line of lines) {
-      // Match UUID at start of line followed by job name
-      const match = line.match(/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\s+(\S+)/);
-      if (match && managedCronNames.has(match[2])) {
-        tryExec(['openclaw', 'cron', 'remove', match[1]]);
+
+  // Try --json first (structured output, immune to format changes), fall back to text parsing
+  let cronRemoved = false;
+  const cronJsonResult = tryExec(['openclaw', 'cron', 'list', '--json']);
+  if (cronJsonResult.ok && cronJsonResult.stdout) {
+    try {
+      const cronEntries = JSON.parse(cronJsonResult.stdout);
+      if (Array.isArray(cronEntries)) {
+        for (const entry of cronEntries) {
+          if (entry.name && managedCronNames.has(entry.name) && entry.id) {
+            tryExec(['openclaw', 'cron', 'remove', entry.id]);
+          }
+        }
+        cronRemoved = true;
+      }
+    } catch (_) { /* not valid JSON, fall through to text parsing */ }
+  }
+
+  if (!cronRemoved) {
+    // Fallback: text parsing with relaxed regex (tolerates leading whitespace, varying column order)
+    const cronListResult = tryExec(['openclaw', 'cron', 'list']);
+    if (cronListResult.ok && cronListResult.stdout) {
+      const UUID_RE = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/;
+      const lines = cronListResult.stdout.split('\n');
+      for (const line of lines) {
+        const uuidMatch = line.match(UUID_RE);
+        if (!uuidMatch) continue;
+        // Check if any managed cron name appears anywhere in the same line
+        for (const name of managedCronNames) {
+          if (line.includes(name)) {
+            tryExec(['openclaw', 'cron', 'remove', uuidMatch[1]]);
+            break;
+          }
+        }
       }
     }
   }
@@ -1707,7 +1801,28 @@ async function main() {
       }
 
       fs.writeFileSync(nativeJsonPath, JSON.stringify(freshJson, null, 2) + '\n');
-      logOk(msg('skill allowlist injected (post-CLI)', 'Skill allowlist 已注入（CLI 操作後）'));
+
+      // Verify: re-read and confirm skills survived the write
+      try {
+        const verifyJson = JSON.parse(fs.readFileSync(nativeJsonPath, 'utf-8'));
+        const verifyList = verifyJson.agents?.list || [];
+        const missing = AGENTS.filter(a => {
+          const agentId = `${AGENT_PREFIX}${a}`;
+          if (skillAllowlist[agentId] === undefined) return false;
+          const entry = verifyList.find(e => e.id === agentId);
+          return !entry || !Array.isArray(entry.skills);
+        });
+        if (missing.length > 0) {
+          logWarn(msg(
+            `Skill allowlist verification failed for: ${missing.map(a => `${AGENT_PREFIX}${a}`).join(', ')}. File may have been overwritten by another process.`,
+            `Skill allowlist 驗證失敗：${missing.map(a => `${AGENT_PREFIX}${a}`).join(', ')}。檔案可能被其他程序覆蓋。`
+          ));
+        } else {
+          logOk(msg('skill allowlist injected and verified (post-CLI)', 'Skill allowlist 已注入並驗證（CLI 操作後）'));
+        }
+      } catch (_) {
+        logOk(msg('skill allowlist injected (post-CLI)', 'Skill allowlist 已注入（CLI 操作後）'));
+      }
     } catch (e) {
       logWarn(msg(
         `Failed to inject skill allowlist: ${e.message}`,
