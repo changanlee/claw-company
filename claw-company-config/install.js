@@ -312,13 +312,19 @@ async function uninstall() {
   }
   log('[INFO] Removed agents via CLI');
 
-  // Remove cron jobs via CLI
-  const cronNames = [
+  // Remove cron jobs via CLI (by UUID, --name doesn't work)
+  const uninstallCronNames = new Set([
     'morning-briefing', 'investment-monitor', 'memory-cleanup',
     'weekly-org-review', 'security-scan', 'cto-memory-cleanup',
-  ];
-  for (const name of cronNames) {
-    tryExec(['openclaw', 'cron', 'remove', '--name', name]);
+  ]);
+  const cronListRes = tryExec(['openclaw', 'cron', 'list']);
+  if (cronListRes.ok && cronListRes.stdout) {
+    for (const line of cronListRes.stdout.split('\n')) {
+      const m = line.match(/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\s+(\S+)/);
+      if (m && uninstallCronNames.has(m[2])) {
+        tryExec(['openclaw', 'cron', 'remove', m[1]]);
+      }
+    }
   }
   log('[INFO] Removed cron jobs via CLI');
 
@@ -1436,13 +1442,22 @@ async function main() {
   // ============================================
   logInfo('Registering cron jobs...', '註冊排程任務...');
 
-  // Remove existing cron jobs by name before re-adding (prevent duplicates on re-install)
-  const cronNames = [
+  // Remove existing cron jobs by UUID before re-adding (prevent duplicates on re-install)
+  // openclaw cron remove --name doesn't work; must parse list and remove by UUID
+  const managedCronNames = new Set([
     'morning-briefing', 'investment-monitor', 'memory-cleanup',
     'weekly-org-review', 'security-scan', 'cto-memory-cleanup',
-  ];
-  for (const name of cronNames) {
-    tryExec(['openclaw', 'cron', 'remove', '--name', name]);
+  ]);
+  const cronListResult = tryExec(['openclaw', 'cron', 'list']);
+  if (cronListResult.ok && cronListResult.stdout) {
+    const lines = cronListResult.stdout.split('\n');
+    for (const line of lines) {
+      // Match UUID at start of line followed by job name
+      const match = line.match(/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\s+(\S+)/);
+      if (match && managedCronNames.has(match[2])) {
+        tryExec(['openclaw', 'cron', 'remove', match[1]]);
+      }
+    }
   }
 
   // v2026.3.8: Cron tight isolation — cron jobs cannot use sessions_send or message tool.
