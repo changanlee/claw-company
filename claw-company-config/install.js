@@ -398,6 +398,117 @@ async function main() {
     return;
   }
 
+  // --setup-memory: lightweight mode — configure Jina API key for memory plugin
+  if (process.argv.includes('--setup-memory')) {
+    log(msg('=== Memory Plugin Setup ===', '=== 記憶插件配置 ==='));
+    log('');
+
+    // Check if plugin is installed
+    const pluginPath = path.join(OPENCLAW_DIR, MEMORY_PLUGIN_DIR);
+    if (!fs.existsSync(path.join(pluginPath, 'package.json'))) {
+      console.error(msg(
+        '[ERROR] memory-lancedb-pro not installed. Run full install first: node install.js',
+        '[ERROR] memory-lancedb-pro 未安裝。請先執行完整安裝：node install.js'
+      ));
+      process.exit(1);
+    }
+
+    // Check JINA_API_KEY
+    if (!process.env.JINA_API_KEY) {
+      log(msg(
+        '[INFO] JINA_API_KEY is not set in your environment.',
+        '[INFO] 環境中未設定 JINA_API_KEY。'
+      ));
+      log('');
+      log(msg('Steps to get your free Jina API key:', '取得免費 Jina API Key 的步驟：'));
+      log(msg(
+        '  1. Visit https://jina.ai and sign up (free tier available)',
+        '  1. 前往 https://jina.ai 註冊帳號（有免費方案）'
+      ));
+      log(msg(
+        '  2. Go to API Keys section and create a new key',
+        '  2. 進入 API Keys 頁面，建立新的金鑰'
+      ));
+      log(msg(
+        '  3. Set the environment variable:',
+        '  3. 設定環境變數：'
+      ));
+      log('     export JINA_API_KEY=your_key_here');
+      log('');
+      log(msg(
+        '  4. Run this command again:',
+        '  4. 再次執行此指令：'
+      ));
+      log('     node install.js --setup-memory');
+      log('');
+      log(msg(
+        'Tip: Add "export JINA_API_KEY=your_key" to ~/.bashrc or ~/.profile for persistence.',
+        '提示：將 "export JINA_API_KEY=your_key" 加入 ~/.bashrc 或 ~/.profile 以永久生效。'
+      ));
+      return;
+    }
+
+    logOk(msg('JINA_API_KEY detected', 'JINA_API_KEY 已偵測到'));
+
+    // Check systemd service
+    let systemdFixed = false;
+    try {
+      const svcCheck = tryExec(['systemctl', 'show', 'openclaw-gateway', '--property=Environment']);
+      if (svcCheck.ok && svcCheck.stdout.includes('Environment=')) {
+        if (svcCheck.stdout.includes('JINA_API_KEY')) {
+          logOk(msg('systemd service already has JINA_API_KEY', 'systemd 服務已包含 JINA_API_KEY'));
+        } else {
+          logWarn(
+            'systemd service is missing JINA_API_KEY. Fixing...',
+            'systemd 服務缺少 JINA_API_KEY，修復中...'
+          );
+          const overrideDir = '/etc/systemd/system/openclaw-gateway.service.d';
+          const overridePath = path.join(overrideDir, 'jina-env.conf');
+          const overrideContent = `[Service]\nEnvironment=JINA_API_KEY=${process.env.JINA_API_KEY}\n`;
+          const mkdirResult = tryExec(['sudo', 'mkdir', '-p', overrideDir]);
+          if (mkdirResult.ok) {
+            const writeResult = spawnSync('sudo', ['tee', overridePath], { input: overrideContent, encoding: 'utf-8', timeout: 10000 });
+            if (writeResult.status === 0) {
+              tryExec(['sudo', 'systemctl', 'daemon-reload']);
+              logOk(msg(
+                'JINA_API_KEY added to systemd service',
+                'JINA_API_KEY 已加入 systemd 服務'
+              ));
+              systemdFixed = true;
+            } else {
+              logWarn(
+                'Failed to write systemd override. Fix manually:',
+                '寫入 systemd override 失敗，請手動修復：'
+              );
+              log(`  sudo systemctl edit openclaw-gateway`);
+              log(`  ${msg('Add:', '加入：')} Environment=JINA_API_KEY=${process.env.JINA_API_KEY}`);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      logInfo(msg('Not running under systemd, skipping', '非 systemd 環境，跳過'));
+    }
+
+    // Verify by reindexing
+    log('');
+    log(msg('Reindexing memory...', '重建記憶索引...'));
+    const reindexResult = tryExec(['openclaw', 'memory', 'index', '--force']);
+    if (reindexResult.ok) {
+      logOk(msg('Memory reindex complete', '記憶索引重建完成'));
+    }
+
+    log('');
+    if (systemdFixed) {
+      log(msg(
+        'Restart gateway to apply: sudo systemctl restart openclaw-gateway',
+        '重啟 gateway 生效：sudo systemctl restart openclaw-gateway'
+      ));
+    }
+    logOk(msg('Memory plugin setup complete!', '記憶插件配置完成！'));
+    return;
+  }
+
   // Safety: no root on Linux
   if (process.platform === 'linux' && process.getuid && process.getuid() === 0) {
     console.error('[ERROR] Do not run as root. Please use a normal user account.');
@@ -1686,6 +1797,7 @@ async function main() {
   log(`  ${msg('Reinstall', '重新安裝')}：node install.js`);
   log(`  ${msg('Skip memory plugin', '跳過記憶插件')}：node install.js --skip-memory-plugin`);
   log(`  ${msg('Update skill allowlist only', '僅更新 Skill 白名單')}：node install.js --update-skills`);
+  log(`  ${msg('Setup memory plugin (Jina key)', '配置記憶插件（Jina Key）')}：node install.js --setup-memory`);
   log('');
 }
 
