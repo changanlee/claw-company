@@ -250,13 +250,15 @@ async function uninstall() {
     log(`Will also clean injected settings from: ${nativeJsonPath}`);
   }
 
-  const rl = createRl();
-  const confirm = await ask(rl, '\nConfirm? (y/N): ');
-  rl.close();
-
-  if (confirm.toLowerCase() !== 'y') {
-    log('Cancelled.');
-    process.exit(0);
+  const autoYes = process.argv.includes('--yes') || process.argv.includes('-y');
+  if (!autoYes) {
+    const rl = createRl();
+    const confirmAnswer = await ask(rl, '\nConfirm? (y/N): ');
+    rl.close();
+    if (confirmAnswer.toLowerCase() !== 'y') {
+      log('Cancelled.');
+      process.exit(0);
+    }
   }
 
   // Remove injected settings from native json
@@ -265,7 +267,17 @@ async function uninstall() {
       const nativeJson = readJsonc(nativeJsonPath);
       // Remove claw-company injected sections
       if (nativeJson.agents && nativeJson.agents.defaults) {
-        delete nativeJson.agents.defaults.models;
+        // Only remove model aliases we injected (smart/fast), preserve user-added ones
+        if (nativeJson.agents.defaults.models) {
+          for (const [key, val] of Object.entries(nativeJson.agents.defaults.models)) {
+            if (val && (val.alias === 'smart' || val.alias === 'fast')) {
+              delete nativeJson.agents.defaults.models[key];
+            }
+          }
+          if (Object.keys(nativeJson.agents.defaults.models).length === 0) {
+            delete nativeJson.agents.defaults.models;
+          }
+        }
         delete nativeJson.agents.defaults.subagents;
         delete nativeJson.agents.defaults.heartbeat;
         delete nativeJson.agents.defaults.model;
@@ -288,7 +300,11 @@ async function uninstall() {
         if (Object.keys(nativeJson.tools).length === 0) delete nativeJson.tools;
       }
       if (nativeJson.hooks && nativeJson.hooks.internal) {
-        delete nativeJson.hooks.internal;
+        // Only remove the key we inject; preserve user entries
+        delete nativeJson.hooks.internal.enabled;
+        if (Object.keys(nativeJson.hooks.internal).length === 0) {
+          delete nativeJson.hooks.internal;
+        }
         if (Object.keys(nativeJson.hooks).length === 0) delete nativeJson.hooks;
       }
       if (nativeJson.cron) {
@@ -1509,8 +1525,11 @@ async function main() {
   // Pre-clean: remove only the specific keys we inject, to prevent array
   // duplication on re-install. Delete at leaf level so user-added keys under
   // the same parent (e.g. tools.customTool) are preserved.
+  //
+  // For objects that mix our keys with user keys (e.g. agents.defaults.models,
+  // hooks.internal), we only remove the keys we will re-inject, not the whole
+  // object. This preserves user-added model aliases and hook entries.
   const keysToPreClean = [
-    'agents.defaults.models',
     'agents.defaults.subagents',
     'agents.defaults.heartbeat',
     'agents.defaults.model',
@@ -1518,7 +1537,6 @@ async function main() {
     'tools.agentToAgent',
     'tools.sessions',
     'tools.loopDetection',
-    'hooks.internal',
     'cron.enabled',
     'cron.maxConcurrentRuns',
   ];
@@ -1533,6 +1551,23 @@ async function main() {
     if (obj && typeof obj === 'object' && obj[lastKey] !== undefined) {
       delete obj[lastKey];
     }
+  }
+
+  // Surgical pre-clean for agents.defaults.models: only remove the two aliases
+  // we inject (smart/fast), preserve user-added model aliases.
+  if (nativeJson.agents?.defaults?.models) {
+    const models = nativeJson.agents.defaults.models;
+    for (const [key, val] of Object.entries(models)) {
+      if (val && (val.alias === 'smart' || val.alias === 'fast')) {
+        delete models[key];
+      }
+    }
+  }
+
+  // Surgical pre-clean for hooks.internal: only remove 'enabled', preserve
+  // user-added entries (boot-md, command-logger, etc.).
+  if (nativeJson.hooks?.internal) {
+    delete nativeJson.hooks.internal.enabled;
   }
 
   // Deep merge — preserves channels, gateway, session, bindings
