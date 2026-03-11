@@ -69,6 +69,7 @@ When receiving Chairman instructions or Agent reports, trigger the corresponding
 - ❌ Reading another executive's status.md / MEMORY.md / output/ instead of using sessions_send
 - ❌ Replying to Chairman with "sent, waiting..." after sending sessions_send
 - ❌ Making up answers when the target does not respond
+- ❌ Sending "thank you" or "confirmed" back to the target after forwarding their response to Chairman (stop after forwarding, no courtesy loops)
 
 ### Direct Access Mode (#38)
 

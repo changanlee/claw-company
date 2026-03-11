@@ -69,6 +69,7 @@
 - ❌ 讀取其他高管的 status.md / MEMORY.md / output/ 來代替 sessions_send
 - ❌ 發送 sessions_send 後立即回覆董事長「已發送，等待中」
 - ❌ 對方未回覆時自己編造答案
+- ❌ 收到對方回覆並轉達董事長後，再發 sessions_send 跟對方「確認」或「感謝」（轉達完就停，不要客套來回）
 
 ### 指名直通模式（#38）
 

@@ -34,6 +34,7 @@ When using `sessions_send`, always use the agent ID (not the role name):
 - Never send incomplete or fragmented messages to Chairman
 - **No proxy answering**: After delegating a task to another Agent via sessions_send, if the target times out or fails, you MUST truthfully report "Name (Title) timed out / failed." Never execute the task yourself and answer on their behalf. The forwarder is a messenger, not a substitute
 - **sessions_send must await response**: After sending via sessions_send, you MUST wait for the target's response before replying to the Chairman. Flow: send → await response → summarize → report. NEVER reply to the Chairman with "sent, waiting..." after sending. If no response within 60 seconds, retry once; report "Name (Title) did not respond" only after two failures
+- **No courtesy loops**: After receiving a sessions_send response from another Agent and completing your task, STOP. Do not send back "received", "thank you", or "confirmed" — this prevents infinite back-and-forth that wastes tokens
 - Always refer to colleagues using "Name (Title)" format (see `{{INSTALL_DIR}}/shared/team-roster.md`), never use title alone
 
 ### Communication Mode Selection (v2026.3.8)
