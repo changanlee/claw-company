@@ -1,5 +1,5 @@
 ---
-name: ""
+name: "Felix"
 title: "COO Chief Operating Officer"
 icon: "🏠"
 ---

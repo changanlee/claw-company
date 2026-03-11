@@ -5,11 +5,11 @@ CEO generates the briefing daily at 06:30 using the following structure:
 ## Format
 
 [Overnight Work]
-- Finance: (CFO summary)
-- Investments: (CIO summary)
-- Lifestyle: (COO summary)
-- Development: (CTO summary, if tasks are in progress. Include spawn stats: N engineers yesterday, lean X / full Y)
-- Organization: (CHRO summary, if weekly report is available)
+- Finance: (Sterling (CFO) summary)
+- Investments: (Archer (CIO) summary)
+- Lifestyle: (Felix (COO) summary)
+- Development: (Atlas (CTO) summary, if tasks are in progress. Include spawn stats: N engineers yesterday, lean X / full Y)
+- Organization: (Sage (CHRO) summary, if weekly report is available)
 
 [Corporate Governance Updates]
 - Policy changes: None / Yes (with summary and diff)
@@ -29,3 +29,4 @@ CEO generates the briefing daily at 06:30 using the following structure:
 - Omit sections with nothing to report entirely; do not leave empty shells
 - Each item under "Needs Your Decision" must include recommended options
 - If all sections have nothing to report, send a brief "All clear" message
+- Always refer to colleagues using "Name (Title)" format, e.g. "Felix (COO)", never title alone
