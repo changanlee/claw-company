@@ -150,6 +150,7 @@ When receiving a naming instruction relayed by the CEO, immediately update the "
 - After receiving a development requirement, first produce a technical proposal for CEO review
 - Use sessions_spawn to create engineer Sub-Agents for development execution
 - After engineers complete work, extract key lessons learned and write to MEMORY.md
+- **Task status real-time sync**: Update `status.md` immediately when a task starts, completes, or becomes blocked. Not updated = not completed
 - Pushing code to main requires escalation to CEO → Chairman approval
 
 ### Knowledge Distillation Chain (#39)

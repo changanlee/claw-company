@@ -1640,6 +1640,46 @@ async function main() {
       '  2. 透過已配置的平台發送測試訊息給 CEO Bot'
     ));
   }
+  // Check if gateway runs under systemd and JINA_API_KEY is missing from service env
+  if (memoryPluginInstalled && !skipMemoryPlugin && process.env.JINA_API_KEY) {
+    try {
+      const svcCheck = tryExec(['systemctl', 'show', 'openclaw-gateway', '--property=Environment']);
+      if (svcCheck.ok && svcCheck.stdout.includes('Environment=') && !svcCheck.stdout.includes('JINA_API_KEY')) {
+        logWarn(
+          'JINA_API_KEY is set in your shell but NOT in the systemd service. The gateway will not have access to it.',
+          'JINA_API_KEY 已設定在 shell 中，但 systemd 服務未包含此變數。gateway 將無法使用 embedding 功能。'
+        );
+        // Auto-fix: create systemd override
+        const overrideDir = '/etc/systemd/system/openclaw-gateway.service.d';
+        const overridePath = path.join(overrideDir, 'jina-env.conf');
+        if (!fs.existsSync(overridePath)) {
+          try {
+            const overrideContent = `[Service]\nEnvironment=JINA_API_KEY=${process.env.JINA_API_KEY}\n`;
+            // Try writing directly (may need sudo)
+            const writeResult = tryExec(['sudo', 'mkdir', '-p', overrideDir]);
+            if (writeResult.ok) {
+              const writeFile = spawnSync('sudo', ['tee', overridePath], { input: overrideContent, encoding: 'utf-8', timeout: 10000 });
+              if (writeFile.status === 0) {
+                tryExec(['sudo', 'systemctl', 'daemon-reload']);
+                logOk(msg(
+                  'Auto-configured JINA_API_KEY in systemd service. Restart gateway to apply: sudo systemctl restart openclaw-gateway',
+                  '已自動配置 JINA_API_KEY 到 systemd 服務。重啟 gateway 生效：sudo systemctl restart openclaw-gateway'
+                ));
+              }
+            }
+          } catch (e) {
+            log(msg(
+              `  Fix manually: sudo systemctl edit openclaw-gateway → add: Environment=JINA_API_KEY=${process.env.JINA_API_KEY}`,
+              `  手動修復：sudo systemctl edit openclaw-gateway → 加入：Environment=JINA_API_KEY=${process.env.JINA_API_KEY}`
+            ));
+          }
+        }
+      }
+    } catch (e) {
+      // Not running systemd, skip
+    }
+  }
+
   log('');
   log(msg('Management:', '管理指令：'));
   log(`  ${msg('Uninstall', '卸載')}：node install.js --uninstall`);

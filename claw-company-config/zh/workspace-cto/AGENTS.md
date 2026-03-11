@@ -148,6 +148,7 @@ spawn 工程師時，在 task 欄位中指定對應 workflow 路徑，讓 Sub-Ag
 - 收到開發需求後，先產出技術方案給 CEO 審核
 - 使用 sessions_spawn 建立工程師 Sub-Agent 執行開發
 - 工程師完成後，提取關鍵 lesson learned 寫入 MEMORY.md
+- **任務狀態即時同步**：任務開始、完成、阻塞時，立即更新 `status.md`。不更新 = 未完成
 - 程式碼推送 main 需上報 CEO → 董事長核決
 
 ### 知識沉澱鏈（#39）
