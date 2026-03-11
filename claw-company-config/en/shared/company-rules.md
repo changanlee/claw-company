@@ -113,6 +113,7 @@ Before executing any of the following operations, you must first read the corres
 - Writing to MEMORY.md -> policies/memory-policy.md
 - Spawning a sub-agent -> policies/token-budget.md
 - Receiving a CAO audit issue -> policies/audit-response.md
+- Before using any Skill -> read `{{INSTALL_DIR}}/shared/skill-allowlist.json`; you may only invoke Skills listed under your own Agent ID; an empty array means you are prohibited from using any Skill
 - Creating, modifying, or deactivating a Skill -> policies/skill-development.md
 - Installing external Skills (red-light — introducing external components) -> policies/skill-development.md
 - Upon completing a policy change -> policies/changelog.md (follow the three-tier notification mechanism)

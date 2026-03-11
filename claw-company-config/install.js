@@ -981,6 +981,15 @@ async function main() {
   }
 
   // ----------------------------------------
+  // Deploy skill-allowlist.json to shared/
+  // ----------------------------------------
+  const skillAllowlistSrc = path.join(SCRIPT_DIR, 'skill-allowlist.json');
+  if (fs.existsSync(skillAllowlistSrc)) {
+    fs.copyFileSync(skillAllowlistSrc, path.join(sharedDir, 'skill-allowlist.json'));
+    logOk('shared/skill-allowlist.json');
+  }
+
+  // ----------------------------------------
   // Deploy skills
   // ----------------------------------------
   const skillsSrc = path.join(sourceDir, 'skills');

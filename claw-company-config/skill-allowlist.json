@@ -5,6 +5,6 @@
   "cc-cio": ["summarize", "tavily", "agent-browser"],
   "cc-coo": ["gog"],
   "cc-cto": ["github", "find-skills", "summarize", "agent-browser"],
-  "cc-chro": ["_blocked"],
-  "cc-cao": ["_blocked"]
+  "cc-chro": [],
+  "cc-cao": []
 }

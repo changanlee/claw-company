@@ -113,6 +113,7 @@
 - 寫入 MEMORY.md → policies/memory-policy.md
 - spawn sub-agent → policies/token-budget.md
 - 收到 CAO 稽核議題 → policies/audit-response.md
+- 使用任何 Skill 前 → 讀取 `{{INSTALL_DIR}}/shared/skill-allowlist.json`，只能調用自己 Agent ID 對應的清單中列出的 Skill；清單為空陣列代表禁止使用任何 Skill
 - 新增、修改或停用 Skill → policies/skill-development.md
 - 安裝外部 Skill（紅燈 — 引入外部元件）→ policies/skill-development.md
 - 政策變更完成時 → policies/changelog.md（遵循三級通知機制）
