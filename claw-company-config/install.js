@@ -752,15 +752,18 @@ async function main() {
   // From native json
   if (nativeJson.channels) {
     for (const [chName, chConfig] of Object.entries(nativeJson.channels)) {
-      if (typeof chConfig === 'object' && chConfig !== null) {
-        // Channels with accounts (like telegram)
-        if (chConfig.accounts) {
-          for (const accName of Object.keys(chConfig.accounts)) {
-            channelsFound.push(`${chName}:${accName}`);
-          }
-        } else {
-          channelsFound.push(chName);
+      if (typeof chConfig !== 'object' || chConfig === null) continue;
+      // Skip explicitly disabled channels
+      if (chConfig.enabled === false) continue;
+
+      if (chConfig.accounts && typeof chConfig.accounts === 'object') {
+        // Channels with accounts (like telegram) — recurse one level for sub-accounts
+        for (const [accName, accConfig] of Object.entries(chConfig.accounts)) {
+          if (typeof accConfig === 'object' && accConfig !== null && accConfig.enabled === false) continue;
+          channelsFound.push(`${chName}:${accName}`);
         }
+      } else {
+        channelsFound.push(chName);
       }
     }
   }
