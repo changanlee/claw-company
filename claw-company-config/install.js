@@ -1829,9 +1829,27 @@ async function main() {
       const acc = config.accounts[account];
       return acc.to || acc.chatId || acc.chat_id || acc.target || null;
     }
-    // Common fields across channel types
-    return config.to || config.phoneNumber || config.phone || config.number ||
-           config.channelId || config.defaultChannel || config.target || null;
+    // Explicit target fields
+    if (config.to || config.phoneNumber || config.phone || config.target) {
+      return config.to || config.phoneNumber || config.phone || config.target;
+    }
+    // WhatsApp: use first allowFrom entry as delivery target
+    if (baseName === 'whatsapp' && Array.isArray(config.allowFrom) && config.allowFrom.length > 0) {
+      return config.allowFrom[0];
+    }
+    // Discord: find first allowed channel in first guild → "channel:<id>"
+    if (baseName === 'discord' && config.guilds && typeof config.guilds === 'object') {
+      for (const guild of Object.values(config.guilds)) {
+        if (guild.channels && typeof guild.channels === 'object') {
+          for (const [chId, chCfg] of Object.entries(guild.channels)) {
+            if (chCfg && chCfg.allow !== false) {
+              return `channel:${chId}`;
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   const primaryTarget = extractChannelTarget(primaryChannel);
