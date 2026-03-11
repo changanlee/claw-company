@@ -266,13 +266,15 @@ async function uninstall() {
     try {
       const nativeJson = readJsonc(nativeJsonPath);
       // Remove claw-company injected sections
+      // Remove metadata marker
+      const injectedModels = nativeJson._clawCompany?.injectedModels || [];
+      delete nativeJson._clawCompany;
+
       if (nativeJson.agents && nativeJson.agents.defaults) {
-        // Only remove model aliases we injected (smart/fast), preserve user-added ones
-        if (nativeJson.agents.defaults.models) {
-          for (const [key, val] of Object.entries(nativeJson.agents.defaults.models)) {
-            if (val && (val.alias === 'smart' || val.alias === 'fast')) {
-              delete nativeJson.agents.defaults.models[key];
-            }
+        // Only remove the exact model keys we injected, preserve user-added ones
+        if (nativeJson.agents.defaults.models && injectedModels.length > 0) {
+          for (const key of injectedModels) {
+            delete nativeJson.agents.defaults.models[key];
           }
           if (Object.keys(nativeJson.agents.defaults.models).length === 0) {
             delete nativeJson.agents.defaults.models;
@@ -1418,6 +1420,9 @@ async function main() {
 
   // Build injection payload
   const injection = {
+    _clawCompany: {
+      injectedModels: [modelPrimary, modelLight],
+    },
     agents: {
       defaults: {
         models: {
@@ -1541,6 +1546,7 @@ async function main() {
   // hooks.internal), we only remove the keys we will re-inject, not the whole
   // object. This preserves user-added model aliases and hook entries.
   const keysToPreClean = [
+    '_clawCompany',
     'agents.defaults.subagents',
     'agents.defaults.heartbeat',
     'agents.defaults.model',
@@ -1564,15 +1570,12 @@ async function main() {
     }
   }
 
-  // Surgical pre-clean for agents.defaults.models: only remove the two aliases
-  // we inject (smart/fast), preserve user-added model aliases.
+  // Surgical pre-clean for agents.defaults.models: only remove the exact two
+  // model keys we are about to inject. Do NOT match by alias — users may have
+  // their own models aliased as 'smart' or 'fast'.
   if (nativeJson.agents?.defaults?.models) {
-    const models = nativeJson.agents.defaults.models;
-    for (const [key, val] of Object.entries(models)) {
-      if (val && (val.alias === 'smart' || val.alias === 'fast')) {
-        delete models[key];
-      }
-    }
+    delete nativeJson.agents.defaults.models[modelPrimary];
+    delete nativeJson.agents.defaults.models[modelLight];
   }
 
   // Surgical pre-clean for hooks.internal: only remove 'enabled', preserve
