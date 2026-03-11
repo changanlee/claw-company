@@ -1285,38 +1285,7 @@ async function main() {
     }
   }
 
-  // ----------------------------------------
-  // Inject per-agent skill allowlist
-  // ----------------------------------------
-  const skillAllowlistPath = path.join(SCRIPT_DIR, 'skill-allowlist.json');
-  if (fs.existsSync(skillAllowlistPath)) {
-    try {
-      const skillAllowlist = JSON.parse(fs.readFileSync(skillAllowlistPath, 'utf-8'));
-      // Ensure agents.list exists
-      if (!nativeJson.agents) nativeJson.agents = {};
-      if (!nativeJson.agents.list) nativeJson.agents.list = [];
-
-      for (const agent of AGENTS) {
-        const agentId = `${AGENT_PREFIX}${agent}`;
-        const allowedSkills = skillAllowlist[agentId];
-        if (allowedSkills === undefined) continue; // skip if not in allowlist config
-
-        // Find or create agent entry in list
-        let entry = nativeJson.agents.list.find(a => a.id === agentId);
-        if (!entry) {
-          entry = { id: agentId };
-          nativeJson.agents.list.push(entry);
-        }
-        entry.skills = allowedSkills;
-      }
-      logOk(msg('skill allowlist injected', 'Skill allowlist 已注入'));
-    } catch (e) {
-      logWarn(msg(
-        `Failed to read skill-allowlist.json: ${e.message}`,
-        `讀取 skill-allowlist.json 失敗：${e.message}`
-      ));
-    }
-  }
+  // Skill allowlist injection is deferred to after agent registration (CLI overwrites json)
 
   // Backup original before writing
   const backupPath = `${nativeJsonPath}.backup.${Date.now()}`;
@@ -1538,6 +1507,44 @@ async function main() {
         `Failed: ${job.name}`,
         `失敗：${job.name}`
       );
+    }
+  }
+
+  log('');
+
+  // ============================================
+  // Inject per-agent skill allowlist (after all CLI ops that modify openclaw.json)
+  // ============================================
+  const skillAllowlistPath = path.join(SCRIPT_DIR, 'skill-allowlist.json');
+  if (fs.existsSync(skillAllowlistPath)) {
+    try {
+      // Re-read json since CLI commands (agents add, cron add) may have modified it
+      const freshJson = JSON.parse(stripJsonComments(fs.readFileSync(nativeJsonPath, 'utf-8')));
+      const skillAllowlist = JSON.parse(fs.readFileSync(skillAllowlistPath, 'utf-8'));
+
+      if (!freshJson.agents) freshJson.agents = {};
+      if (!freshJson.agents.list) freshJson.agents.list = [];
+
+      for (const agent of AGENTS) {
+        const agentId = `${AGENT_PREFIX}${agent}`;
+        const allowedSkills = skillAllowlist[agentId];
+        if (allowedSkills === undefined) continue;
+
+        let entry = freshJson.agents.list.find(a => a.id === agentId);
+        if (!entry) {
+          entry = { id: agentId };
+          freshJson.agents.list.push(entry);
+        }
+        entry.skills = allowedSkills;
+      }
+
+      fs.writeFileSync(nativeJsonPath, JSON.stringify(freshJson, null, 2) + '\n');
+      logOk(msg('skill allowlist injected (post-CLI)', 'Skill allowlist 已注入（CLI 操作後）'));
+    } catch (e) {
+      logWarn(msg(
+        `Failed to inject skill allowlist: ${e.message}`,
+        `注入 Skill allowlist 失敗：${e.message}`
+      ));
     }
   }
 
