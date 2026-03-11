@@ -1758,12 +1758,15 @@ async function main() {
     }
   }
 
-  // Bind CAO to telegram:audit if it exists
-  if (channelsFound.includes('telegram:audit')) {
-    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cao`, '--bind', 'telegram:audit'];
+  // Bind CAO to an independent channel (prefer non-primary for audit independence)
+  const caoBindChannel = channelsFound.length > 1
+    ? channelsFound.find(ch => ch !== primaryChannel) || primaryChannel
+    : primaryChannel;
+  if (caoBindChannel) {
+    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cao`, '--bind', caoBindChannel];
     const result = tryExec(cmdArgs);
     if (result.ok) {
-      logOk(`${AGENT_PREFIX}cao -> telegram:audit`);
+      logOk(`${AGENT_PREFIX}cao -> ${caoBindChannel}`);
     } else {
       failedBindCmds.push(cmdToString(cmdArgs));
     }
@@ -1824,7 +1827,10 @@ async function main() {
   // For 'announce' jobs, results are delivered via --channel + --announce + --to.
   // For 'none' jobs, results are written to output/ files; CEO heartbeat picks them up.
   const primaryChannel = channelsFound[0] || null;
-  const caoChannel = channelsFound.includes('telegram:audit') ? 'telegram:audit' : primaryChannel;
+  // CAO prefers an independent (non-primary) channel for audit independence
+  const caoChannel = channelsFound.length > 1
+    ? channelsFound.find(ch => ch !== primaryChannel) || primaryChannel
+    : primaryChannel;
 
   // Try to extract delivery target from channel config (for cron --to).
   // OpenClaw cron requires --to for channel delivery (e.g. E.164 for WhatsApp, channel:ID for Discord).
@@ -1866,6 +1872,51 @@ async function main() {
   const primaryTarget = extractChannelTarget(primaryChannel);
   const caoTarget = extractChannelTarget(caoChannel);
   const missingTargets = [];
+
+  // Auto-detect system timezone for cron --tz (IANA format)
+  let cronTz = '';
+  try {
+    cronTz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+  } catch (_) {}
+  if (!cronTz || cronTz === 'UTC' || cronTz === 'Etc/UTC') {
+    // Fallback: read /etc/timezone or TZ env
+    const envTz = process.env.TZ || '';
+    if (envTz && envTz !== 'UTC' && envTz !== 'Etc/UTC') cronTz = envTz;
+    if (!cronTz || cronTz === 'UTC' || cronTz === 'Etc/UTC') {
+      try {
+        const fileTz = fs.readFileSync('/etc/timezone', 'utf-8').trim();
+        if (fileTz && fileTz !== 'UTC' && fileTz !== 'Etc/UTC') cronTz = fileTz;
+      } catch (_) {}
+    }
+  }
+  // If still UTC or empty, ask user for their timezone
+  if (!cronTz || cronTz === 'UTC' || cronTz === 'Etc/UTC') {
+    log(msg(
+      '\n  Server timezone appears to be UTC. Cron jobs need your local timezone.',
+      '\n  伺服器時區為 UTC。排程任務需要你的當地時區。'
+    ));
+    log(msg(
+      '  Examples: Asia/Taipei, America/New_York, Europe/London',
+      '  範例：Asia/Taipei, America/New_York, Europe/London'
+    ));
+    const tzInput = await ask(rl, msg('  Your timezone (Enter to skip): ', '  你的時區（Enter 跳過）：'));
+    if (tzInput.trim()) {
+      cronTz = tzInput.trim();
+    } else {
+      cronTz = ''; // Will use server time (UTC)
+    }
+  }
+  if (cronTz && cronTz !== 'UTC') {
+    logInfo(
+      `Timezone for cron: ${cronTz}`,
+      `排程時區：${cronTz}`
+    );
+  } else {
+    logWarn(
+      'Cron jobs will use server time (UTC). Schedules may not match your local time.',
+      '排程將使用伺服器時間（UTC），可能與你的當地時間不同。'
+    );
+  }
 
   const cronJobs = [
     {
@@ -1924,8 +1975,13 @@ async function main() {
 
   const failedCronCmds = [];
   for (const job of cronJobs) {
-    const cmdArgs = ['openclaw', 'cron', 'add', '--name', job.name, '--cron', job.cron, '--agent', job.agent, '--model', job.model, '--message', job.message];
-    // Only add channel delivery args for announce jobs (announce !== false)
+    // Build args with --message LAST — some CLI parsers treat it as greedy
+    const cmdArgs = ['openclaw', 'cron', 'add', '--name', job.name, '--cron', job.cron, '--agent', job.agent, '--model', job.model];
+    // Add timezone if detected
+    if (cronTz) {
+      cmdArgs.push('--tz', cronTz);
+    }
+    // Add channel delivery args BEFORE --message for announce jobs
     if (job.announce !== false && job.channel) {
       cmdArgs.push('--channel', job.channel, '--announce');
       if (job.to) {
@@ -1934,7 +1990,8 @@ async function main() {
         missingTargets.push(job.name);
       }
     }
-    // Silent jobs (announce: false): no --channel, no --announce, no --to
+    // --message always last
+    cmdArgs.push('--message', job.message);
     const result = tryExec(cmdArgs);
     if (result.ok) {
       logOk(job.name);
