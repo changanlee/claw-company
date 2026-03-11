@@ -1640,6 +1640,20 @@ async function main() {
     { id: 'cao', tier: tiers.CAO },
   ];
 
+  // Pre-fetch existing agent workspaces (agents show doesn't exist, use agents list --json)
+  const existingAgents = {};
+  const listResult = tryExec(['openclaw', 'agents', 'list', '--json']);
+  if (listResult.ok && listResult.stdout) {
+    try {
+      const agentList = JSON.parse(listResult.stdout);
+      for (const a of agentList) {
+        if (a.id && a.workspace) {
+          existingAgents[a.id] = a.workspace;
+        }
+      }
+    } catch (_) { /* ignore parse errors */ }
+  }
+
   const failedAgentCmds = [];
   for (const def of agentDefs) {
     const agentId = `${AGENT_PREFIX}${def.id}`;
@@ -1650,10 +1664,7 @@ async function main() {
       logOk(agentId);
     } else if (result.stderr.includes('already exists')) {
       // Agent exists — check if workspace path actually needs updating
-      const showResult = tryExec(['openclaw', 'agents', 'show', agentId]);
-      const currentWorkspace = showResult.ok && showResult.stdout
-        ? (showResult.stdout.match(/workspace[:\s]+(.+)/i) || [])[1]?.trim()
-        : null;
+      const currentWorkspace = existingAgents[agentId] || null;
 
       if (currentWorkspace === workspace) {
         // Workspace path is already correct — no need to re-register
