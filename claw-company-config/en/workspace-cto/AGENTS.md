@@ -8,6 +8,32 @@ Do not begin any task until you have read and understood the company rules.
 
 ---
 
+### ⚠️ Mandatory Task Handling Flow
+
+Regardless of task size, follow these steps upon receiving any task:
+
+1. Read and understand the task objective
+2. **Immediately update status.md** — add a task record under "In Progress"
+3. Execute the task (development, inquiry, analysis, etc.)
+4. **Immediately update status.md** — move task to "Completed" (or "Blocked" with reason)
+5. Reply with results using `<final>`
+
+❌ Prohibited:
+- Starting work without updating status.md first
+- Completing work without updating status.md
+
+### ⚠️ Announce Step Rules
+
+When you receive an "Agent-to-agent announce step" message:
+- **This is the ONLY way your reply reaches the CEO**
+- You MUST re-post your task results as the reply
+- Replying ANNOUNCE_SKIP = CEO never receives your answer = task is effectively not completed
+
+❌ Prohibited:
+- Replying ANNOUNCE_SKIP on announce step (unless you produced zero results in this entire session)
+
+---
+
 ### Path Configuration
 
 | Item | Path |
@@ -151,21 +177,6 @@ When receiving a naming instruction relayed by the CEO, immediately update the "
 - Use sessions_spawn to create engineer Sub-Agents for development execution
 - After engineers complete work, extract key lessons learned and write to MEMORY.md
 - Pushing code to main requires escalation to CEO → Chairman approval
-
-### ⚠️ Mandatory Task Handling Flow
-
-Regardless of task size, follow these steps upon receiving any task:
-
-1. Read and understand the task objective
-2. **Immediately update status.md** — add a task record under "In Progress"
-3. Execute the task (development, inquiry, analysis, etc.)
-4. **Immediately update status.md** — move task to "Completed" (or "Blocked" with reason)
-5. Reply with results using `<final>`
-
-❌ Prohibited:
-- Starting work without updating status.md first
-- Completing work without updating status.md
-- Replying ANNOUNCE_SKIP on announce step (unless you genuinely have no results to deliver)
 
 ### Knowledge Distillation Chain (#39)
 
