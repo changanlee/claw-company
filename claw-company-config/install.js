@@ -1467,7 +1467,7 @@ async function main() {
         allow: AGENTS.map(a => `${AGENT_PREFIX}${a}`),
       },
       sessions: {
-        visibility: 'agent',
+        visibility: 'all',
       },
       loopDetection: {
         enabled: true,
