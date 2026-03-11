@@ -2067,7 +2067,7 @@ async function main() {
   if (memoryPluginInstalled && !skipMemoryPlugin) {
     log(msg('  Memory plugin:', '  記憶插件：'));
     log(`  - memory-lancedb-pro ${MEMORY_PLUGIN_VERSION} ${msg('installed', '已安裝')}`);
-    log(`  - ${msg('Rerank: cross-encoder (Jina) with lightweight fallback', 'Rerank：cross-encoder（Jina）+ lightweight 自動降級')}`);
+    log(`  - ${msg('Rerank: cross-encoder (Jina) — JINA_API_KEY required (no fallback without it)', 'Rerank：cross-encoder（Jina）— 必須設定 JINA_API_KEY（缺失時 plugin 不載入）')}`);
     log(`  - ${msg('Scope isolation: main isolated, cc-* share project:claw-company', 'Scope 隔離：main 獨立，cc-* 共享 project:claw-company')}`);
     if (!process.env.JINA_API_KEY) {
       log(`  - ${msg('⚠ Set JINA_API_KEY before starting gateway', '⚠ 啟動 gateway 前請設定 JINA_API_KEY')}`);
