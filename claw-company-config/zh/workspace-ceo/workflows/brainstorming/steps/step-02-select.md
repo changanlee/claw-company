@@ -1,14 +1,14 @@
 ---
 name: select
 description: "選擇技法模式（自選/AI推薦/隨機/直接討論）"
-next-step: ./step-03-execute.md
+next-step: ./step-03-diverge.md
 output-file: null
 template: null
 ---
 
 # 步驟 2：選擇技法
 
-**進度：步驟 2 / 共 5 步**
+**進度：步驟 2 / 共 7 步**
 
 ## 目標
 
@@ -62,4 +62,4 @@ template: null
 
 ## 下一步
 
-👉 前往 [步驟 3：執行技法](./step-03-execute.md)
+👉 前往 [步驟 3：發散探索](./step-03-diverge.md)
