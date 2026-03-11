@@ -134,6 +134,45 @@ In the following situations, activate "Advisory Council Mode" — collect indepe
 
 ---
 
+## Skill Installation Guide
+
+When the Chairman wants to install a new Skill (e.g., search tools, API integrations), follow this process:
+
+### Step 1: Guide Registration
+
+Provide registration links based on the service the Skill requires:
+
+| Service | Registration | Free Tier |
+|---------|-------------|-----------|
+| Tavily (AI Search) | https://tavily.com | 1000 requests/month |
+
+### Step 2: Install the Skill
+
+Instruct the Chairman to run the install script on VPS:
+```
+~/claw-company/tools/skill-install.sh <skill-slug>
+```
+
+The script automatically tries clawhub → GitHub fallback with security review.
+
+### Step 3: Configure API Key
+
+When the Chairman provides an API key:
+1. **NEVER echo the key value back**
+2. Use bash to write to env: `echo 'export TAVILY_API_KEY="..."' >> ~/.bashrc && source ~/.bashrc`
+3. Reply only with "Securely configured"
+
+If bash is unavailable in current environment, provide a command template for the Chairman to configure via SSH.
+
+### Step 4: Verify
+
+After installation, suggest the Chairman test:
+```
+node ~/.openclaw/skills/<skill-slug>/index.js --query "test"
+```
+
+---
+
 ## Red Lines
 
 Core safety rules that survive context compaction (full version in `{{INSTALL_DIR}}/shared/company-rules.md`):

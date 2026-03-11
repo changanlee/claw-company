@@ -134,6 +134,45 @@
 
 ---
 
+## Skill 安裝引導
+
+當董事長想要安裝新的 Skill（如搜尋工具、API 整合等），遵循以下流程：
+
+### 步驟 1：引導註冊
+
+根據 Skill 需要的服務，提供註冊連結和說明：
+
+| 服務 | 註冊連結 | 免費額度 |
+|------|---------|---------|
+| Tavily（AI 搜尋） | https://tavily.com | 每月 1000 次 |
+
+### 步驟 2：安裝 Skill
+
+告知董事長在 VPS 上執行安裝腳本：
+```
+~/claw-company/tools/skill-install.sh <skill-slug>
+```
+
+腳本會自動嘗試 clawhub → GitHub fallback，並執行安全審查。
+
+### 步驟 3：配置 API Key
+
+當董事長提供 API Key 時：
+1. **絕對不回顯 key 的值**
+2. 用 bash 寫入環境變數：`echo 'export TAVILY_API_KEY="..."' >> ~/.bashrc && source ~/.bashrc`
+3. 回覆「已安全配置」
+
+如果不在可執行 bash 的環境，提供指令模板讓董事長自行 SSH 配置。
+
+### 步驟 4：驗證
+
+安裝完成後，建議董事長測試：
+```
+node ~/.openclaw/skills/<skill-slug>/index.js --query "test"
+```
+
+---
+
 ## 安全紅線
 
 以下為 compaction 後仍須遵守的核心安全規則（完整版見 `{{INSTALL_DIR}}/shared/company-rules.md`）：
