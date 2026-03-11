@@ -1436,6 +1436,15 @@ async function main() {
   // ============================================
   logInfo('Registering cron jobs...', '註冊排程任務...');
 
+  // Remove existing cron jobs by name before re-adding (prevent duplicates on re-install)
+  const cronNames = [
+    'morning-briefing', 'investment-monitor', 'memory-cleanup',
+    'weekly-org-review', 'security-scan', 'cto-memory-cleanup',
+  ];
+  for (const name of cronNames) {
+    tryExec(['openclaw', 'cron', 'remove', '--name', name]);
+  }
+
   // v2026.3.8: Cron tight isolation — cron jobs cannot use sessions_send or message tool.
   // Delivery modes: 'announce' (push to channel), 'none' (silent, file-based relay).
   // For 'announce' jobs, results are delivered to the agent's bound channel via cron runner.
