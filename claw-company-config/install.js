@@ -266,9 +266,14 @@ async function uninstall() {
     try {
       const nativeJson = readJsonc(nativeJsonPath);
       // Remove claw-company injected sections
-      // Remove metadata marker
-      const injectedModels = nativeJson._clawCompany?.injectedModels || [];
-      delete nativeJson._clawCompany;
+      // Read injected model keys from install metadata
+      const metaPath = path.join(INSTALL_DIR, '.install-meta.json');
+      let injectedModels = [];
+      try {
+        if (fs.existsSync(metaPath)) {
+          injectedModels = JSON.parse(fs.readFileSync(metaPath, 'utf-8')).injectedModels || [];
+        }
+      } catch (_) {}
 
       if (nativeJson.agents && nativeJson.agents.defaults) {
         // Only remove the exact model keys we injected, preserve user-added ones
@@ -1418,11 +1423,15 @@ async function main() {
     nativeJson = readJsonc(nativeJsonPath);
   }
 
+  // Save injected model keys for future pre-clean / uninstall
+  const installMeta = { injectedModels: [modelPrimary, modelLight] };
+  fs.writeFileSync(
+    path.join(INSTALL_DIR, '.install-meta.json'),
+    JSON.stringify(installMeta, null, 2) + '\n'
+  );
+
   // Build injection payload
   const injection = {
-    _clawCompany: {
-      injectedModels: [modelPrimary, modelLight],
-    },
     agents: {
       defaults: {
         models: {
@@ -1546,7 +1555,6 @@ async function main() {
   // hooks.internal), we only remove the keys we will re-inject, not the whole
   // object. This preserves user-added model aliases and hook entries.
   const keysToPreClean = [
-    '_clawCompany',
     'agents.defaults.subagents',
     'agents.defaults.heartbeat',
     'agents.defaults.model',
