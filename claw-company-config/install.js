@@ -739,7 +739,18 @@ async function main() {
   // ----------------------------------------
   const modelsSet = new Set();
 
-  // Extract from agents.defaults.models keys
+  // Extract from models.providers (actual model definitions)
+  if (nativeJson.models?.providers) {
+    for (const [providerName, providerConfig] of Object.entries(nativeJson.models.providers)) {
+      if (providerConfig.models && Array.isArray(providerConfig.models)) {
+        for (const m of providerConfig.models) {
+          if (m.id) modelsSet.add(`${providerName}/${m.id}`);
+        }
+      }
+    }
+  }
+
+  // Extract from agents.defaults.models keys (alias mappings)
   if (nativeJson.agents?.defaults?.models) {
     for (const key of Object.keys(nativeJson.agents.defaults.models)) {
       if (key.includes('/')) modelsSet.add(key);
