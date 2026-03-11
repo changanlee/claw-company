@@ -1809,11 +1809,34 @@ async function main() {
   }
 
   // v2026.3.8: Cron tight isolation — cron jobs cannot use sessions_send or message tool.
-  // Delivery modes: 'announce' (push to channel), 'none' (silent, file-based relay).
-  // For 'announce' jobs, results are delivered to the agent's bound channel via cron runner.
+  // Delivery modes: 'announce' (push to channel), 'none' (silent, no --channel).
+  // For 'announce' jobs, results are delivered via --channel + --announce + --to.
   // For 'none' jobs, results are written to output/ files; CEO heartbeat picks them up.
   const primaryChannel = channelsFound[0] || null;
   const caoChannel = channelsFound.includes('telegram:audit') ? 'telegram:audit' : primaryChannel;
+
+  // Try to extract delivery target from channel config (for cron --to).
+  // OpenClaw cron requires --to for channel delivery (e.g. E.164 for WhatsApp, channel:ID for Discord).
+  function extractChannelTarget(channelName) {
+    if (!nativeJson.channels || !channelName) return null;
+    const parts = channelName.split(':');
+    const baseName = parts[0];
+    const account = parts[1];
+    const config = nativeJson.channels[baseName];
+    if (!config || typeof config !== 'object') return null;
+    // Telegram-style with accounts
+    if (account && config.accounts && config.accounts[account]) {
+      const acc = config.accounts[account];
+      return acc.to || acc.chatId || acc.chat_id || acc.target || null;
+    }
+    // Common fields across channel types
+    return config.to || config.phoneNumber || config.phone || config.number ||
+           config.channelId || config.defaultChannel || config.target || null;
+  }
+
+  const primaryTarget = extractChannelTarget(primaryChannel);
+  const caoTarget = extractChannelTarget(caoChannel);
+  const missingTargets = [];
 
   const cronJobs = [
     {
@@ -1822,7 +1845,8 @@ async function main() {
       agent: `${AGENT_PREFIX}ceo`,
       model: tiers.CEO,
       message: 'Execute morning briefing: read MEMORY.md and recent output/ files from all executives (CFO, CIO, COO, CTO, CHRO, CAO) to collect latest status. Compile into briefing with action items for Chairman. Refer to briefing-template.md. Do NOT use sessions_send (unavailable in cron).',
-      target: primaryChannel,
+      channel: primaryChannel,
+      to: primaryTarget,
     },
     {
       name: 'investment-monitor',
@@ -1830,8 +1854,7 @@ async function main() {
       agent: `${AGENT_PREFIX}cio`,
       model: tiers.CIO,
       message: 'Check portfolio data. If any position moves >5%, write alert file to output/alerts/ with analysis. Otherwise silently log to memory/. Do NOT use sessions_send (unavailable in cron). CEO heartbeat will pick up alert files.',
-      target: primaryChannel,
-      announce: false,
+      announce: false, // Silent: no --channel, no --announce, no --to
     },
     {
       name: 'memory-cleanup',
@@ -1839,7 +1862,8 @@ async function main() {
       agent: `${AGENT_PREFIX}chro`,
       model: tiers.CHRO,
       message: 'Audit MEMORY.md health across all agents: check line counts vs 200-line limit, duplicates, stale entries, archive logs >30 days. Write health report to output/reports/. Do NOT use sessions_send (unavailable in cron).',
-      target: primaryChannel,
+      channel: primaryChannel,
+      to: primaryTarget,
     },
     {
       name: 'weekly-org-review',
@@ -1847,7 +1871,8 @@ async function main() {
       agent: `${AGENT_PREFIX}chro`,
       model: tiers.CHRO,
       message: 'Produce weekly org health report: agent performance summary, capability gaps, model config suggestions, skill usage stats. Write report to output/reports/. Do NOT use sessions_send (unavailable in cron).',
-      target: primaryChannel,
+      channel: primaryChannel,
+      to: primaryTarget,
     },
     {
       name: 'security-scan',
@@ -1855,7 +1880,8 @@ async function main() {
       agent: `${AGENT_PREFIX}cao`,
       model: tiers.CAO,
       message: 'Run full security scan: verify SOUL.md integrity, check recent session logs for anomalies, validate security rules compliance. Produce security scan report. Do NOT use sessions_send (unavailable in cron). Report is delivered via cron announce.',
-      target: caoChannel,
+      channel: caoChannel,
+      to: caoTarget,
     },
     {
       name: 'cto-memory-cleanup',
@@ -1863,20 +1889,23 @@ async function main() {
       agent: `${AGENT_PREFIX}cto`,
       model: tiers.CTO,
       message: 'Execute weekly memory cleanup: remove stale entries, promote recurring patterns to principles, archive completed tasks >7 days in status.md, ensure MEMORY.md <=200 lines, check for contradictions. Write cleanup summary to memory/ log',
-      target: primaryChannel,
-      announce: false,
+      announce: false, // Silent: no --channel, no --announce, no --to
     },
   ];
 
   const failedCronCmds = [];
   for (const job of cronJobs) {
     const cmdArgs = ['openclaw', 'cron', 'add', '--name', job.name, '--cron', job.cron, '--agent', job.agent, '--model', job.model, '--message', job.message];
-    if (job.target) {
-      cmdArgs.push('--channel', job.target);
-      if (job.announce !== false) {
-        cmdArgs.push('--announce');
+    // Only add channel delivery args for announce jobs (announce !== false)
+    if (job.announce !== false && job.channel) {
+      cmdArgs.push('--channel', job.channel, '--announce');
+      if (job.to) {
+        cmdArgs.push('--to', job.to);
+      } else {
+        missingTargets.push(job.name);
       }
     }
+    // Silent jobs (announce: false): no --channel, no --announce, no --to
     const result = tryExec(cmdArgs);
     if (result.ok) {
       logOk(job.name);
@@ -1887,6 +1916,21 @@ async function main() {
         `失敗：${job.name}`
       );
     }
+  }
+
+  if (missingTargets.length > 0) {
+    logWarn(
+      `Could not auto-detect --to for cron jobs: ${missingTargets.join(', ')}. These jobs will fail at delivery.`,
+      `無法自動偵測 --to 參數：${missingTargets.join(', ')}。這些排程推送時會失敗。`
+    );
+    log(msg(
+      '  Fix: openclaw cron remove <id> && openclaw cron add ... --to <target>',
+      '  修法：openclaw cron remove <id> && openclaw cron add ... --to <target>'
+    ));
+    log(msg(
+      '  WhatsApp: --to +886912345678  |  Discord: --to channel:123456789',
+      '  WhatsApp: --to +886912345678  |  Discord: --to channel:123456789'
+    ));
   }
 
   log('');

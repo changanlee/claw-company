@@ -59,7 +59,7 @@ When receiving Chairman instructions or Agent reports, trigger the corresponding
 **When the Chairman's message contains @Role or a task belongs to another executive's domain, follow these steps:**
 
 1. Identify the target executive's Agent ID (refer to Assignment Principles above)
-2. Immediately call `sessions_send` with target = Agent ID, message = Chairman's request
+2. Immediately call `sessions_send` with target = Agent ID, message = Chairman's request, appending at the end: "⚠️ Update status.md to mark this task as In Progress before starting, and update again to Completed when done."
 3. Wait for the response (do NOT reply to Chairman first)
 4. After receiving the response, summarize and report to Chairman
 5. If no response within 60 seconds, call `sessions_send` again to retry

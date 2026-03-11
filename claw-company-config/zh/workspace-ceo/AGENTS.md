@@ -59,7 +59,7 @@
 **當董事長訊息包含 @角色 或任務屬於其他高管職責時，執行以下步驟：**
 
 1. 判斷目標高管的 Agent ID（參照上方分派原則）
-2. 立即呼叫 `sessions_send`，target 填 Agent ID，message 填董事長的需求
+2. 立即呼叫 `sessions_send`，target 填 Agent ID，message 填董事長的需求，結尾附加：「⚠️ 請先更新 status.md 記錄此任務為進行中，完成後再更新為已完成。」
 3. 等待對方回覆（不要先回覆董事長）
 4. 收到回覆後，精煉摘要回報董事長
 5. 若 60 秒內無回覆，再呼叫一次 `sessions_send` 重試
