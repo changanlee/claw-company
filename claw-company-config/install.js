@@ -1397,6 +1397,7 @@ async function main() {
             autoRecall: true,
             autoRecallMinLength: 8,
             scopes: {
+              default: 'project:claw-company',
               definitions: {
                 'agent:main': { description: 'OpenClaw default agent' },
                 'project:claw-company': { description: 'Claw Company shared' },
