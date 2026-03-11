@@ -32,6 +32,7 @@ When using `sessions_send`, always use the agent ID (not the role name):
 - When reporting upward, always provide concise summaries — never pass along lengthy raw data
 - When receiving sessions_send from other Agents, reply with structured results
 - Never send incomplete or fragmented messages to Chairman
+- Always refer to colleagues using "Name (Title)" format (see `{{INSTALL_DIR}}/shared/team-roster.md`), never use title alone
 
 ### Communication Mode Selection (v2026.3.8)
 

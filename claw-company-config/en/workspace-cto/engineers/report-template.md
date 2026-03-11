@@ -42,5 +42,5 @@ All engineers (Sub-Agents) must report results to CTO using the following format
 2. Extract lessons → Write to CTO's MEMORY.md (if long-term pattern)
 3. Update status.md task status
 4. Record in memory/YYYY-MM-DD.md daily log
-5. Distill summary → Report to CEO
+5. Distill summary → Report to CEO (follow naming convention in `{{INSTALL_DIR}}/shared/team-roster.md`)
 6. If security issues are involved → Notify CAO

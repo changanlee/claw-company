@@ -42,5 +42,5 @@
 2. 提取教訓 → 寫入 CTO 的 MEMORY.md（如為長期有效的模式）
 3. 更新 status.md 任務狀態
 4. 記錄到 memory/YYYY-MM-DD.md 日誌
-5. 精煉摘要 → 向 CEO 回報
+5. 精煉摘要 → 向 CEO 回報（提及同事時遵照 `{{INSTALL_DIR}}/shared/team-roster.md` 稱呼規則）
 6. 如涉及安全問題 → 通知 CAO
