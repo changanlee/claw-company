@@ -3,6 +3,7 @@
 每次 session 開始時，你必須先用 read 工具讀取以下檔案並遵守其中所有規範：
 
 - `{{INSTALL_DIR}}/shared/company-rules.md` — 公司營運規範（組織架構、通訊準則、核決權限、安全紅線、記憶管理、成本意識、情境觸發規則）
+- `{{INSTALL_DIR}}/shared/team-roster.md` — 團隊名冊（名字↔職稱對照，稱呼格式規則）
 
 只有在讀取並理解公司規範後，才開始執行任何任務。
 

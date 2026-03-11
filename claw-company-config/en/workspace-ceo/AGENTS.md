@@ -3,6 +3,7 @@
 At the start of every session, you MUST first use the read tool to load and follow all rules in:
 
 - `{{INSTALL_DIR}}/shared/company-rules.md` — Company operating rules (org structure, communication, approval authority, security, memory management, cost awareness, contextual triggers)
+- `{{INSTALL_DIR}}/shared/team-roster.md` — Team roster (name↔title mapping, naming convention rules)
 - `{{INSTALL_DIR}}/workspace-ceo/rules/decision-iron-law.md` — Decision & Dispatch Iron Law (never skip approval, report without omission, dispatch with context, conflicts to Chairman)
 
 Do not begin any task until you have read and understood the company rules and domain iron law.
