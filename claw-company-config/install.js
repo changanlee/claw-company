@@ -793,21 +793,26 @@ async function main() {
   const sharedSrc = path.join(sourceDir, 'shared');
   const sharedDst = path.join(INSTALL_DIR, 'shared');
 
-  // company-rules, tools-policy, USER.md
+  // company-rules, tools-policy, USER.md (with {{INSTALL_DIR}} substitution for .md)
   fs.mkdirSync(path.join(sharedDst, 'policies'), { recursive: true });
   for (const f of ['company-rules.md', 'tools-policy.md', 'USER.md']) {
     const src = path.join(sharedSrc, f);
-    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(sharedDst, f));
+    if (!fs.existsSync(src)) continue;
+    if (f.endsWith('.md')) {
+      fs.writeFileSync(path.join(sharedDst, f), replaceInstallDir(fs.readFileSync(src, 'utf-8')));
+    } else {
+      fs.copyFileSync(src, path.join(sharedDst, f));
+    }
   }
 
-  // policies/
+  // policies/ (with {{INSTALL_DIR}} substitution)
   const policiesSrc = path.join(sharedSrc, 'policies');
   if (fs.existsSync(policiesSrc)) {
-    deployDir(policiesSrc, path.join(sharedDst, 'policies'));
+    deployDir(policiesSrc, path.join(sharedDst, 'policies'), { substituteInstallDir: true });
   }
 
-  // setup-guides/
-  deployDir(path.join(sharedSrc, 'setup-guides'), path.join(sharedDst, 'setup-guides'));
+  // setup-guides/ (with {{INSTALL_DIR}} substitution)
+  deployDir(path.join(sharedSrc, 'setup-guides'), path.join(sharedDst, 'setup-guides'), { substituteInstallDir: true });
 
   // templates/
   deployDir(path.join(sharedSrc, 'templates'), path.join(sharedDst, 'templates'));
@@ -815,11 +820,11 @@ async function main() {
   // standards/ (with {{INSTALL_DIR}} substitution)
   deployDir(path.join(sharedSrc, 'standards'), path.join(sharedDst, 'standards'), { substituteInstallDir: true });
 
-  // tasks/
-  deployDir(path.join(sharedSrc, 'tasks'), path.join(sharedDst, 'tasks'));
+  // tasks/ (with {{INSTALL_DIR}} substitution)
+  deployDir(path.join(sharedSrc, 'tasks'), path.join(sharedDst, 'tasks'), { substituteInstallDir: true });
 
-  // principles/
-  deployDir(path.join(sharedSrc, 'principles'), path.join(sharedDst, 'principles'));
+  // principles/ (with {{INSTALL_DIR}} substitution)
+  deployDir(path.join(sharedSrc, 'principles'), path.join(sharedDst, 'principles'), { substituteInstallDir: true });
 
   // brain-methods.csv
   const brainSrc = path.join(sharedSrc, 'brain-methods.csv');
@@ -856,9 +861,11 @@ async function main() {
       if (fs.existsSync(memSrc)) fs.copyFileSync(memSrc, memDst);
     }
 
-    // HEARTBEAT.md
+    // HEARTBEAT.md (with {{INSTALL_DIR}} substitution)
     const hbSrc = path.join(wsSrc, 'HEARTBEAT.md');
-    if (fs.existsSync(hbSrc)) fs.copyFileSync(hbSrc, path.join(wsDst, 'HEARTBEAT.md'));
+    if (fs.existsSync(hbSrc)) {
+      fs.writeFileSync(path.join(wsDst, 'HEARTBEAT.md'), replaceInstallDir(fs.readFileSync(hbSrc, 'utf-8')));
+    }
 
     // TOOLS.md with {{INSTALL_DIR}} substitution
     const toolsSrc = path.join(wsSrc, 'TOOLS.md');
@@ -867,10 +874,15 @@ async function main() {
       fs.writeFileSync(path.join(wsDst, 'TOOLS.md'), replaceInstallDir(content));
     }
 
-    // Extra files
+    // Extra files (with {{INSTALL_DIR}} substitution for .md)
     for (const extra of ['briefing-template.md', 'status.md', 'issues.md']) {
       const src = path.join(wsSrc, extra);
-      if (fs.existsSync(src)) fs.copyFileSync(src, path.join(wsDst, extra));
+      if (!fs.existsSync(src)) continue;
+      if (extra.endsWith('.md')) {
+        fs.writeFileSync(path.join(wsDst, extra), replaceInstallDir(fs.readFileSync(src, 'utf-8')));
+      } else {
+        fs.copyFileSync(src, path.join(wsDst, extra));
+      }
     }
 
     // Link or copy shared files into workspace
