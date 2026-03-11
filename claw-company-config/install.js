@@ -1372,7 +1372,7 @@ async function main() {
   const cronJobs = [
     {
       name: 'morning-briefing',
-      cron: '30 6 * * *',
+      cron: '30 0 * * *',
       agent: `${AGENT_PREFIX}ceo`,
       model: tiers.CEO,
       message: 'Execute morning briefing: read MEMORY.md and recent output/ files from all executives (CFO, CIO, COO, CTO, CHRO, CAO) to collect latest status. Compile into briefing with action items for Chairman. Refer to briefing-template.md. Do NOT use sessions_send (unavailable in cron).',
@@ -1384,7 +1384,8 @@ async function main() {
       agent: `${AGENT_PREFIX}cio`,
       model: tiers.CIO,
       message: 'Check portfolio data. If any position moves >5%, write alert file to output/alerts/ with analysis. Otherwise silently log to memory/. Do NOT use sessions_send (unavailable in cron). CEO heartbeat will pick up alert files.',
-      target: null,
+      target: primaryChannel,
+      announce: false,
     },
     {
       name: 'memory-cleanup',
@@ -1416,7 +1417,8 @@ async function main() {
       agent: `${AGENT_PREFIX}cto`,
       model: tiers.CTO,
       message: 'Execute weekly memory cleanup: remove stale entries, promote recurring patterns to principles, archive completed tasks >7 days in status.md, ensure MEMORY.md <=200 lines, check for contradictions. Write cleanup summary to memory/ log',
-      target: null,
+      target: primaryChannel,
+      announce: false,
     },
   ];
 
@@ -1424,7 +1426,10 @@ async function main() {
   for (const job of cronJobs) {
     const cmdArgs = ['openclaw', 'cron', 'add', '--name', job.name, '--cron', job.cron, '--agent', job.agent, '--model', job.model, '--message', job.message];
     if (job.target) {
-      cmdArgs.push('--channel', job.target, '--announce');
+      cmdArgs.push('--channel', job.target);
+      if (job.announce !== false) {
+        cmdArgs.push('--announce');
+      }
     }
     const result = tryExec(cmdArgs);
     if (result.ok) {
