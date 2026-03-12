@@ -25,32 +25,36 @@ You don't need another AI tool. **You need an organization** — with delegation
 ## See It in Action
 
 ```
-👤 You:       幫我記午餐 $15
-🤵 CEO:      已轉 CFO 處理 ✓
-💰 CFO→CEO:  已記帳。本月餐飲累計 $280，預算剩餘 $120
-🤵 CEO:      午餐 $15 已記錄，本月餐飲剩 $120 額度
+👤 You:       Log my lunch, $15
+🤵 CEO:      Forwarded to CFO ✓
+💰 CFO→CEO:  Recorded. Dining this month: $280 total, $120 remaining
+🤵 CEO:      Lunch $15 logged. You have $120 left in your dining budget
 ```
 
 ```
-👤 You:       我想做一個 habit tracker app
-🤵 CEO:      已轉 CTO 評估
-🔧 CTO→CEO:  已啟動開發流程。先跑腦力激盪，收斂後做規模評估和任務拆解
-              預計 3 階段，每階段結束向您報告
-🤵 CEO:      CTO 已啟動，第一步是腦力激盪，完成後會跟你確認方向
+👤 You:       I want to build a habit tracker app
+🤵 CEO:      Forwarded to CTO for assessment
+🔧 CTO→CEO:  Dev pipeline started. Running brainstorming first,
+              then scale assessment and task breakdown.
+              3 phases — I'll report at each checkpoint
+🤵 CEO:      CTO is on it. First step is brainstorming,
+              he'll confirm direction with you once done
 ```
 
 ```
-👤 You:       查一下我的投資組合
-🤵 CEO:      已轉 CIO 查詢
-📈 CIO→CEO:  美股持倉總值 $12,450（+2.3%）。NVDA 單日 +5.1% 觸發關注
-              本週五投資週報會有完整分析
-🤵 CEO:      投資組合 $12,450，漲 2.3%。NVDA 今天漲了 5.1%，CIO 週五會出週報
+👤 You:       Check my investment portfolio
+🤵 CEO:      Forwarded to CIO
+📈 CIO→CEO:  US equity holdings $12,450 (+2.3%). NVDA +5.1% today — flagged
+              Full analysis in Friday's weekly report
+🤵 CEO:      Portfolio at $12,450, up 2.3%. NVDA jumped 5.1% today.
+              CIO's weekly report comes Friday
 ```
 
 ```
 🔍 CAO → You (independent channel):
-    安全掃描完成。發現 1 項中風險：CTO 上週 spawn 的工程師未在完成後清理 session
-    建議：執行 session 清理。需要我追蹤改善嗎？
+    Security scan complete. 1 medium-risk finding: CTO's sub-agent
+    from last week didn't clean up its session after finishing.
+    Recommendation: run session cleanup. Want me to track remediation?
 ```
 
 Every message goes through **CEO as your single point of contact**. Behind the scenes: delegation, execution, review, and reporting — all automatic. CAO (auditor) reports directly to you through an independent channel, bypassing CEO entirely.
