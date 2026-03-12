@@ -623,18 +623,79 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
 
       // Resolve Discord cron delivery targets (guild channel IDs, NOT account names)
       // Cron --to for Discord uses "channel:<guildChannelId>" to target a specific text channel
-      // Use hint matching: "ceo" → prefer channel named "cc-ceo", "cao" → prefer "cc-cao"
-      if (ceoBind && ceoBind.startsWith('discord') && !ceoDeliveryTarget) {
-        const ceoAccount = ceoBind.split(':')[1] || 'ceo';
-        const guildChannel = pickGuildChannel(discordConfig, ceoAccount);
-        if (guildChannel) ceoDeliveryTarget = `channel:${guildChannel}`;
+      // JSON guilds config doesn't store channel names, so list IDs for user to pick
+      const allGuildChannels = [];
+      if (discordConfig.guilds) {
+        for (const [, guildObj] of Object.entries(discordConfig.guilds)) {
+          if (!guildObj?.channels) continue;
+          for (const [chId, chCfg] of Object.entries(guildObj.channels)) {
+            if (chCfg && chCfg.allow !== false) allGuildChannels.push(chId);
+          }
+        }
       }
-      if (caoBind && caoBind.startsWith('discord') && !caoDeliveryTarget) {
-        // CAO: prefer a different channel than CEO to avoid overlap
-        const caoAccount = caoBind.split(':')[1] || 'cao';
-        const ceoChannelId = ceoDeliveryTarget ? ceoDeliveryTarget.replace('channel:', '') : null;
-        const guildChannel = pickGuildChannel(discordConfig, caoAccount, ceoChannelId ? [ceoChannelId] : []);
-        if (guildChannel) caoDeliveryTarget = `channel:${guildChannel}`;
+
+      if (allGuildChannels.length > 0 && ceoBind && ceoBind.startsWith('discord') && !ceoDeliveryTarget) {
+        if (allGuildChannels.length === 1) {
+          ceoDeliveryTarget = `channel:${allGuildChannels[0]}`;
+        } else {
+          log('');
+          log(msg(
+            '  Select Discord channel for CEO cron delivery (morning briefing etc.):',
+            '  選擇 CEO 排程推送的 Discord 頻道（晨間簡報等）：'
+          ));
+          for (let i = 0; i < allGuildChannels.length; i++) {
+            log(`    ${i + 1}) ${allGuildChannels[i]}`);
+          }
+          log(msg(
+            '  (Check Discord channel settings to match IDs to names)',
+            '  （對照 Discord 頻道設定確認 ID 對應的頻道名稱）'
+          ));
+          let ceoChIdx = -1;
+          while (ceoChIdx < 1 || ceoChIdx > allGuildChannels.length) {
+            const input = await ask(rl, msg(
+              `  CEO delivery channel (1-${allGuildChannels.length}): `,
+              `  CEO 推送頻道 (1-${allGuildChannels.length})：`
+            ));
+            ceoChIdx = parseInt(input, 10);
+            if (isNaN(ceoChIdx)) ceoChIdx = -1;
+          }
+          ceoDeliveryTarget = `channel:${allGuildChannels[ceoChIdx - 1]}`;
+        }
+      }
+      if (allGuildChannels.length > 0 && caoBind && caoBind.startsWith('discord') && !caoDeliveryTarget) {
+        if (allGuildChannels.length === 1) {
+          caoDeliveryTarget = `channel:${allGuildChannels[0]}`;
+        } else {
+          // Default to a different channel than CEO if possible
+          const ceoChId = ceoDeliveryTarget ? ceoDeliveryTarget.replace('channel:', '') : null;
+          const remaining = allGuildChannels.filter(ch => ch !== ceoChId);
+          if (remaining.length === 1) {
+            caoDeliveryTarget = `channel:${remaining[0]}`;
+            log(msg(
+              `  CAO delivery channel: ${remaining[0]} (auto-selected, different from CEO)`,
+              `  CAO 推送頻道：${remaining[0]}（自動選擇，與 CEO 不同）`
+            ));
+          } else {
+            log('');
+            log(msg(
+              '  Select Discord channel for CAO cron delivery (security scan):',
+              '  選擇 CAO 排程推送的 Discord 頻道（安全掃描）：'
+            ));
+            for (let i = 0; i < allGuildChannels.length; i++) {
+              log(`    ${i + 1}) ${allGuildChannels[i]}`);
+            }
+            let caoChIdx = -1;
+            while (caoChIdx < 1 || caoChIdx > allGuildChannels.length) {
+              const input = await ask(rl, msg(
+                `  CAO delivery channel (1-${allGuildChannels.length}): `,
+                `  CAO 推送頻道 (1-${allGuildChannels.length})：`
+              ));
+              caoChIdx = parseInt(input, 10);
+              if (isNaN(caoChIdx)) caoChIdx = -1;
+            }
+            caoDeliveryTarget = `channel:${allGuildChannels[caoChIdx - 1]}`;
+          }
+        }
       }
     }
   }
@@ -687,41 +748,6 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
   return { ceoBind, caoBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds };
 }
 
-/**
- * Pick an allowed guild channel ID from Discord config (for cron delivery --to).
- * @param {object} discordConfig - channels.discord config object
- * @param {string} [hint] - optional channel name substring to prefer (e.g. "ceo", "cao")
- * @param {string[]} [exclude] - channel IDs to skip (avoid giving CEO and CAO the same channel)
- * @returns {string|null} guild channel ID or null
- */
-function pickGuildChannel(discordConfig, hint, exclude) {
-  if (!discordConfig?.guilds) return null;
-  const allChannels = [];
-  for (const [, guildObj] of Object.entries(discordConfig.guilds)) {
-    if (!guildObj?.channels) continue;
-    for (const [chId, chCfg] of Object.entries(guildObj.channels)) {
-      if (chCfg && chCfg.allow !== false) {
-        allChannels.push({ id: chId, name: chCfg.name || '' });
-      }
-    }
-  }
-  if (allChannels.length === 0) return null;
-  const excludeSet = new Set(exclude || []);
-  // Try hint match first (channel name contains hint, e.g. "cc-ceo" matches "ceo")
-  if (hint) {
-    const hintLower = hint.toLowerCase();
-    const match = allChannels.find(ch => ch.name.toLowerCase().includes(hintLower) && !excludeSet.has(ch.id));
-    if (match) return match.id;
-  }
-  // Fallback: first non-excluded channel
-  const fallback = allChannels.find(ch => !excludeSet.has(ch.id));
-  return fallback ? fallback.id : allChannels[0].id;
-}
-
-// Backward-compat alias
-function pickFirstGuildChannel(discordConfig) {
-  return pickGuildChannel(discordConfig);
-}
 
 // ============================================
 // Main Install Flow
@@ -2371,7 +2397,10 @@ async function main() {
       cmdArgs.push('--tz', cronTz);
     }
     // Add channel delivery args BEFORE --message for announce jobs
-    if (job.announce !== false && job.channel) {
+    if (job.announce === false) {
+      // Explicitly silent: --no-deliver prevents OpenClaw's default "announce + channel:last"
+      cmdArgs.push('--no-deliver');
+    } else if (job.channel) {
       cmdArgs.push('--channel', job.channel, '--announce');
       // Discord multi-bot: --account specifies which bot delivers the message
       if (job.account) {
