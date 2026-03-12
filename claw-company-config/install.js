@@ -395,12 +395,225 @@ async function uninstall() {
 }
 
 // ============================================
+// Discord Channel Setup (shared by install + --update-channels)
+// ============================================
+
+/**
+ * Detect, add, and assign Discord channels for CEO/CAO.
+ * Also handles agent binding.
+ * @returns {{ ceoBind, caoBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds }}
+ */
+async function setupDiscordChannels(rl, nativeJson, nativeJsonPath, channelsFound) {
+  logInfo('Binding channels...', '綁定通道...');
+
+  const failedBindCmds = [];
+
+  // Primary channel (non-Discord) for CEO — e.g. WhatsApp
+  const primaryChannel = channelsFound.find(ch => !ch.startsWith('discord')) || channelsFound[0] || null;
+
+  // Defaults
+  let ceoBind = primaryChannel;
+  let caoBind = primaryChannel;
+  let ceoDeliveryTarget = null;
+  let caoDeliveryTarget = null;
+
+  // Detect Discord
+  const discordConfig = nativeJson.channels?.discord;
+  if (discordConfig && discordConfig.enabled !== false) {
+    // Find first guild
+    let guildId = null;
+    let guildObj = null;
+    if (discordConfig.guilds && typeof discordConfig.guilds === 'object') {
+      const entries = Object.entries(discordConfig.guilds);
+      if (entries.length > 0) {
+        [guildId, guildObj] = entries[0];
+      }
+    }
+
+    // Collect existing allowed channels
+    const discordChannels = [];
+    if (guildObj && guildObj.channels && typeof guildObj.channels === 'object') {
+      for (const [chId, chCfg] of Object.entries(guildObj.channels)) {
+        if (chCfg && chCfg.allow !== false) {
+          discordChannels.push({ id: chId, name: chCfg.name || chCfg.label || chId });
+        }
+      }
+    }
+
+    // Offer to add new Discord channels
+    if (guildId) {
+      log('');
+      log(msg(
+        '  Discord channels currently allowed:',
+        '  目前允許的 Discord 頻道：'
+      ));
+      if (discordChannels.length === 0) {
+        log(msg('    (none)', '    （無）'));
+      } else {
+        for (const ch of discordChannels) {
+          log(`    - ${ch.name} (${ch.id})`);
+        }
+      }
+      log('');
+
+      // Ask to add more
+      const addMore = await ask(rl, msg(
+        '  Add Discord channel IDs? (paste IDs comma-separated, or Enter to skip): ',
+        '  新增 Discord 頻道？（貼上 ID，逗號分隔，Enter 跳過）：'
+      ));
+      if (addMore.trim()) {
+        const newIds = addMore.split(/[,\s]+/).map(s => s.trim()).filter(s => /^\d+$/.test(s));
+        if (newIds.length > 0) {
+          // Inject into openclaw.json
+          if (!nativeJson.channels.discord.guilds) nativeJson.channels.discord.guilds = {};
+          if (!nativeJson.channels.discord.guilds[guildId]) {
+            nativeJson.channels.discord.guilds[guildId] = { channels: {} };
+          }
+          const guildChannels = nativeJson.channels.discord.guilds[guildId].channels;
+          for (const id of newIds) {
+            if (!guildChannels[id]) {
+              guildChannels[id] = { allow: true };
+              discordChannels.push({ id, name: id });
+              logOk(msg(`Added Discord channel: ${id}`, `已新增 Discord 頻道：${id}`));
+            }
+          }
+          // Write updated json
+          fs.writeFileSync(nativeJsonPath, JSON.stringify(nativeJson, null, 2) + '\n');
+        }
+      }
+    }
+
+    // Assign channels to agents
+    if (discordChannels.length >= 2) {
+      log('');
+      log(msg(
+        '  Assign Discord channels to agents:',
+        '  分配 Discord 頻道給 Agent：'
+      ));
+      log('');
+      for (let i = 0; i < discordChannels.length; i++) {
+        log(`    ${i + 1}) ${discordChannels[i].name} (${discordChannels[i].id})`);
+      }
+      log(`    0) ${msg('Skip (do not bind to Discord)', '跳過（不綁 Discord）')}`);
+      log('');
+
+      // CEO channel
+      let ceoIdx = -1;
+      while (ceoIdx < 0 || ceoIdx > discordChannels.length) {
+        const input = await ask(rl, msg(`  CEO channel (0-${discordChannels.length}): `, `  CEO 頻道 (0-${discordChannels.length})：`));
+        ceoIdx = parseInt(input, 10);
+        if (isNaN(ceoIdx)) ceoIdx = -1;
+      }
+      if (ceoIdx > 0) {
+        const ch = discordChannels[ceoIdx - 1];
+        ceoBind = `discord:${ch.id}`;
+        ceoDeliveryTarget = `channel:${ch.id}`;
+      }
+
+      // CAO channel
+      let caoIdx = -1;
+      while (caoIdx < 0 || caoIdx > discordChannels.length) {
+        const input = await ask(rl, msg(`  CAO channel (0-${discordChannels.length}): `, `  CAO 頻道 (0-${discordChannels.length})：`));
+        caoIdx = parseInt(input, 10);
+        if (isNaN(caoIdx)) caoIdx = -1;
+      }
+      if (caoIdx > 0) {
+        const ch = discordChannels[caoIdx - 1];
+        caoBind = `discord:${ch.id}`;
+        caoDeliveryTarget = `channel:${ch.id}`;
+      }
+
+      log('');
+    } else if (discordChannels.length === 1) {
+      // Single Discord channel — use as CAO independent channel if CEO has another channel
+      if (primaryChannel && !primaryChannel.startsWith('discord')) {
+        caoBind = `discord:${discordChannels[0].id}`;
+        caoDeliveryTarget = `channel:${discordChannels[0].id}`;
+      }
+    }
+  }
+
+  // Unbind existing CEO/CAO discord bindings before re-binding
+  tryExec(['openclaw', 'agents', 'unbind', '--agent', `${AGENT_PREFIX}ceo`, '--unbind', 'discord']);
+  tryExec(['openclaw', 'agents', 'unbind', '--agent', `${AGENT_PREFIX}cao`, '--unbind', 'discord']);
+
+  // Bind CEO
+  if (ceoBind) {
+    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}ceo`, '--bind', ceoBind];
+    const result = tryExec(cmdArgs);
+    if (result.ok) {
+      logOk(`${AGENT_PREFIX}ceo -> ${ceoBind}`);
+    } else {
+      failedBindCmds.push(cmdToString(cmdArgs));
+    }
+  }
+
+  // Bind CAO (separate channel if available)
+  if (caoBind) {
+    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cao`, '--bind', caoBind];
+    const result = tryExec(cmdArgs);
+    if (result.ok) {
+      const shared = caoBind === ceoBind ? ' (shared)' : '';
+      logOk(`${AGENT_PREFIX}cao -> ${caoBind}${shared}`);
+    } else {
+      failedBindCmds.push(cmdToString(cmdArgs));
+    }
+  }
+
+  log('');
+  return { ceoBind, caoBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds };
+}
+
+// ============================================
 // Main Install Flow
 // ============================================
 async function main() {
   // --uninstall flag
   if (process.argv.includes('--uninstall') || process.argv.includes('uninstall')) {
     await uninstall();
+    return;
+  }
+
+  // --update-channels: lightweight mode — re-configure Discord channels + agent bindings
+  if (process.argv.includes('--update-channels')) {
+    const nativeJsonPath = path.join(OPENCLAW_DIR, 'openclaw.json');
+    if (!fs.existsSync(nativeJsonPath)) {
+      console.error('[ERROR] openclaw.json not found. Run full install first.');
+      process.exit(1);
+    }
+    const nativeJson = readJsonc(nativeJsonPath);
+
+    // Detect channels
+    const channelsFound = [];
+    if (nativeJson.channels) {
+      for (const [chName, chConfig] of Object.entries(nativeJson.channels)) {
+        if (typeof chConfig !== 'object' || chConfig === null) continue;
+        if (chConfig.enabled === false) continue;
+        if (chConfig.accounts && typeof chConfig.accounts === 'object') {
+          for (const [accName, accConfig] of Object.entries(chConfig.accounts)) {
+            if (typeof accConfig === 'object' && accConfig !== null && accConfig.enabled === false) continue;
+            channelsFound.push(`${chName}:${accName}`);
+          }
+        } else {
+          channelsFound.push(chName);
+        }
+      }
+    }
+    if (channelsFound.length === 0) {
+      console.error(msg('[ERROR] No channels found.', '[ERROR] 找不到通道。'));
+      process.exit(1);
+    }
+
+    const rl = createRl();
+    // Backup
+    const backupPath = `${nativeJsonPath}.backup.${Date.now()}`;
+    try { fs.copyFileSync(nativeJsonPath, backupPath); } catch (_) {}
+
+    await setupDiscordChannels(rl, nativeJson, nativeJsonPath, channelsFound);
+
+    logOk(msg('Channel bindings updated.', '通道綁定已更新。'));
+    log(msg('  Verify: openclaw agents bindings', '  驗證：openclaw agents bindings'));
+    rl.close();
     return;
   }
 
@@ -1741,114 +1954,8 @@ async function main() {
   // ============================================
   // Bind channels
   // ============================================
-  logInfo('Binding channels...', '綁定通道...');
-
-  const failedBindCmds = [];
-
-  // Collect all Discord channel IDs for interactive assignment
-  const discordChannelIds = [];
-  const discordConfig = nativeJson.channels?.discord;
-  if (discordConfig && discordConfig.guilds && typeof discordConfig.guilds === 'object') {
-    for (const guild of Object.values(discordConfig.guilds)) {
-      if (guild.channels && typeof guild.channels === 'object') {
-        for (const [chId, chCfg] of Object.entries(guild.channels)) {
-          if (chCfg && chCfg.allow !== false) {
-            const name = chCfg.name || chCfg.label || chId;
-            discordChannelIds.push({ id: chId, name });
-          }
-        }
-      }
-    }
-  }
-
-  // Primary channel (non-Discord) for CEO — e.g. WhatsApp
-  const primaryChannel = channelsFound.find(ch => !ch.startsWith('discord')) || channelsFound[0] || null;
-
-  // Channel assignment: CEO bind target, CAO bind target, cron delivery targets
-  let ceoBind = primaryChannel; // default: WhatsApp or first channel
-  let caoBind = primaryChannel; // default: same as CEO (single-channel)
-  let ceoDeliveryTarget = null; // --to for cron (e.g. phone number or channel:ID)
-  let caoDeliveryTarget = null;
-
-  if (discordChannelIds.length >= 2) {
-    // Multiple Discord channels — ask user to assign CEO and CAO
-    log('');
-    log(msg(
-      '  Multiple Discord channels detected. Assign channels to agents:',
-      '  偵測到多個 Discord 頻道，請分配給 Agent：'
-    ));
-    log('');
-    for (let i = 0; i < discordChannelIds.length; i++) {
-      log(`    ${i + 1}) ${discordChannelIds[i].name} (${discordChannelIds[i].id})`);
-    }
-    log(`    0) ${msg('Skip (do not bind to Discord)', '跳過（不綁 Discord）')}`);
-    log('');
-
-    // CEO channel
-    let ceoIdx = -1;
-    while (ceoIdx < 0 || ceoIdx > discordChannelIds.length) {
-      const input = await ask(rl, msg(`  CEO channel (0-${discordChannelIds.length}): `, `  CEO 頻道 (0-${discordChannelIds.length})：`));
-      ceoIdx = parseInt(input, 10);
-      if (isNaN(ceoIdx)) ceoIdx = -1;
-    }
-    if (ceoIdx > 0) {
-      const ch = discordChannelIds[ceoIdx - 1];
-      ceoBind = `discord:${ch.id}`;
-      ceoDeliveryTarget = `channel:${ch.id}`;
-    }
-
-    // CAO channel
-    let caoIdx = -1;
-    while (caoIdx < 0 || caoIdx > discordChannelIds.length) {
-      const input = await ask(rl, msg(`  CAO channel (0-${discordChannelIds.length}): `, `  CAO 頻道 (0-${discordChannelIds.length})：`));
-      caoIdx = parseInt(input, 10);
-      if (isNaN(caoIdx)) caoIdx = -1;
-    }
-    if (caoIdx > 0) {
-      const ch = discordChannelIds[caoIdx - 1];
-      caoBind = `discord:${ch.id}`;
-      caoDeliveryTarget = `channel:${ch.id}`;
-    }
-
-    log('');
-  } else if (discordChannelIds.length === 1) {
-    // Single Discord channel — use as CAO independent channel if CEO has another channel
-    if (primaryChannel && !primaryChannel.startsWith('discord')) {
-      caoBind = `discord:${discordChannelIds[0].id}`;
-      caoDeliveryTarget = `channel:${discordChannelIds[0].id}`;
-    }
-  }
-
-  // Bind CEO
-  if (ceoBind) {
-    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}ceo`, '--bind', ceoBind];
-    const result = tryExec(cmdArgs);
-    if (result.ok) {
-      logOk(`${AGENT_PREFIX}ceo -> ${ceoBind}`);
-    } else {
-      failedBindCmds.push(cmdToString(cmdArgs));
-    }
-  }
-
-  // Bind CAO
-  if (caoBind && caoBind !== ceoBind) {
-    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cao`, '--bind', caoBind];
-    const result = tryExec(cmdArgs);
-    if (result.ok) {
-      logOk(`${AGENT_PREFIX}cao -> ${caoBind}`);
-    } else {
-      failedBindCmds.push(cmdToString(cmdArgs));
-    }
-  } else if (caoBind) {
-    // CAO shares channel with CEO — bind anyway (will show as shared)
-    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cao`, '--bind', caoBind];
-    const result = tryExec(cmdArgs);
-    if (result.ok) {
-      logOk(`${AGENT_PREFIX}cao -> ${caoBind} (shared)`);
-    } else {
-      failedBindCmds.push(cmdToString(cmdArgs));
-    }
-  }
+  const channelResult = await setupDiscordChannels(rl, nativeJson, nativeJsonPath, channelsFound);
+  const { ceoBind, caoBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds } = channelResult;
 
   log('');
 
@@ -2281,6 +2388,7 @@ async function main() {
   log(`  ${msg('Uninstall', '卸載')}：node install.js --uninstall`);
   log(`  ${msg('Reinstall', '重新安裝')}：node install.js`);
   log(`  ${msg('Skip memory plugin', '跳過記憶插件')}：node install.js --skip-memory-plugin`);
+  log(`  ${msg('Update channel bindings', '更新通道綁定')}：node install.js --update-channels`);
   log(`  ${msg('Update skill allowlist only', '僅更新 Skill 白名單')}：node install.js --update-skills`);
   log(`  ${msg('Setup memory plugin (Jina key)', '配置記憶插件（Jina Key）')}：node install.js --setup-memory`);
   log('');
