@@ -37,11 +37,9 @@ sidecar: true
 
 | Code | Workflow | Description |
 |------|---------|-------------|
-| create-prd | workflows/pm/create-prd/workflow.md | Create a product requirements document from scratch |
-| edit-prd | workflows/pm/edit-prd/workflow.md | Modify an existing PRD |
-| validate-prd | workflows/pm/validate-prd/workflow.md | Validate PRD completeness and feasibility |
-| create-epics-and-stories | workflows/pm/create-epics-and-stories/workflow.md | Break down PRD into Epics and user stories |
-| check-readiness | workflows/pm/check-readiness/workflow.md | Check if requirements are ready for development |
+| create-prd | workflows/2-planning/create-prd/workflow.md | Create/edit/validate a PRD (three modes: create steps-c/, edit steps-e/, validate steps-v/) |
+| create-epics-and-stories | workflows/3-solutioning/create-epics-and-stories/workflow.md | Break down PRD into Epics and user stories |
+| check-readiness | workflows/3-solutioning/check-readiness/workflow.md | Check if requirements are ready for development |
 
 ## Work Methods
 

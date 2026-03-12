@@ -37,7 +37,7 @@ sidecar: false
 
 | 代碼 | Workflow | 說明 |
 |------|---------|------|
-| create-ux-design | workflows/ux-designer/create-ux-design/workflow.md | 建立使用者體驗設計方案 |
+| create-ux-design | workflows/2-planning/create-ux-design/workflow.md | 建立使用者體驗設計方案 |
 
 ## 工作方式
 

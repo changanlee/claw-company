@@ -44,7 +44,7 @@ Knox 是兩階段審查的**第二階段**（程式碼品質），僅在 Spec Re
 
 | 代碼 | Workflow | 說明 |
 |------|---------|------|
-| code-review | workflows/code-reviewer/code-review/workflow.md | 執行代碼審查與品質評估 |
+| code-review | workflows/4-implementation/code-review/workflow.md | 執行代碼審查與品質評估 |
 
 ## 工作方式
 

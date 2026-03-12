@@ -48,7 +48,7 @@ Analyze each Agent's recent behavior logs:
 
 ### 4. Global Skill Scan
 
-List all installed Skills in `~/.openclaw/skills/` and compare against all registered names in `{{INSTALL_DIR}}/skill-allowlist.json`:
+List all installed Skills in `~/.openclaw/skills/` and compare against all registered names in `{{INSTALL_DIR}}/shared/skill-allowlist.json`:
 
 - **Unregistered Skills** (present in directory but not in any agent's allowlist) → record as finding, recommend following `policies/skill-development.md` approval process
 - **Skills in allowlist but missing from directory** (Skill uninstalled or removed but allowlist not updated) → record as configuration inconsistency

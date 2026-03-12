@@ -39,8 +39,8 @@ sidecar: false
 
 | 代碼 | Workflow | 說明 |
 |------|---------|------|
-| dev-story | workflows/dev/dev-story/workflow.md | 按 story file 完成功能開發 |
-| quick-dev | workflows/dev/quick-dev/workflow.md | 快速完成小型開發任務 |
+| dev-story | workflows/4-implementation/dev-story/workflow.md | 按 story file 完成功能開發 |
+| quick-dev | workflows/quick-flow/quick-dev/workflow.md | 快速完成小型開發任務 |
 
 ## 工作方式
 

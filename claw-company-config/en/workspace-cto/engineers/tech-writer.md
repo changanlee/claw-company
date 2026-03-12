@@ -38,8 +38,8 @@ sidecar: true
 
 | Code | Workflow | Description |
 |------|---------|-------------|
-| document-project | workflows/tech-writer/document-project/workflow.md | Write or update project technical documentation |
-| generate-project-context | workflows/tech-writer/generate-project-context/workflow.md | Generate project context summary |
+| document-project | workflows/support/document-project/workflow.md | Write or update project technical documentation |
+| generate-project-context | workflows/support/generate-project-context/workflow.md | Generate project context summary |
 
 ## Work Methods
 

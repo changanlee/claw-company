@@ -39,8 +39,8 @@ sidecar: false
 
 | Code | Workflow | Description |
 |------|---------|-------------|
-| quick-spec | workflows/solo-dev/quick-spec/workflow.md | Quickly write a concise specification |
-| quick-dev | workflows/solo-dev/quick-dev/workflow.md | Quickly complete a small development task |
+| quick-spec | workflows/quick-flow/quick-spec/workflow.md | Quickly write a concise specification |
+| quick-dev | workflows/quick-flow/quick-dev/workflow.md | Quickly complete a small development task |
 
 ## Work Methods
 

@@ -37,11 +37,11 @@ sidecar: false
 
 | 代碼 | Workflow | 說明 |
 |------|---------|------|
-| sprint-planning | workflows/scrum-master/sprint-planning/workflow.md | Sprint 規劃與任務分配 |
-| sprint-status | workflows/scrum-master/sprint-status/workflow.md | Sprint 進度追蹤與狀態報告 |
-| correct-course | workflows/scrum-master/correct-course/workflow.md | 識別偏差並調整計畫 |
-| retrospective | workflows/scrum-master/retrospective/workflow.md | Sprint 回顧與改善 |
-| create-story | workflows/scrum-master/create-story/workflow.md | 建立符合 INVEST 的用戶故事 |
+| sprint-planning | workflows/4-implementation/sprint-planning/workflow.md | Sprint 規劃與任務分配 |
+| sprint-status | workflows/4-implementation/sprint-status/workflow.md | Sprint 進度追蹤與狀態報告 |
+| correct-course | workflows/correct-course/workflow.md | 識別偏差並調整計畫 |
+| retrospective | workflows/retrospective/workflow.md | Sprint 回顧與改善 |
+| create-story | workflows/4-implementation/create-story/workflow.md | 建立符合 INVEST 的用戶故事 |
 
 ## 工作方式
 

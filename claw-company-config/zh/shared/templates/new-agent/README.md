@@ -26,6 +26,12 @@
    - 更新 `openclaw.json` 中的 `agents.list` 和 `tools.agentToAgent.allow`
    - 更新 `shared/company-rules.md` 的組織架構段落
 
+## 格式標準
+
+建立新角色檔案時，請遵循以下格式規範：
+- `shared/standards/agent-format.md` — Agent 定義檔案格式規範
+- `shared/standards/workflow-format.md` — 工作流程檔案格式規範
+
 ## 注意事項
 
 - AGENTS.md 的「啟動必讀」段落不可刪除（確保新角色遵守公司規範）

@@ -22,9 +22,13 @@ Build a complete 6-file spec package using the new Agent templates.
 
 ## Instructions
 
-### 1. Read Templates
+### 1. Read Templates and Format Standards
 
 Read all template files in `{{INSTALL_DIR}}/shared/templates/new-agent/`.
+
+Also read format standards to ensure outputs comply with conventions:
+- `{{INSTALL_DIR}}/shared/standards/agent-format.md` — Agent definition file format standard
+- `{{INSTALL_DIR}}/shared/standards/workflow-format.md` — Workflow file format standard (if new role includes workflows)
 
 ### 2. Build 6-File Spec Package
 

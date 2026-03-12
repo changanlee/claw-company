@@ -37,9 +37,8 @@ sidecar: true
 
 | 代碼 | Workflow | 說明 |
 |------|---------|------|
-| create-architecture | workflows/architect/create-architecture/workflow.md | 建立系統架構設計文件 |
-| domain-research | workflows/architect/domain-research/workflow.md | 領域知識研究與技術調研 |
-| technical-research | workflows/architect/technical-research/workflow.md | 深入技術研究與方案評估 |
+| create-architecture | workflows/3-solutioning/create-architecture/workflow.md | 建立系統架構設計文件 |
+| research | workflows/1-analysis/research/workflow.md | 研究工作流程（涵蓋領域研究與技術研究） |
 
 ## 工作方式
 

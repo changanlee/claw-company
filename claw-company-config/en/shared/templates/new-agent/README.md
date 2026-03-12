@@ -26,6 +26,12 @@ This template is for CHRO to use when proposing new agent roles.
    - Update `openclaw.json` agent list and `tools.agentToAgent.allow`
    - Update `shared/company-rules.md` org structure section
 
+## Format Standards
+
+When creating new agent files, follow these format conventions:
+- `shared/standards/agent-format.md` — Agent definition file format standard
+- `shared/standards/workflow-format.md` — Workflow file format standard
+
 ## Notes
 
 - The "Startup Required Reading" section in AGENTS.md must not be removed

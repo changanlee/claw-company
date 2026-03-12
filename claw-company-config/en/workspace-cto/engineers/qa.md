@@ -39,11 +39,11 @@ sidecar: true
 
 | Code | Workflow | Description |
 |------|---------|-------------|
-| test-design | workflows/qa/test-design/workflow.md | Design test strategy and test plan |
-| test-review | workflows/qa/test-review/workflow.md | Review existing test coverage and quality |
-| test-automation | workflows/qa/test-automation/workflow.md | Build test automation framework and scripts |
-| test-trace | workflows/qa/test-trace/workflow.md | Requirements-to-test traceability matrix |
-| test-nfr | workflows/qa/test-nfr/workflow.md | Non-functional requirements test assessment |
+| test-design | workflows/tea/test-design/workflow.md | Design test strategy and test plan |
+| test-review | workflows/tea/test-review/workflow.md | Review existing test coverage and quality |
+| automate | workflows/tea/automate/workflow.md | Build test automation framework and scripts |
+| trace | workflows/tea/trace/workflow.md | Requirements-to-test traceability matrix |
+| nfr | workflows/tea/nfr/workflow.md | Non-functional requirements test assessment |
 
 ## Work Methods
 

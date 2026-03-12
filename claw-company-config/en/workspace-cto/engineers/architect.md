@@ -37,9 +37,8 @@ sidecar: true
 
 | Code | Workflow | Description |
 |------|---------|-------------|
-| create-architecture | workflows/architect/create-architecture/workflow.md | Create a system architecture design document |
-| domain-research | workflows/architect/domain-research/workflow.md | Domain knowledge research and technical investigation |
-| technical-research | workflows/architect/technical-research/workflow.md | In-depth technical research and solution evaluation |
+| create-architecture | workflows/3-solutioning/create-architecture/workflow.md | Create a system architecture design document |
+| research | workflows/1-analysis/research/workflow.md | Research workflow (covers both domain and technical research) |
 
 ## Work Methods
 

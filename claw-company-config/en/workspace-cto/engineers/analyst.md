@@ -37,9 +37,7 @@ sidecar: false
 
 | Code | Workflow | Description |
 |------|---------|-------------|
-| market-research | workflows/analyst/market-research/workflow.md | Market research and competitive analysis |
-| domain-research | workflows/analyst/domain-research/workflow.md | In-depth domain knowledge research |
-| technical-research | workflows/analyst/technical-research/workflow.md | Technical feasibility research and evaluation |
+| research | workflows/1-analysis/research/workflow.md | Research workflow (covers market, domain, and technical research in a unified entry point) |
 
 ## Work Methods
 

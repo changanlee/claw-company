@@ -48,7 +48,7 @@ template: null
 
 ### 4. 全局 Skill 掃描
 
-列出 `~/.openclaw/skills/` 目錄下所有已安裝的 Skill，與 `{{INSTALL_DIR}}/skill-allowlist.json` 中所有已登記名稱比對：
+列出 `~/.openclaw/skills/` 目錄下所有已安裝的 Skill，與 `{{INSTALL_DIR}}/shared/skill-allowlist.json` 中所有已登記名稱比對：
 
 - **未登記的 Skill**（存在於目錄但不在任何 agent 的 allowlist 中）→ 記錄為發現，建議走 `policies/skill-development.md` 審批流程
 - **allowlist 中有但目錄中不存在的 Skill** → 記錄為配置不一致（Skill 未安裝或已移除但 allowlist 未更新）

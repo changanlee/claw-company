@@ -39,8 +39,8 @@ sidecar: false
 
 | 代碼 | Workflow | 說明 |
 |------|---------|------|
-| quick-spec | workflows/solo-dev/quick-spec/workflow.md | 快速撰寫精簡規格 |
-| quick-dev | workflows/solo-dev/quick-dev/workflow.md | 快速完成小型開發任務 |
+| quick-spec | workflows/quick-flow/quick-spec/workflow.md | 快速撰寫精簡規格 |
+| quick-dev | workflows/quick-flow/quick-dev/workflow.md | 快速完成小型開發任務 |
 
 ## 工作方式
 

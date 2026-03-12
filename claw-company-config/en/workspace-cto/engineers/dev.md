@@ -39,8 +39,8 @@ sidecar: false
 
 | Code | Workflow | Description |
 |------|---------|-------------|
-| dev-story | workflows/dev/dev-story/workflow.md | Complete feature development following a story file |
-| quick-dev | workflows/dev/quick-dev/workflow.md | Quickly complete a small development task |
+| dev-story | workflows/4-implementation/dev-story/workflow.md | Complete feature development following a story file |
+| quick-dev | workflows/quick-flow/quick-dev/workflow.md | Quickly complete a small development task |
 
 ## Work Methods
 

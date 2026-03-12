@@ -37,7 +37,7 @@ sidecar: false
 
 | Code | Workflow | Description |
 |------|---------|-------------|
-| create-ux-design | workflows/ux-designer/create-ux-design/workflow.md | Create a user experience design proposal |
+| create-ux-design | workflows/2-planning/create-ux-design/workflow.md | Create a user experience design proposal |
 
 ## Work Methods
 

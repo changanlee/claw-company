@@ -37,9 +37,7 @@ sidecar: false
 
 | 代碼 | Workflow | 說明 |
 |------|---------|------|
-| market-research | workflows/analyst/market-research/workflow.md | 市場研究與競品分析 |
-| domain-research | workflows/analyst/domain-research/workflow.md | 領域知識深入研究 |
-| technical-research | workflows/analyst/technical-research/workflow.md | 技術可行性研究與評估 |
+| research | workflows/1-analysis/research/workflow.md | 研究工作流程（涵蓋市場研究、領域研究、技術研究，統一入口） |
 
 ## 工作方式
 

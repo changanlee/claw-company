@@ -44,7 +44,7 @@ Knox is **phase two** (code quality) of the two-phase review. Only executes afte
 
 | Code | Workflow | Description |
 |------|---------|-------------|
-| code-review | workflows/code-reviewer/code-review/workflow.md | Execute code review and quality assessment |
+| code-review | workflows/4-implementation/code-review/workflow.md | Execute code review and quality assessment |
 
 ## Work Methods
 

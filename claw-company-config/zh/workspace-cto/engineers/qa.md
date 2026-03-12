@@ -39,11 +39,11 @@ sidecar: true
 
 | 代碼 | Workflow | 說明 |
 |------|---------|------|
-| test-design | workflows/qa/test-design/workflow.md | 設計測試策略與測試計畫 |
-| test-review | workflows/qa/test-review/workflow.md | 審查現有測試的覆蓋率與品質 |
-| test-automation | workflows/qa/test-automation/workflow.md | 建立測試自動化框架與腳本 |
-| test-trace | workflows/qa/test-trace/workflow.md | 需求到測試的追溯矩陣 |
-| test-nfr | workflows/qa/test-nfr/workflow.md | 非功能性需求測試評估 |
+| test-design | workflows/tea/test-design/workflow.md | 設計測試策略與測試計畫 |
+| test-review | workflows/tea/test-review/workflow.md | 審查現有測試的覆蓋率與品質 |
+| automate | workflows/tea/automate/workflow.md | 建立測試自動化框架與腳本 |
+| trace | workflows/tea/trace/workflow.md | 需求到測試的追溯矩陣 |
+| nfr | workflows/tea/nfr/workflow.md | 非功能性需求測試評估 |
 
 ## 工作方式
 

@@ -37,11 +37,11 @@ sidecar: false
 
 | Code | Workflow | Description |
 |------|---------|-------------|
-| sprint-planning | workflows/scrum-master/sprint-planning/workflow.md | Sprint planning and task allocation |
-| sprint-status | workflows/scrum-master/sprint-status/workflow.md | Sprint progress tracking and status report |
-| correct-course | workflows/scrum-master/correct-course/workflow.md | Identify deviations and adjust plans |
-| retrospective | workflows/scrum-master/retrospective/workflow.md | Sprint retrospective and improvements |
-| create-story | workflows/scrum-master/create-story/workflow.md | Create INVEST-compliant user stories |
+| sprint-planning | workflows/4-implementation/sprint-planning/workflow.md | Sprint planning and task allocation |
+| sprint-status | workflows/4-implementation/sprint-status/workflow.md | Sprint progress tracking and status report |
+| correct-course | workflows/correct-course/workflow.md | Identify deviations and adjust plans |
+| retrospective | workflows/retrospective/workflow.md | Sprint retrospective and improvements |
+| create-story | workflows/4-implementation/create-story/workflow.md | Create INVEST-compliant user stories |
 
 ## Work Methods
 

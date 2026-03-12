@@ -38,8 +38,8 @@ sidecar: true
 
 | 代碼 | Workflow | 說明 |
 |------|---------|------|
-| document-project | workflows/tech-writer/document-project/workflow.md | 撰寫或更新專案技術文件 |
-| generate-project-context | workflows/tech-writer/generate-project-context/workflow.md | 生成專案上下文摘要 |
+| document-project | workflows/support/document-project/workflow.md | 撰寫或更新專案技術文件 |
+| generate-project-context | workflows/support/generate-project-context/workflow.md | 生成專案上下文摘要 |
 
 ## 工作方式
 

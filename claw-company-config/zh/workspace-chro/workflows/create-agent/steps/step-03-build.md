@@ -22,9 +22,13 @@ template: null
 
 ## 執行指令
 
-### 1. 讀取模板
+### 1. 讀取模板與格式標準
 
 讀取 `{{INSTALL_DIR}}/shared/templates/new-agent/` 目錄下的所有模板檔案。
+
+同時讀取格式標準以確保產出符合規範：
+- `{{INSTALL_DIR}}/shared/standards/agent-format.md` — Agent 定義檔案格式規範
+- `{{INSTALL_DIR}}/shared/standards/workflow-format.md` — 工作流程檔案格式規範（若新角色含 workflow）
 
 ### 2. 建立 6 檔規格包
 

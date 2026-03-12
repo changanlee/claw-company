@@ -37,11 +37,9 @@ sidecar: true
 
 | 代碼 | Workflow | 說明 |
 |------|---------|------|
-| create-prd | workflows/pm/create-prd/workflow.md | 從零建立產品需求文件 |
-| edit-prd | workflows/pm/edit-prd/workflow.md | 修改現有 PRD |
-| validate-prd | workflows/pm/validate-prd/workflow.md | 驗證 PRD 完整性與可行性 |
-| create-epics-and-stories | workflows/pm/create-epics-and-stories/workflow.md | 將 PRD 拆解為 Epic 與用戶故事 |
-| check-readiness | workflows/pm/check-readiness/workflow.md | 檢查需求是否準備好進入開發 |
+| create-prd | workflows/2-planning/create-prd/workflow.md | 建立/編輯/驗證產品需求文件（含三種模式：建立 steps-c/、編輯 steps-e/、驗證 steps-v/） |
+| create-epics-and-stories | workflows/3-solutioning/create-epics-and-stories/workflow.md | 將 PRD 拆解為 Epic 與用戶故事 |
+| check-readiness | workflows/3-solutioning/check-readiness/workflow.md | 檢查需求是否準備好進入開發 |
 
 ## 工作方式
 
