@@ -483,53 +483,91 @@ async function setupDiscordChannels(rl, nativeJson, nativeJsonPath, channelsFoun
       }
     }
 
+    // Query existing bindings to exclude channels claimed by non-claw-company agents
+    const claimedChannels = new Map(); // channelId -> agentId
+    const bindingsResult = tryExec(['openclaw', 'agents', 'bindings', '--json']);
+    if (bindingsResult.ok && bindingsResult.stdout) {
+      try {
+        const bindings = JSON.parse(bindingsResult.stdout);
+        // bindings format: array of { agentId, channel, accountId } or similar
+        for (const b of (Array.isArray(bindings) ? bindings : [])) {
+          const agentId = b.agentId || b.agent || '';
+          // Skip our own agents — we'll unbind and rebind them
+          if (agentId.startsWith(AGENT_PREFIX)) continue;
+          // Extract discord channel ID from binding
+          const bindChannel = b.accountId || b.account || '';
+          const bindType = b.channel || b.type || '';
+          if (bindType === 'discord' && bindChannel) {
+            claimedChannels.set(bindChannel, agentId);
+          }
+        }
+      } catch (_) { /* not valid JSON, skip */ }
+    }
+
+    // Filter out channels claimed by other agents
+    const availableChannels = discordChannels.filter(ch => {
+      const claimer = claimedChannels.get(ch.id);
+      if (claimer) {
+        log(msg(
+          `    ⊘ ${ch.name} (${ch.id}) — bound to ${claimer}`,
+          `    ⊘ ${ch.name} (${ch.id}) — 已綁定 ${claimer}`
+        ));
+      }
+      return !claimer;
+    });
+
     // Assign channels to agents
-    if (discordChannels.length >= 2) {
+    if (availableChannels.length >= 2) {
       log('');
       log(msg(
         '  Assign Discord channels to agents:',
         '  分配 Discord 頻道給 Agent：'
       ));
       log('');
-      for (let i = 0; i < discordChannels.length; i++) {
-        log(`    ${i + 1}) ${discordChannels[i].name} (${discordChannels[i].id})`);
+      for (let i = 0; i < availableChannels.length; i++) {
+        log(`    ${i + 1}) ${availableChannels[i].name} (${availableChannels[i].id})`);
       }
       log(`    0) ${msg('Skip (do not bind to Discord)', '跳過（不綁 Discord）')}`);
       log('');
 
       // CEO channel
       let ceoIdx = -1;
-      while (ceoIdx < 0 || ceoIdx > discordChannels.length) {
-        const input = await ask(rl, msg(`  CEO channel (0-${discordChannels.length}): `, `  CEO 頻道 (0-${discordChannels.length})：`));
+      while (ceoIdx < 0 || ceoIdx > availableChannels.length) {
+        const input = await ask(rl, msg(`  CEO channel (0-${availableChannels.length}): `, `  CEO 頻道 (0-${availableChannels.length})：`));
         ceoIdx = parseInt(input, 10);
         if (isNaN(ceoIdx)) ceoIdx = -1;
       }
       if (ceoIdx > 0) {
-        const ch = discordChannels[ceoIdx - 1];
+        const ch = availableChannels[ceoIdx - 1];
         ceoBind = `discord:${ch.id}`;
         ceoDeliveryTarget = `channel:${ch.id}`;
       }
 
       // CAO channel
       let caoIdx = -1;
-      while (caoIdx < 0 || caoIdx > discordChannels.length) {
-        const input = await ask(rl, msg(`  CAO channel (0-${discordChannels.length}): `, `  CAO 頻道 (0-${discordChannels.length})：`));
+      while (caoIdx < 0 || caoIdx > availableChannels.length) {
+        const input = await ask(rl, msg(`  CAO channel (0-${availableChannels.length}): `, `  CAO 頻道 (0-${availableChannels.length})：`));
         caoIdx = parseInt(input, 10);
         if (isNaN(caoIdx)) caoIdx = -1;
       }
       if (caoIdx > 0) {
-        const ch = discordChannels[caoIdx - 1];
+        const ch = availableChannels[caoIdx - 1];
         caoBind = `discord:${ch.id}`;
         caoDeliveryTarget = `channel:${ch.id}`;
       }
 
       log('');
-    } else if (discordChannels.length === 1) {
-      // Single Discord channel — use as CAO independent channel if CEO has another channel
+    } else if (availableChannels.length === 1) {
+      // Single available Discord channel — use as CAO independent channel if CEO has another channel
       if (primaryChannel && !primaryChannel.startsWith('discord')) {
-        caoBind = `discord:${discordChannels[0].id}`;
-        caoDeliveryTarget = `channel:${discordChannels[0].id}`;
+        caoBind = `discord:${availableChannels[0].id}`;
+        caoDeliveryTarget = `channel:${availableChannels[0].id}`;
       }
+    } else if (availableChannels.length === 0 && discordChannels.length > 0) {
+      logWarn(msg(
+        'All Discord channels are bound to other agents. Add new channels or unbind existing ones.',
+        '所有 Discord 頻道已被其他 Agent 佔用。請新增頻道或解除現有綁定。'
+      ));
     }
   }
 
