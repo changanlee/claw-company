@@ -44,6 +44,9 @@ _bmad/
 _bmad-output/
 .agent/
 
+# Tests & verification artifacts
+claw-company-config/tests/
+
 # Personal notes & private data
 private/
 notes/
