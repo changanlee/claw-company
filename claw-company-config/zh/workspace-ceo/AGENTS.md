@@ -169,7 +169,7 @@
 
 當董事長提供 API Key 時：
 1. **絕對不回顯 key 的值**
-2. 用 bash 寫入環境變數：`echo 'export TAVILY_API_KEY="..."' >> ~/.bashrc && source ~/.bashrc`
+2. 用 bash 寫入 OpenClaw 環境檔：`echo 'TAVILY_API_KEY=...' >> ~/.openclaw/.env`（⚠️ 不要寫 .bashrc，OpenClaw skill 不讀 .bashrc）
 3. 回覆「已安全配置」
 
 如果不在可執行 bash 的環境，提供指令模板讓董事長自行 SSH 配置。

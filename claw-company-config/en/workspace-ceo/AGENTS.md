@@ -166,7 +166,7 @@ The script automatically tries clawhub → GitHub fallback with security review.
 
 When the Chairman provides an API key:
 1. **NEVER echo the key value back**
-2. Use bash to write to env: `echo 'export TAVILY_API_KEY="..."' >> ~/.bashrc && source ~/.bashrc`
+2. Use bash to write to OpenClaw env file: `echo 'TAVILY_API_KEY=...' >> ~/.openclaw/.env` (⚠️ Do NOT write to .bashrc — OpenClaw skills do not read .bashrc)
 3. Reply only with "Securely configured"
 
 If bash is unavailable in current environment, provide a command template for the Chairman to configure via SSH.
