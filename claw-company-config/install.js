@@ -495,25 +495,18 @@ async function setupDiscordChannels(rl, nativeJson, nativeJsonPath, channelsFoun
       }
     }
 
-    // Query existing bindings to exclude channels claimed by non-claw-company agents
+    // Read existing bindings from openclaw.json to exclude channels claimed by non-claw-company agents
     const claimedChannels = new Map(); // channelId -> agentId
-    const bindingsResult = tryExec(['openclaw', 'agents', 'bindings', '--json']);
-    if (bindingsResult.ok && bindingsResult.stdout) {
-      try {
-        const bindings = parseJsonFromOutput(bindingsResult.stdout);
-        // bindings format: [{ agentId, match: { channel, accountId }, description }]
-        for (const b of (Array.isArray(bindings) ? bindings : [])) {
-          const agentId = b.agentId || '';
-          // Skip our own agents — we'll unbind and rebind them
-          if (agentId.startsWith(AGENT_PREFIX)) continue;
-          // Extract discord channel ID from binding
-          const bindType = b.match?.channel || '';
-          const bindAccount = b.match?.accountId || '';
-          if (bindType === 'discord' && bindAccount) {
-            claimedChannels.set(bindAccount, agentId);
-          }
-        }
-      } catch (_) { /* not valid JSON, skip */ }
+    const existingBindings = Array.isArray(nativeJson.bindings) ? nativeJson.bindings : [];
+    for (const b of existingBindings) {
+      const agentId = b.agentId || '';
+      // Skip our own agents — we'll unbind and rebind them
+      if (agentId.startsWith(AGENT_PREFIX)) continue;
+      const bindType = b.match?.channel || '';
+      const bindAccount = b.match?.accountId || '';
+      if (bindType === 'discord' && bindAccount) {
+        claimedChannels.set(bindAccount, agentId);
+      }
     }
 
     // Filter out channels claimed by other agents
