@@ -489,16 +489,16 @@ async function setupDiscordChannels(rl, nativeJson, nativeJsonPath, channelsFoun
     if (bindingsResult.ok && bindingsResult.stdout) {
       try {
         const bindings = JSON.parse(bindingsResult.stdout);
-        // bindings format: array of { agentId, channel, accountId } or similar
+        // bindings format: [{ agentId, match: { channel, accountId }, description }]
         for (const b of (Array.isArray(bindings) ? bindings : [])) {
-          const agentId = b.agentId || b.agent || '';
+          const agentId = b.agentId || '';
           // Skip our own agents — we'll unbind and rebind them
           if (agentId.startsWith(AGENT_PREFIX)) continue;
           // Extract discord channel ID from binding
-          const bindChannel = b.accountId || b.account || '';
-          const bindType = b.channel || b.type || '';
-          if (bindType === 'discord' && bindChannel) {
-            claimedChannels.set(bindChannel, agentId);
+          const bindType = b.match?.channel || '';
+          const bindAccount = b.match?.accountId || '';
+          if (bindType === 'discord' && bindAccount) {
+            claimedChannels.set(bindAccount, agentId);
           }
         }
       } catch (_) { /* not valid JSON, skip */ }
