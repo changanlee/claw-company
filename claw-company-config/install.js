@@ -1744,30 +1744,107 @@ async function main() {
   logInfo('Binding channels...', '綁定通道...');
 
   const failedBindCmds = [];
-  // Bind CEO to all detected channels
-  for (const ch of channelsFound) {
-    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}ceo`, '--bind', ch];
-    const result = tryExec(cmdArgs);
-    if (result.ok) {
-      logOk(`${AGENT_PREFIX}ceo -> ${ch}`);
-    } else {
-      failedBindCmds.push(cmdToString(cmdArgs));
-      // Non-blocking: channel binding failure doesn't stop install
+
+  // Collect all Discord channel IDs for interactive assignment
+  const discordChannelIds = [];
+  const discordConfig = nativeJson.channels?.discord;
+  if (discordConfig && discordConfig.guilds && typeof discordConfig.guilds === 'object') {
+    for (const guild of Object.values(discordConfig.guilds)) {
+      if (guild.channels && typeof guild.channels === 'object') {
+        for (const [chId, chCfg] of Object.entries(guild.channels)) {
+          if (chCfg && chCfg.allow !== false) {
+            const name = chCfg.name || chCfg.label || chId;
+            discordChannelIds.push({ id: chId, name });
+          }
+        }
+      }
     }
   }
 
-  // Primary channel = first detected channel (used for CEO delivery + CAO fallback)
-  const primaryChannel = channelsFound[0] || null;
+  // Primary channel (non-Discord) for CEO — e.g. WhatsApp
+  const primaryChannel = channelsFound.find(ch => !ch.startsWith('discord')) || channelsFound[0] || null;
 
-  // Bind CAO to an independent channel (prefer non-primary for audit independence)
-  const caoBindChannel = channelsFound.length > 1
-    ? channelsFound.find(ch => ch !== primaryChannel) || primaryChannel
-    : primaryChannel;
-  if (caoBindChannel) {
-    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cao`, '--bind', caoBindChannel];
+  // Channel assignment: CEO bind target, CAO bind target, cron delivery targets
+  let ceoBind = primaryChannel; // default: WhatsApp or first channel
+  let caoBind = primaryChannel; // default: same as CEO (single-channel)
+  let ceoDeliveryTarget = null; // --to for cron (e.g. phone number or channel:ID)
+  let caoDeliveryTarget = null;
+
+  if (discordChannelIds.length >= 2) {
+    // Multiple Discord channels — ask user to assign CEO and CAO
+    log('');
+    log(msg(
+      '  Multiple Discord channels detected. Assign channels to agents:',
+      '  偵測到多個 Discord 頻道，請分配給 Agent：'
+    ));
+    log('');
+    for (let i = 0; i < discordChannelIds.length; i++) {
+      log(`    ${i + 1}) ${discordChannelIds[i].name} (${discordChannelIds[i].id})`);
+    }
+    log(`    0) ${msg('Skip (do not bind to Discord)', '跳過（不綁 Discord）')}`);
+    log('');
+
+    // CEO channel
+    let ceoIdx = -1;
+    while (ceoIdx < 0 || ceoIdx > discordChannelIds.length) {
+      const input = await ask(rl, msg(`  CEO channel (0-${discordChannelIds.length}): `, `  CEO 頻道 (0-${discordChannelIds.length})：`));
+      ceoIdx = parseInt(input, 10);
+      if (isNaN(ceoIdx)) ceoIdx = -1;
+    }
+    if (ceoIdx > 0) {
+      const ch = discordChannelIds[ceoIdx - 1];
+      ceoBind = `discord:${ch.id}`;
+      ceoDeliveryTarget = `channel:${ch.id}`;
+    }
+
+    // CAO channel
+    let caoIdx = -1;
+    while (caoIdx < 0 || caoIdx > discordChannelIds.length) {
+      const input = await ask(rl, msg(`  CAO channel (0-${discordChannelIds.length}): `, `  CAO 頻道 (0-${discordChannelIds.length})：`));
+      caoIdx = parseInt(input, 10);
+      if (isNaN(caoIdx)) caoIdx = -1;
+    }
+    if (caoIdx > 0) {
+      const ch = discordChannelIds[caoIdx - 1];
+      caoBind = `discord:${ch.id}`;
+      caoDeliveryTarget = `channel:${ch.id}`;
+    }
+
+    log('');
+  } else if (discordChannelIds.length === 1) {
+    // Single Discord channel — use as CAO independent channel if CEO has another channel
+    if (primaryChannel && !primaryChannel.startsWith('discord')) {
+      caoBind = `discord:${discordChannelIds[0].id}`;
+      caoDeliveryTarget = `channel:${discordChannelIds[0].id}`;
+    }
+  }
+
+  // Bind CEO
+  if (ceoBind) {
+    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}ceo`, '--bind', ceoBind];
     const result = tryExec(cmdArgs);
     if (result.ok) {
-      logOk(`${AGENT_PREFIX}cao -> ${caoBindChannel}`);
+      logOk(`${AGENT_PREFIX}ceo -> ${ceoBind}`);
+    } else {
+      failedBindCmds.push(cmdToString(cmdArgs));
+    }
+  }
+
+  // Bind CAO
+  if (caoBind && caoBind !== ceoBind) {
+    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cao`, '--bind', caoBind];
+    const result = tryExec(cmdArgs);
+    if (result.ok) {
+      logOk(`${AGENT_PREFIX}cao -> ${caoBind}`);
+    } else {
+      failedBindCmds.push(cmdToString(cmdArgs));
+    }
+  } else if (caoBind) {
+    // CAO shares channel with CEO — bind anyway (will show as shared)
+    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cao`, '--bind', caoBind];
+    const result = tryExec(cmdArgs);
+    if (result.ok) {
+      logOk(`${AGENT_PREFIX}cao -> ${caoBind} (shared)`);
     } else {
       failedBindCmds.push(cmdToString(cmdArgs));
     }
@@ -1827,13 +1904,8 @@ async function main() {
   // Delivery modes: 'announce' (push to channel), 'none' (silent, no --channel).
   // For 'announce' jobs, results are delivered via --channel + --announce + --to.
   // For 'none' jobs, results are written to output/ files; CEO heartbeat picks them up.
-  // CAO prefers an independent (non-primary) channel for audit independence
-  const caoChannel = channelsFound.length > 1
-    ? channelsFound.find(ch => ch !== primaryChannel) || primaryChannel
-    : primaryChannel;
 
-  // Try to extract delivery target from channel config (for cron --to).
-  // OpenClaw cron requires --to for channel delivery (e.g. E.164 for WhatsApp, channel:ID for Discord).
+  // Extract delivery target for non-Discord channels (WhatsApp, Telegram)
   function extractChannelTarget(channelName) {
     if (!nativeJson.channels || !channelName) return null;
     const parts = channelName.split(':');
@@ -1854,23 +1926,15 @@ async function main() {
     if (baseName === 'whatsapp' && Array.isArray(config.allowFrom) && config.allowFrom.length > 0) {
       return config.allowFrom[0];
     }
-    // Discord: find first allowed channel in first guild → "channel:<id>"
-    if (baseName === 'discord' && config.guilds && typeof config.guilds === 'object') {
-      for (const guild of Object.values(config.guilds)) {
-        if (guild.channels && typeof guild.channels === 'object') {
-          for (const [chId, chCfg] of Object.entries(guild.channels)) {
-            if (chCfg && chCfg.allow !== false) {
-              return `channel:${chId}`;
-            }
-          }
-        }
-      }
-    }
     return null;
   }
 
-  const primaryTarget = extractChannelTarget(primaryChannel);
-  const caoTarget = extractChannelTarget(caoChannel);
+  // Resolve cron delivery channel (base name) and target (--to destination)
+  // --channel expects base name (e.g. "whatsapp", "discord"), --to expects destination
+  const ceoCronChannel = (ceoBind || primaryChannel || '').split(':')[0] || null;
+  const caoCronChannel = (caoBind || primaryChannel || '').split(':')[0] || null;
+  const primaryTarget = ceoDeliveryTarget || extractChannelTarget(ceoCronChannel);
+  const caoTarget = caoDeliveryTarget || extractChannelTarget(caoCronChannel);
   const missingTargets = [];
 
   // Auto-detect system timezone for cron --tz (IANA format)
@@ -1925,7 +1989,7 @@ async function main() {
       agent: `${AGENT_PREFIX}ceo`,
       model: tiers.CEO,
       message: 'Execute morning briefing: read MEMORY.md and recent output/ files from all executives (CFO, CIO, COO, CTO, CHRO, CAO) to collect latest status. Compile into briefing with action items for Chairman. Refer to briefing-template.md. Do NOT use sessions_send (unavailable in cron).',
-      channel: primaryChannel,
+      channel: ceoCronChannel,
       to: primaryTarget,
     },
     {
@@ -1942,7 +2006,7 @@ async function main() {
       agent: `${AGENT_PREFIX}chro`,
       model: tiers.CHRO,
       message: 'Audit MEMORY.md health across all agents: check line counts vs 200-line limit, duplicates, stale entries, archive logs >30 days. Write health report to output/reports/. Do NOT use sessions_send (unavailable in cron).',
-      channel: primaryChannel,
+      channel: ceoCronChannel,
       to: primaryTarget,
     },
     {
@@ -1951,7 +2015,7 @@ async function main() {
       agent: `${AGENT_PREFIX}chro`,
       model: tiers.CHRO,
       message: 'Produce weekly org health report: agent performance summary, capability gaps, model config suggestions, skill usage stats. Write report to output/reports/. Do NOT use sessions_send (unavailable in cron).',
-      channel: primaryChannel,
+      channel: ceoCronChannel,
       to: primaryTarget,
     },
     {
@@ -1960,7 +2024,7 @@ async function main() {
       agent: `${AGENT_PREFIX}cao`,
       model: tiers.CAO,
       message: 'Run full security scan: verify SOUL.md integrity, check recent session logs for anomalies, validate security rules compliance. Produce security scan report. Do NOT use sessions_send (unavailable in cron). Report is delivered via cron announce.',
-      channel: caoChannel,
+      channel: caoCronChannel,
       to: caoTarget,
     },
     {
