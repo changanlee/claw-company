@@ -2396,11 +2396,17 @@ async function main() {
     if (cronTz) {
       cmdArgs.push('--tz', cronTz);
     }
-    // Add channel delivery args BEFORE --message for announce jobs
+    // Add channel delivery args BEFORE --message
+    // Three modes:
+    //   1. announce:false → --no-deliver (explicitly silent)
+    //   2. channel set → --channel + --announce + --to (push to chat)
+    //   3. channel null (no channel detected) → --no-deliver (prevent OpenClaw default
+    //      "announce + channel:last" which errors when multiple channels exist)
     if (job.announce === false) {
-      // Explicitly silent: --no-deliver prevents OpenClaw's default "announce + channel:last"
+      // Mode 1: explicitly silent job
       cmdArgs.push('--no-deliver');
     } else if (job.channel) {
+      // Mode 2: announce to specific channel
       cmdArgs.push('--channel', job.channel, '--announce');
       // Discord multi-bot: --account specifies which bot delivers the message
       if (job.account) {
@@ -2411,6 +2417,10 @@ async function main() {
       } else {
         missingTargets.push(job.name);
       }
+    } else {
+      // Mode 3: should announce but no channel available — force silent to avoid runtime error
+      cmdArgs.push('--no-deliver');
+      missingTargets.push(job.name);
     }
     // --message always last
     cmdArgs.push('--message', job.message);
