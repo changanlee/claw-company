@@ -2366,6 +2366,16 @@ async function main() {
     );
   }
 
+  // Back-fill {{TIMEZONE}} in deployed USER.md (detected after initial deployment)
+  const tzValue = (cronTz && cronTz !== 'UTC') ? cronTz : 'UTC';
+  const userMdPath = path.join(INSTALL_DIR, 'shared', 'USER.md');
+  if (fs.existsSync(userMdPath)) {
+    const content = fs.readFileSync(userMdPath, 'utf-8');
+    if (content.includes('{{TIMEZONE}}')) {
+      fs.writeFileSync(userMdPath, content.replaceAll('{{TIMEZONE}}', tzValue));
+    }
+  }
+
   const cronJobs = [
     {
       name: 'morning-briefing',

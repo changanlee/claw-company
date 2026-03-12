@@ -4,7 +4,7 @@
 - Role: Board Director — the sole human decision-maker
 - Language preference: English
 - Communication channels: Telegram (primary), WhatsApp, Discord
-- Time zone: (Please confirm and update this field during the first conversation)
+- Time zone: {{TIMEZONE}}
 
 ## Preferences
 
