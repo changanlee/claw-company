@@ -511,12 +511,12 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
         return !claimer;
       });
 
-      // Guide: recommend creating more bots if only 1 account available
-      if (availableAccounts.length === 1 && discordAccounts.length === 1) {
+      // Guide: offer to register more bots interactively
+      if (availableAccounts.length < 2) {
         log('');
         log(msg(
-          '  Tip: For full multi-bot routing, create 3 Discord bots:',
-          '  提示：完整的多 Bot 路由建議建立 3 個 Discord Bot：'
+          '  For full multi-bot routing, you need at least 3 Discord bots:',
+          '  完整多 Bot 路由建議至少 3 個 Discord Bot：'
         ));
         log(msg(
           '    1) CEO bot — bound to CEO agent (main entry point)',
@@ -530,14 +530,51 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
           '    3) Native bot — default fallback (no binding needed)',
           '    3) 原生 Bot — 預設 fallback（不需要 binding）'
         ));
-        log(msg(
-          '  Register bots: openclaw channels add --channel discord --account <name> --token <TOKEN>',
-          '  註冊 Bot：openclaw channels add --channel discord --account <name> --token <TOKEN>'
+        log('');
+        const addBots = await ask(rl, msg(
+          '  Register additional Discord bots now? (y/N): ',
+          '  現在註冊新的 Discord Bot？(y/N)：'
         ));
-        log(msg(
-          '  Then re-run: node install.js --update-channels',
-          '  然後重新執行：node install.js --update-channels'
-        ));
+        if (addBots.trim().toLowerCase().startsWith('y')) {
+          let adding = true;
+          while (adding) {
+            const accName = await ask(rl, msg(
+              '    Account name (e.g. ceo, audit): ',
+              '    帳號名稱（例如 ceo、audit）：'
+            ));
+            const accToken = await ask(rl, msg(
+              '    Bot token: ',
+              '    Bot Token：'
+            ));
+            if (accName.trim() && accToken.trim()) {
+              const result = tryExec([
+                'openclaw', 'channels', 'add',
+                '--channel', 'discord',
+                '--account', accName.trim(),
+                '--token', accToken.trim(),
+              ]);
+              if (result.ok) {
+                logOk(`Discord account "${accName.trim()}" added`);
+                // Add to available accounts for binding selection
+                const newBinding = `discord:${accName.trim()}`;
+                discordAccounts.push({ binding: newBinding, account: accName.trim() });
+                availableAccounts.push({ binding: newBinding, account: accName.trim() });
+              } else {
+                logWarn(
+                  `Failed to add account: ${result.stderr}`,
+                  `新增帳號失敗：${result.stderr}`
+                );
+              }
+            }
+            const more = await ask(rl, msg(
+              '    Add another? (y/N): ',
+              '    繼續新增？(y/N)：'
+            ));
+            adding = more.trim().toLowerCase().startsWith('y');
+          }
+          // Re-read json after adding accounts (channels add modifies openclaw.json)
+          Object.assign(nativeJson, readJsonc(nativeJsonPath));
+        }
       }
 
       // Guide: remind about guild channel allowlist
