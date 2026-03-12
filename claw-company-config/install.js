@@ -2379,7 +2379,7 @@ async function main() {
   const cronJobs = [
     {
       name: 'morning-briefing',
-      cron: '30 0 * * *',
+      cron: '30 6 * * *',
       agent: `${AGENT_PREFIX}ceo`,
       model: tiers.CEO,
       message: 'Execute morning briefing: read MEMORY.md and recent output/ files from all executives (CFO, CIO, COO, CTO, CHRO, CAO) to collect latest status. Compile into briefing with action items for Chairman. Refer to briefing-template.md. Do NOT use sessions_send (unavailable in cron).',
