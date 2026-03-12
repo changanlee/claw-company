@@ -159,6 +159,18 @@ function tryExec(args) {
   return { ok: false, stdout: '', stderr: (result.stderr || result.error?.message || '').trim() };
 }
 
+/** Safely parse JSON from CLI output that may contain log lines mixed into stdout. */
+function parseJsonFromOutput(raw) {
+  // Find first [ or { — skip any log lines before the JSON payload
+  const arrStart = raw.indexOf('[');
+  const objStart = raw.indexOf('{');
+  let start = -1;
+  if (arrStart >= 0 && objStart >= 0) start = Math.min(arrStart, objStart);
+  else if (arrStart >= 0) start = arrStart;
+  else if (objStart >= 0) start = objStart;
+  return JSON.parse(start >= 0 ? raw.slice(start) : raw);
+}
+
 /** Build a display-friendly command string for fallback output. */
 function cmdToString(args) {
   return args.map(a => (a.includes(' ') || a.includes('"')) ? `"${a.replace(/"/g, '\\"')}"` : a).join(' ');
@@ -344,7 +356,7 @@ async function uninstall() {
   const cronJsonRes = tryExec(['openclaw', 'cron', 'list', '--json']);
   if (cronJsonRes.ok && cronJsonRes.stdout) {
     try {
-      const entries = JSON.parse(cronJsonRes.stdout);
+      const entries = parseJsonFromOutput(cronJsonRes.stdout);
       if (Array.isArray(entries)) {
         for (const entry of entries) {
           if (entry.name && uninstallCronNames.has(entry.name) && entry.id) {
@@ -488,7 +500,7 @@ async function setupDiscordChannels(rl, nativeJson, nativeJsonPath, channelsFoun
     const bindingsResult = tryExec(['openclaw', 'agents', 'bindings', '--json']);
     if (bindingsResult.ok && bindingsResult.stdout) {
       try {
-        const bindings = JSON.parse(bindingsResult.stdout);
+        const bindings = parseJsonFromOutput(bindingsResult.stdout);
         // bindings format: [{ agentId, match: { channel, accountId }, description }]
         for (const b of (Array.isArray(bindings) ? bindings : [])) {
           const agentId = b.agentId || '';
@@ -1894,7 +1906,7 @@ async function main() {
   const listResult = tryExec(['openclaw', 'agents', 'list', '--json']);
   if (listResult.ok && listResult.stdout) {
     try {
-      const agentList = JSON.parse(listResult.stdout);
+      const agentList = parseJsonFromOutput(listResult.stdout);
       for (const a of agentList) {
         if (a.id && a.workspace) {
           existingAgents[a.id] = a.workspace;
@@ -2013,7 +2025,7 @@ async function main() {
   const cronJsonResult = tryExec(['openclaw', 'cron', 'list', '--json']);
   if (cronJsonResult.ok && cronJsonResult.stdout) {
     try {
-      const cronEntries = JSON.parse(cronJsonResult.stdout);
+      const cronEntries = parseJsonFromOutput(cronJsonResult.stdout);
       if (Array.isArray(cronEntries)) {
         for (const entry of cronEntries) {
           if (entry.name && managedCronNames.has(entry.name) && entry.id) {
