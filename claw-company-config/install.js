@@ -916,6 +916,34 @@ async function main() {
 
     logOk(msg('Channel bindings updated.', '通道綁定已更新。'));
     log(msg('  Verify: openclaw agents bindings', '  驗證：openclaw agents bindings'));
+
+    // Gateway restart prompt
+    log('');
+    const restartCh = await ask(rl, msg(
+      'Restart gateway now? (Y/n): ',
+      '是否立即重啟 gateway？(Y/n)：'
+    ));
+    if (restartCh.toLowerCase() !== 'n') {
+      const gwSp = new Spinner(msg('Restarting gateway...', '重啟 gateway...'));
+      gwSp.start();
+      const sysResult = tryExec(['sudo', 'systemctl', 'restart', 'openclaw-gateway']);
+      if (sysResult.ok) {
+        gwSp.succeed(msg('Gateway restarted (systemd)', 'Gateway 已重啟（systemd）'));
+      } else {
+        tryExec(['pkill', '-f', 'openclaw']);
+        spawnSync('sleep', ['2'], { encoding: 'utf-8' });
+        const gw = spawn('openclaw', ['gateway'], { detached: true, stdio: 'ignore' });
+        gw.unref();
+        gwSp.succeed(msg('Gateway restart initiated', 'Gateway 重啟已發起'));
+        log(msg('  Verify: ps aux | grep openclaw', '  驗證：ps aux | grep openclaw'));
+      }
+    } else {
+      log(msg(
+        '  Restart later: pkill -f openclaw; sleep 3 && nohup openclaw gateway &',
+        '  稍後重啟：pkill -f openclaw; sleep 3 && nohup openclaw gateway &'
+      ));
+    }
+
     rl.close();
     return;
   }
