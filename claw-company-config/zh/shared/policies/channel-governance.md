@@ -78,7 +78,7 @@
 | 任務來源 | 綠燈 | 黃燈 | 紅燈 |
 |---------|------|------|------|
 | CEO dispatch | 自動執行 | dispatch CEO 審批 | dispatch CEO 審查 → CEO 呈報董事長 |
-| 董事長直接指派 | 自動執行 | dispatch CEO 審批 | 董事長已說 = 已核決，直接執行 + dispatch CEO 知會 |
+| 董事長直接指派 | 自動執行 | dispatch CEO 審批 | 董事長已說 = 已核決，確認細節後執行 + dispatch CEO 知會 |
 | cron | 自動執行 | dispatch CEO 審批 | dispatch CEO 審查 → CEO 呈報董事長 |
 
 **紅燈知會格式**：

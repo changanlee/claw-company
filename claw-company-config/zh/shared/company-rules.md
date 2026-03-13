@@ -52,7 +52,7 @@
 - 有獨立通道的 Agent（CTO、COO、CAO）可被董事長直接對話
 - 核決流程不因通道而改變（詳見 `policies/approval-matrix.md` 任務來源段落）
 - 黃燈：一律 dispatch CEO 審批（無論任務來自 CEO 或董事長）
-- 紅燈（董事長直接指派）：已核決，直接執行 + dispatch CEO 知會
+- 紅燈（董事長直接指派）：已核決，確認執行細節後執行 + dispatch CEO 知會（破壞性操作必須先向董事長確認具體範圍）
 - 紅燈（其他來源）：dispatch CEO 審查 → CEO 呈報董事長核決
 - 綠燈任務完成後寫 MEMORY.md 或 output/，確保 CEO 晨間會報與 CAO 稽核可追蹤
 
