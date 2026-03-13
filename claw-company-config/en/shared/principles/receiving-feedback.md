@@ -1,26 +1,28 @@
-# Receiving Feedback: Evaluate Feedback on Merit
+# Evaluate Feedback on Merit, Don't Blindly Accept or Reject
 
-Don't blindly accept or reject feedback. Evaluate each point on its own merit.
+## Core Principle
+
+When receiving feedback, evaluate it based on evidence and logic, not emotional reaction.
 
 ## Rules
 
-1. **Critical feedback** requires immediate action — no exceptions.
-2. **Important feedback** requires resolution before proceeding.
-3. **Minor feedback** can be deferred with documented justification.
-4. If feedback seems wrong, challenge it with evidence — not silence or blind compliance.
-5. Never dismiss valid concerns without clear, documented reasoning.
-6. "I disagree" is not a response. "I disagree because [evidence]" is.
-
-## Why This Matters
-
-Blind acceptance leads to unnecessary changes. Blind rejection leads to repeated mistakes. Merit-based evaluation of feedback improves both the work and the feedback process.
+- Critical feedback requires immediate action
+- Important feedback must be resolved before proceeding
+- Minor feedback can be deferred with justification
+- If feedback seems wrong, challenge it with evidence — not silence or blind compliance
+- Don't dismiss valid concerns without clear reasoning
 
 ## Applicability
 
-This principle applies to all tasks that involve receiving and acting on feedback from any source. Not limited to the examples below.
+This principle applies to all situations involving receiving and evaluating feedback. Not limited to the examples below.
 
 Common examples:
 - Receiving audit findings from CAO
-- Policy feedback from CHRO
-- Review comments from any reviewer
-- Chairman directives that need clarification
+- Receiving policy feedback from CHRO
+- Receiving any review comments
+
+## Anti-Pattern
+
+- Accepting all feedback without thinking
+- Defensively rejecting all criticism
+- Verbally agreeing but not actually making changes

@@ -1,6 +1,6 @@
 ---
 name: submit
-description: "Submit: Submit trip plan to CEO for Chairman approval"
+description: "Submit: Submit trip plan for Chairman approval"
 next-step: null
 output-file: null
 template: null
@@ -12,7 +12,7 @@ template: null
 
 ## Goal
 
-Submit the completed trip plan draft to CEO for consolidation and escalation to Chairman for approval.
+Submit the completed trip plan draft for Chairman approval. Choose the submission path based on task source.
 
 ## Execution Rules
 
@@ -22,13 +22,15 @@ Submit the completed trip plan draft to CEO for consolidation and escalation to 
 
 ## Instructions
 
-### 1. Submit to CEO
+### 1. Submit for Approval
 
-Use `sessions_send` to submit the trip plan draft to CEO:
+Choose the submission path based on task source:
+
+**If task came from CEO dispatch**: Use `exec dispatch` to submit the trip plan draft to CEO (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh):
 
 > "CEO, attached is the [destination] trip plan draft. Please consolidate and escalate to the Chairman for approval."
 
-Include the plan file path.
+**If Chairman assigned directly**: Reply directly in channel to Chairman with the trip plan draft for approval. Also dispatch CEO for notification.
 
 ### 2. Await Approval Result
 
@@ -45,7 +47,7 @@ Record the approval result in `memory/` logs:
 
 ## Completion Criteria
 
-- [ ] Submitted to CEO for Chairman escalation
+- [ ] Submitted for approval (CEO dispatch → submit to CEO; Chairman direct → reply to Chairman + notify CEO)
 - [ ] Received approval result
 - [ ] Recorded result to memory/
 

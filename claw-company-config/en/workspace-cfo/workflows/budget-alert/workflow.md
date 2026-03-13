@@ -23,12 +23,12 @@ CFO (Sage) automatically triggers this workflow upon detecting anomalous spendin
 |------|------|-------------|----------|
 | 01 | Detect | Detect anomalous spending (>2x daily average) | — |
 | 02 | Analyze | Analyze cause and impact | — |
-| 03 | Notify | sessions_send notification to CEO | — |
+| 03 | Notify | exec dispatch notification to CEO | — |
 
 ## Execution
 
 Begin from the first step:
 
 ```
--> Start execution -> Read steps/step-01-detect.md
+👉 Start execution → Read steps/step-01-detect.md
 ```

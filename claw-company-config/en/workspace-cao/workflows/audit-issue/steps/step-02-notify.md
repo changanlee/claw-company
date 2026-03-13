@@ -1,6 +1,6 @@
 ---
 name: notify
-description: "Notify: sessions_send to notify responsible Agent and CEO"
+description: "Notify: exec dispatch to notify responsible Agent and CEO"
 next-step: ./step-03-track.md
 output-file: null
 template: null
@@ -12,7 +12,7 @@ template: null
 
 ## Goal
 
-Notify the responsible Agent and CEO via sessions_send to ensure all parties are aware and can begin remediation.
+Notify the responsible Agent and CEO via exec dispatch to ensure all parties are aware and can begin remediation.
 
 ## Execution Rules
 
@@ -24,7 +24,7 @@ Notify the responsible Agent and CEO via sessions_send to ensure all parties are
 
 ### 1. Notify Responsible Agent
 
-Use `sessions_send` to notify the responsible Agent:
+Use `exec dispatch` to notify the responsible Agent (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh):
 
 > "[Agent name], Audit Issue Notification:
 > - Issue ID: [AUD-YYYY-NNN]
@@ -35,7 +35,7 @@ Use `sessions_send` to notify the responsible Agent:
 
 ### 2. Notify CEO
 
-Use `sessions_send` to notify CEO:
+Use `exec dispatch` to notify CEO:
 
 > "CEO, New audit issue [AUD-YYYY-NNN] ([severity]):
 > - Issue: [description]

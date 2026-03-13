@@ -62,7 +62,7 @@ Write the final research report to `{{INSTALL_DIR}}/workspace-cto/output/plannin
 
 ### 4. Report to CTO
 
-Via `sessions_send`, report the completed research to the CTO:
+Via `announce`, report the completed research to the CTO:
 
 - Include research summary (research type, number of key findings, number of recommendations)
 - Highlight important insights requiring CTO attention

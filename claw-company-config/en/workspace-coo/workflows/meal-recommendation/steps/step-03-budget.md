@@ -12,7 +12,7 @@ template: null
 
 ## Goal
 
-Confirm the remaining monthly meal budget with CFO via sessions_send to determine the price range for recommendations.
+Confirm the remaining monthly meal budget with CFO via exec dispatch to determine the price range for recommendations.
 
 ## Execution Rules
 
@@ -24,7 +24,7 @@ Confirm the remaining monthly meal budget with CFO via sessions_send to determin
 
 ### 1. Query Budget
 
-Use `sessions_send` to ask CFO:
+Use `exec dispatch` to ask CFO (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh):
 
 > "CFO, what's the remaining meal budget for this month? Suggested per-meal price range for today?"
 

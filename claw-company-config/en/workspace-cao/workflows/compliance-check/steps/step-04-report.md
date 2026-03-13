@@ -34,7 +34,7 @@ Report includes the following content:
 
 ### 2. Respond to Drafter
 
-Use `sessions_send` to send the review report to the drafter (usually CHRO):
+Use `exec dispatch` to send the review report to the drafter (usually CHRO):
 
 **All compliant:**
 > "[Draft name] compliance review passed. May proceed to approval process."
@@ -47,7 +47,7 @@ Use `sessions_send` to send the review report to the drafter (usually CHRO):
 
 ### 3. Notify CEO
 
-Use `sessions_send` to notify CEO with the review result summary.
+Use `exec dispatch` to notify CEO with the review result summary.
 
 ### 4. Record
 

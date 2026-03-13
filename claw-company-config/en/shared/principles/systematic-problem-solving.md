@@ -1,27 +1,30 @@
-# Systematic Problem Solving: Find Root Cause Before Attempting Fixes
+# Find Root Cause Before Attempting Fixes
 
-No fixes without understanding what went wrong and why. Never: "quick fix now, investigate later."
+## Core Principle
+
+No fixes without understanding what went wrong and why.
 
 ## Rules
 
-1. **Phase 1 — Gather evidence:** What happened? What was expected? What changed recently?
-2. **Phase 2 — Find patterns:** Compare with similar situations that worked. What is different?
-3. **Phase 3 — Hypothesize:** Form one hypothesis and test it with the smallest possible action.
-4. **Phase 4 — Fix and verify:** Implement the fix, then verify it actually resolved the issue.
-5. After 3+ failed attempts, stop and question your assumptions fundamentally.
-6. Never apply a fix you cannot explain.
-
-## Why This Matters
-
-Guessing at solutions compounds problems. Systematic diagnosis is slower on the first attempt but faster overall because it avoids cascading failures.
+- Phase 1: Gather evidence — what happened, what was expected, what changed recently
+- Phase 2: Find patterns — compare with similar successful cases
+- Phase 3: Form one hypothesis and test it with the smallest possible action
+- Phase 4: Implement the fix and verify it actually resolved the issue
+- After 3+ failed attempts = stop and fundamentally question your assumptions
+- Never: "quick fix now, investigate later"
 
 ## Applicability
 
-This principle applies to all tasks that involve diagnosing or fixing something that is not working as expected. Not limited to the examples below.
+This principle applies to all situations requiring diagnosis and problem resolution. Not limited to the examples below.
 
 Common examples:
 - Budget overruns
 - Investment losses
 - Schedule conflicts
 - Agent performance issues
-- Any situation where the outcome does not match expectations
+
+## Anti-Pattern
+
+- Attempting fixes without investigation
+- Changing multiple variables at once, unable to tell which one worked
+- Repeatedly trying the same approach

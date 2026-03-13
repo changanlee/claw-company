@@ -1,6 +1,6 @@
 ---
 name: model-evaluation
-description: "Model Evaluation: Detect Trigger → Comparative Analysis → Proposal → Tiered Approval"
+description: "Model Evaluation: Detect Trigger → Comparative Analysis → Proposal → Capability Test → Tiered Approval"
 type: semi-automatic
 agent: chro
 sub-agent: null
@@ -12,7 +12,7 @@ output-dir: output/assessments/
 
 ## Overview
 
-CHRO (Harper) detects model upgrade/downgrade trigger conditions, performs comparative analysis on performance and cost, produces upgrade/downgrade proposals, and routes to tiered approval (downgrade to CEO yellow; upgrade/vendor change to Chairman red).
+CHRO (Harper) detects model upgrade/downgrade trigger conditions, performs comparative analysis on performance and cost, produces upgrade/downgrade proposals, validates capability with testing, and routes to tiered approval (downgrade to CEO yellow; upgrade/vendor change to Chairman red).
 
 ## Prerequisites
 
@@ -27,7 +27,8 @@ CHRO (Harper) detects model upgrade/downgrade trigger conditions, performs compa
 | 01 | Detect Trigger | Detect trigger conditions (failure rate, new model) | — |
 | 02 | Comparative Analysis | Compare performance, cost, context length | — |
 | 03 | Produce Proposal | Upgrade/downgrade proposal (affected Agents, rationale, risk) | — |
-| 04 | Tiered Submission | Downgrade → CEO yellow; Upgrade/vendor change → Chairman red | Yellow/Red |
+| 04 | Capability Test | Validate recommended model can complete current-stage tasks | — |
+| 05 | Tiered Submission | Downgrade → CEO yellow; Upgrade/vendor change → Chairman red | Yellow/Red |
 
 ## Approval Gates
 

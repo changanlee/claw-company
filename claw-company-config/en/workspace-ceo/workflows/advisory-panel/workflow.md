@@ -21,7 +21,7 @@ CEO (Nova) determines which executives should provide professional opinions base
 
 | Step | Name | Description | Approval |
 |------|------|-------------|----------|
-| 01 | Query | Determine roles + sessions_send queries | — |
+| 01 | Query | Determine roles + exec dispatch queries | — |
 | 02 | Collect | Collect replies + integrate viewpoints | — |
 | 03 | Present | One-page summary + options report to Chairman | — |
 
@@ -30,5 +30,5 @@ CEO (Nova) determines which executives should provide professional opinions base
 Begin from the first step:
 
 ```
--> Start execution -> Read steps/step-01-dispatch.md
+👉 Start execution → Read steps/step-01-dispatch.md
 ```

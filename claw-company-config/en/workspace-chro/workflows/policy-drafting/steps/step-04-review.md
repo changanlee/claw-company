@@ -24,7 +24,7 @@ Submit the policy draft for CEO review and CAO compliance check, implementing th
 
 ### 1. Submit to CEO for Review (Yellow)
 
-Via `sessions_send`, submit the policy draft to CEO for review:
+Via `exec dispatch`, submit the policy draft to CEO for review:
 
 - Whether the policy aligns with company strategy
 - Whether any stakeholders are overlooked
@@ -33,7 +33,7 @@ Via `sessions_send`, submit the policy draft to CEO for review:
 
 ### 2. Submit to CAO for Compliance Check
 
-Simultaneously via `sessions_send`, submit to CAO for review:
+Simultaneously via `exec dispatch`, submit to CAO for review:
 
 - Whether it conflicts with existing policies
 - Whether it complies with security rules

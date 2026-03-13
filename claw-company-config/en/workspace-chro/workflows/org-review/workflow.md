@@ -25,6 +25,7 @@ CHRO (Harper) scans each Agent's MEMORY.md and recent activity weekly, analyzes 
 | 01 | Scan Activity | Scan each Agent's MEMORY.md and recent activity | — |
 | 02 | Analyze Metrics | Analyze load balance, coordination frequency, capability gaps | — |
 | 03 | Produce Report | Produce org health weekly report | — |
+| 04 | Channel Assessment Trigger | Determine whether to initiate channel assessment | — |
 
 ## Execution
 

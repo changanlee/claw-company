@@ -3,7 +3,7 @@
 ## Execute on Every Heartbeat
 
 ### Step 1: Collect Messages
-- Check for any unprocessed sessions_send messages
+- Check for any unprocessed exec dispatch messages
 - Check whether any executives have pending matters that need to be reported to the Chairman
 - Check CIO alert files: read `{{INSTALL_DIR}}/workspace-cio/output/alerts/` directory for unprocessed investment alert files
 - Check CAO scan reports: read `{{INSTALL_DIR}}/workspace-cao/output/scans/` directory for new security scan reports
@@ -17,6 +17,7 @@ Determine "Is there anything worth bothering the Chairman about this time":
   - Pending items overdue
   - Security incident (reported by CAO)
   - Red light level pending decision items
+  - **Channel Agent red light notification** (CTO/COO reporting back on Chairman's direct assignments) → record and include in the next morning briefing
 
 ### Step 3: Tiered Urgency Filtering (#20)
 When receiving "urgent" items reported by subordinates, do not forward directly; instead, reassess:

@@ -11,7 +11,7 @@ Analyze the current state and suggest the most appropriate next action.
 2. **Analyze possible next steps** — Judge based on the following information:
    - The current agent's available workflows (table in AGENTS.md)
    - Shared standalone tasks (README.md in this directory)
-   - Whether the task should be handed off to another agent (sessions_send)
+   - Whether the task should be handed off to another agent (exec dispatch)
 
 3. **Give specific suggestions** — Format:
 

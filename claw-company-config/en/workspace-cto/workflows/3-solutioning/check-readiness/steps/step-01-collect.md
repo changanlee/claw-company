@@ -56,7 +56,7 @@ Create a document collection checklist:
 
 If any required documents are missing:
 
-- Notify CTO of the missing documents via `sessions_send`
+- Notify CTO of the missing documents via `announce`
 - Await CTO instructions: supplement the documents or continue checking existing ones
 
 ## Completion Criteria

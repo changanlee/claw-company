@@ -43,7 +43,7 @@ If any anomaly is found, immediately push to Chairman via CAO's independent chan
 
 ### 3. Also Notify CEO
 
-After pushing to Chairman, notify CEO via `sessions_send` (notification only, not awaiting approval):
+After pushing to Chairman, notify CEO via `exec dispatch` (notification only, not awaiting approval):
 
 > "CEO, CAO SOUL.md integrity check found an anomaly. Chairman has been notified directly."
 

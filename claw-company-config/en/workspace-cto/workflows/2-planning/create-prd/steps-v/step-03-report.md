@@ -50,7 +50,7 @@ Based on results, provide an overall recommendation:
 
 ### 4. Report to CTO
 
-Use `sessions_send` to report validation results to the CTO:
+Use `announce` to report validation results to the CTO:
 
 - Validation results summary
 - Overall recommendation

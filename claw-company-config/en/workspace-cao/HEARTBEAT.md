@@ -24,8 +24,8 @@ Scan CTO's `status.md` to check spawn counts for active tasks:
 - **Has workflow level tag** (lean/full) → compare against limits (lean ≤ 4 / full ≤ 12)
 - **No workflow level tag** → treat as lean (limit 4)
 - **Cannot parse record format** → record as P2 audit issue, notify CTO to fix status.md format
-- **Exceeds limit** → sessions_send to notify CEO to investigate, record as P2 audit issue
-- **Approaches OpenClaw hard limit 12** → runtime already blocks beyond 12, but record observation if continuous spawn patterns detected near the limit
+- **Exceeds limit** → exec dispatch to notify CEO to investigate (write file → dispatch.sh), record as P2 audit issue
+- **Exceeds OpenClaw hard limit 12** → impossible (runtime already blocks), but if continuous spawn patterns near the limit are detected, record observation
 
 ### Policy Compliance Spot Check (#64)
 

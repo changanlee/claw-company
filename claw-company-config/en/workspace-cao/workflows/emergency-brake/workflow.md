@@ -23,7 +23,7 @@ When CAO detects abnormal Token consumption or spawn behavior, it immediately fr
 |------|------|-------------|----------|
 | 01 | Detect | Detect anomaly (single Agent daily >10% monthly budget, company >5%, abnormal spawn) | — |
 | 02 | Freeze | Immediately freeze suspect Agent spawn permissions, record in issues.md | Green (CAO independent authority) |
-| 03 | Escalate | sessions_send CEO; no response in 30 min → push directly to Chairman | — |
+| 03 | Escalate | exec dispatch CEO; no response in 30 min → push directly to Chairman | — |
 
 ## Execution
 

@@ -50,7 +50,7 @@ Write the final product brief to `{{INSTALL_DIR}}/workspace-cto/output/planning/
 
 ### 4. Submit for review
 
-Via `sessions_send`, submit the completed product brief to CTO for review:
+Via `announce`, submit the completed product brief to CTO for review:
 
 - Include product brief summary (vision, target users, core value proposition)
 - State that all 4 steps have been completed

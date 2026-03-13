@@ -42,7 +42,7 @@ Quick check post-switch basic functionality:
 - Can the Agent respond normally
 - Can MEMORY.md be read normally
 - Can heartbeat execute normally
-- Can `sessions_send` send normally
+- Can `exec dispatch` send normally
 
 ### 4. Record Switch Status
 

@@ -10,21 +10,21 @@ template: null
 
 **Progress: Step 3 of 3**
 
-## Objective
+## Goal
 
 Determine notification method based on confidence level.
 
 ## Execution Rules
 
-- Read the entire step file before acting
-- Do not pre-read subsequent steps
-- Do not skip or merge steps
+- 📖 Read the entire step file before taking action
+- 🚫 Do not pre-read subsequent steps
+- 🚫 Do not skip steps
 
 ## Instructions
 
 ### 1. High-Confidence Opportunities
 
-Use `sessions_send` to immediately notify CEO, including:
+Use `exec dispatch` to immediately notify CEO (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh), including:
 
 - Asset overview
 - Opportunity rationale

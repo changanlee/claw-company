@@ -32,5 +32,5 @@ Execute the following 6-step review process:
 
 ### Step 6: Produce Report
 - Generate a refined summary of the "Organizational Health Weekly Report"
-- Send to CEO via sessions_send
+- Send to CEO via exec dispatch
 - CEO determines whether to include in the morning briefing or directly forward to the Chairman

@@ -40,7 +40,7 @@ Confirm the following items one by one (skip those already provided by the Chair
 
 ### 3. Query Budget
 
-Use `sessions_send` to confirm travel budget allocation with CFO.
+Use `exec dispatch` to confirm travel budget allocation with CFO (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh).
 
 ### 4. Compile Requirements Summary
 

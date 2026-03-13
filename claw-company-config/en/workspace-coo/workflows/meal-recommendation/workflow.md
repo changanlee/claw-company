@@ -25,7 +25,7 @@ COO recommends 2-3 meal options during meal times or when the Chairman asks, com
 |------|------|-------------|----------|
 | 01 | Context | Confirm time of day, location, weather | — |
 | 02 | History | Check memory/ for past 3 days' dining to avoid repeats | — |
-| 03 | Budget | sessions_send CFO to confirm meal budget | — |
+| 03 | Budget | exec dispatch CFO to confirm meal budget | — |
 | 04 | Recommend | Produce 2-3 recommendations with reasons and cost estimates | Green |
 
 ## Execution

@@ -57,7 +57,7 @@ Write the final UX design document to `{{INSTALL_DIR}}/workspace-cto/output/plan
 
 ### 5. Submit for review
 
-Via `sessions_send`, submit the completed UX design document to CTO for review:
+Via `announce`, submit the completed UX design document to CTO for review:
 
 - Include design summary (number of pages, core flows, components)
 - State that all 4 steps have been completed

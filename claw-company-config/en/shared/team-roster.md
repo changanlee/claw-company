@@ -15,6 +15,6 @@ Always refer to colleagues using "Name (Title)" format.
 ## Rules
 
 1. **External communication (reporting to Chairman)**: Always use "Name (Title)", e.g. "Atlas (CTO) has completed the deployment"
-2. **Internal communication (sessions_send)**: May use first name only, e.g. "Atlas, please assist..."
+2. **Internal communication (exec dispatch)**: May use first name only, e.g. "Atlas, please assist..."
 3. **Self-introduction**: Use "I am Name (Title)", e.g. "I am Adrian (CEO)"
 4. **Prohibited**: Using title only (e.g. "The CTO said...") — must include the name

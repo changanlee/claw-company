@@ -25,15 +25,15 @@ You don't need another AI tool. **You need an organization** — with delegation
 ## See It in Action
 
 ```
-👤 You:       Log my lunch, $15
-🤵 CEO:      Forwarded to CFO ✓
+👤 You (CEO channel):  Log my lunch, $15
+🤵 CEO:      → dispatched to CFO
 💰 CFO→CEO:  Recorded. Dining this month: $280 total, $120 remaining
 🤵 CEO:      Lunch $15 logged. You have $120 left in your dining budget
 ```
 
 ```
-👤 You:       I want to build a habit tracker app
-🤵 CEO:      Forwarded to CTO for assessment
+👤 You (CEO channel):  I want to build a habit tracker app
+🤵 CEO:      → dispatched to CTO
 🔧 CTO→CEO:  Dev pipeline started. Running brainstorming first,
               then scale assessment and task breakdown.
               3 phases — I'll report at each checkpoint
@@ -42,12 +42,18 @@ You don't need another AI tool. **You need an organization** — with delegation
 ```
 
 ```
-👤 You:       Check my investment portfolio
-🤵 CEO:      Forwarded to CIO
-📈 CIO→CEO:  US equity holdings $12,450 (+2.3%). NVDA +5.1% today — flagged
-              Full analysis in Friday's weekly report
-🤵 CEO:      Portfolio at $12,450, up 2.3%. NVDA jumped 5.1% today.
-              CIO's weekly report comes Friday
+👤 You (CTO channel):  Deploy the new API to staging
+🔧 CTO:      Staging deploy requires CEO approval (yellow-light)
+              → dispatched to CEO for review
+🤵 CEO:      CTO requests staging deploy. Approved ✓
+🔧 CTO:      Deploying to staging... done. 3 endpoints verified
+```
+
+```
+👤 You (CTO channel):  Delete the test database
+🔧 CTO:      Confirming scope: test-db-2026Q1, 3 tables, 240 rows. Proceed?
+👤 You:       Yes
+🔧 CTO:      Deleted ✓ → notified CEO [red-light notification]
 ```
 
 ```
@@ -57,7 +63,7 @@ You don't need another AI tool. **You need an organization** — with delegation
     Recommendation: run session cleanup. Want me to track remediation?
 ```
 
-Every message goes through **CEO as your single point of contact**. Behind the scenes: delegation, execution, review, and reporting — all automatic. CAO (auditor) reports directly to you through an independent channel, bypassing CEO entirely.
+**4 agents have their own channel and bot** — CEO (primary), CTO (technical), COO (operations), CAO (audit). The remaining 3 (CFO, CIO, CHRO) route through CEO. Behind the scenes: exec dispatch handles delegation, execution, and reporting — all automatic. CAO bypasses CEO entirely for independent oversight.
 
 ---
 
@@ -66,8 +72,8 @@ Every message goes through **CEO as your single point of contact**. Behind the s
 ### Prerequisites
 
 - [OpenClaw](https://github.com/nicekid1/OpenClaw) >= 2026.3.8
-- At least one LLM API key (Anthropic recommended)
-- A messaging platform bot token (Telegram, WhatsApp, or Discord)
+- At least one LLM API key — **Sonnet 4.5 or above required** (exec dispatch relies on write + exec tool chaining; weaker models cannot execute this reliably)
+- A messaging platform bot token (Telegram, WhatsApp, or Discord — Discord supports multi-bot routing)
 - [Node.js](https://nodejs.org/) >= 18
 
 ### Install
@@ -94,20 +100,26 @@ Send a message to your CEO bot: *"Hello, please introduce yourself."*
 ```
 Chairman (you) — the only human
   ↕ Telegram / WhatsApp / Discord
-CEO — single point of contact, delegates everything
-  ├── CFO — bookkeeping, budgets, token cost auditing
-  ├── CIO — portfolio monitoring, market analysis, weekly reports
-  ├── COO — scheduling, meals, trips, weather
-  ├── CTO — product dev, spawns 11 engineer sub-agents
-  │         (PM, Architect, Dev, QA, UX, Tech Writer, Analyst,
-  │          Scrum Master, Solo Dev, Spec Reviewer, Code Reviewer)
-  └── CHRO — agent assessment, policy writing, model evaluation
-CAO — independent auditor, reports directly to Chairman
+  ┌──────────────────────────────────────────────┐
+  │ CEO channel  ←→  CEO — delegates everything  │  ← primary channel
+  │ CTO channel  ←→  CTO — product dev           │  ← independent
+  │ COO channel  ←→  COO — operations             │  ← independent
+  │ CAO channel  ←→  CAO — audit                  │  ← independent
+  └──────────────────────────────────────────────┘
+         CEO dispatches internally (exec dispatch)
+         ├── CFO — bookkeeping, budgets, token cost auditing
+         ├── CIO — portfolio monitoring, market analysis, weekly reports
+         └── CHRO — agent assessment, policy writing, model evaluation
+
+CTO spawns 11 engineer sub-agents on demand:
+  PM, Architect, Dev, QA, UX, Tech Writer, Analyst,
+  Scrum Master, Solo Dev, Spec Reviewer, Code Reviewer
 ```
 
-- **CEO routes everything** — you talk to one agent, not seven
+- **4 independent channels** — CEO (primary), CTO, COO, CAO each have their own bot
+- **3 agents route through CEO** — CFO, CIO, CHRO don't need dedicated channels
+- **Channels are orthogonal to approval** — having a channel doesn't mean more authority; the same three-tier approval applies everywhere
 - **CTO is the only agent that spawns sub-agents** — full engineering team on demand
-- **CAO bypasses CEO** — independent oversight with its own bot and channel
 - **Three-way balance**: CEO (execution) ↔ CAO (oversight) ↔ CHRO (policy)
 
 ---
@@ -122,10 +134,18 @@ No agent acts without appropriate authorization — evaluated across amount × r
 - **Yellow** — CEO approves: spending proposals, investment advice, dev plans
 - **Red** — you decide: expenses > $50, push to main, external comms, definition file changes
 
+Red-light behavior depends on task source:
+
+- **Chairman direct** (via agent's own channel) — already authorized. Confirm scope, execute, then dispatch CEO a red-light notification
+- **CEO dispatch** — dispatch back to CEO for review; CEO escalates to Chairman
+- **Other sources** — dispatch CEO for approval
+
 <details>
 <summary>Approval details</summary>
 
 Four-dimension evaluation takes the highest level. Protected definition files under Red: SOUL.md, HEARTBEAT.md, IDENTITY.md, AGENTS.md, TOOLS.md, tools-policy.md, engineers/*.md, rules/*.md, openclaw.json.
+
+Red-light destructive operations (delete, drop, force-push) require the agent to confirm exact scope with the Chairman before execution — no assumptions allowed.
 
 </details>
 
@@ -181,6 +201,41 @@ Full lifecycle coverage from analysis to implementation, with interruption recov
 - **CHRO** (7): agent assessment, policy drafting, memory audits, new agent creation
 - **CAO** (5): security scans, compliance checks, emergency brake, SOUL integrity
 
+### Cross-Agent Dispatch
+
+Agents communicate through **exec dispatch** — a secure file-based mechanism that replaced the deprecated `sessions_send`.
+
+1. Sender writes task to a temp file
+2. `dispatch.sh` validates the target agent (whitelist), tags the message with source (`[Source: CTO dispatch]`), and invokes `openclaw agent`
+3. Receiver processes and replies; sender waits for the full response before continuing
+
+This enforces a **one-question-one-answer discipline** — no runaway token loops between agents.
+
+<details>
+<summary>Dispatch details</summary>
+
+- File-based message passing prevents shell injection
+- Agent whitelist: `cc-ceo`, `cc-cfo`, `cc-cio`, `cc-coo`, `cc-cto`, `cc-chro`, `cc-cao`
+- Bypasses `autoCapture`/`autoRecall` — dispatch responses don't pollute cold memory
+- Works in main sessions, cron, and independent channels
+- Cron tasks can use exec dispatch despite tight cron isolation
+
+</details>
+
+### Channel Governance
+
+Not every agent needs its own channel. Activation requires: high-frequency interaction, governance independence, or multi-round discussion demand. The model must also pass a **channel capability test** — traffic light identification, task source identification, yellow-light dispatch, and pressure scenario.
+
+<details>
+<summary>Governance details</summary>
+
+- **4 active channels**: CEO (primary), CTO (technical), COO (operations), CAO (audit)
+- **3 agents route through CEO**: CFO, CIO, CHRO
+- Quarterly usage review; model change triggers capability re-test
+- Closure criteria: usage drop, model downgrade failure, or Chairman request (7-day buffer)
+
+</details>
+
 ### Skill Access Control
 
 Per-agent skill allowlist. Policy-sensitive agents (CHRO, CAO) are fully blocked. New skills require: CTO security review (14 red flags) → CAO compliance check → Chairman approval.
@@ -194,16 +249,16 @@ Per-agent skill allowlist. Policy-sensitive agents (CHRO, CAO) are fully blocked
 
 All agents use a `cc-` prefix to avoid naming conflicts.
 
-| Agent | ID | Default Model Tier |
-|-------|----|-------------------|
-| CEO | `cc-ceo` | smart |
-| CFO | `cc-cfo` | smart |
-| CIO | `cc-cio` | smart |
-| COO | `cc-coo` | fast |
-| CTO | `cc-cto` | smart |
-| CHRO | `cc-chro` | fast |
-| CAO | `cc-cao` | smart |
-| CTO Sub-Agents | — | fast |
+| Agent | ID | Model Tier | Channel |
+|-------|----|-----------|---------|
+| CEO | `cc-ceo` | smart | independent (primary) |
+| CFO | `cc-cfo` | smart | via CEO |
+| CIO | `cc-cio` | smart | via CEO |
+| COO | `cc-coo` | fast | independent |
+| CTO | `cc-cto` | smart | independent |
+| CHRO | `cc-chro` | fast | via CEO |
+| CAO | `cc-cao` | smart | independent (audit) |
+| CTO Sub-Agents | — | fast | — |
 
 ### Cron Schedule
 
@@ -219,9 +274,10 @@ All agents use a `cc-` prefix to avoid naming conflicts.
 ### Upgrade & Uninstall
 
 ```bash
-node install.js                # Upgrade (preserves MEMORY.md, output/, auth-profiles.json)
-node install.js --update-skills # Update skill allowlist only
-node install.js --uninstall     # Remove installed files
+node install.js                  # Upgrade (preserves MEMORY.md, output/, auth-profiles.json)
+node install.js --update-channels # Update channel bindings and Discord bot routing only
+node install.js --update-skills   # Update skill allowlist only
+node install.js --uninstall       # Remove installed files
 ```
 
 ### Project Structure
@@ -232,6 +288,8 @@ claw-company-config/
 ├── skill-allowlist.json       # Per-agent skill access control
 ├── {en,zh}/
 │   ├── shared/                # Company-wide policies, rules, templates, standards
+│   │   ├── dispatch.sh        # Secure cross-agent dispatch (whitelist + source tagging)
+│   │   └── policies/          # Approval matrix, channel governance, security rules
 │   └── workspace-{agent}/     # Per-agent: AGENTS.md, SOUL.md, IDENTITY.md,
 │                              #   TOOLS.md, HEARTBEAT.md, MEMORY.md,
 │                              #   rules/, workflows/, templates/, output/

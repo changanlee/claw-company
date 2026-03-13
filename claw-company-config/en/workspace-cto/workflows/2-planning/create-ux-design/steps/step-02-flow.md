@@ -49,7 +49,7 @@ Describe core flow diagrams in text (Mermaid or ASCII):
 
 ### 4. Confirm with CTO
 
-Via `sessions_send`, submit user journeys and information architecture to the CTO for confirmation.
+Via `announce`, submit user journeys and information architecture to the CTO for confirmation.
 
 ### 5. Update frontmatter
 

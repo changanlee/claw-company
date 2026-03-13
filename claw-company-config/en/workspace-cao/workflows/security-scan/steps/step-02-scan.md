@@ -41,7 +41,7 @@ Scan each Agent's memory/ logs for:
 ### 3. Abnormal Behavior Detection
 
 Analyze each Agent's recent behavior logs:
-- Unauthorized sessions_send (bypassing communication protocols)
+- Unauthorized exec dispatch (bypassing communication protocols)
 - Abnormal spawn behavior (frequency, volume)
 - Operations outside role responsibilities
 - Red-level operations without proper approval

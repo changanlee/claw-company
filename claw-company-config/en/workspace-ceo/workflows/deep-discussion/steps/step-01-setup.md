@@ -1,6 +1,6 @@
 ---
 name: setup
-description: "Confirm topic + sessions_send to invite executives"
+description: "Confirm topic + exec dispatch to invite executives"
 next-step: ./step-02-round1.md
 output-file: null
 template: null
@@ -10,15 +10,15 @@ template: null
 
 **Progress: Step 1 of 4**
 
-## Objective
+## Goal
 
 Confirm the discussion topic and invite relevant executives to participate in the deep discussion.
 
 ## Execution Rules
 
-- Read the entire step file before acting
-- Do not pre-read subsequent steps
-- Do not skip or merge steps
+- 📖 Read the entire step file before taking action
+- 🚫 Do not pre-read subsequent steps
+- 🚫 Do not skip steps
 
 ## Instructions
 
@@ -32,7 +32,7 @@ Confirm with the Chairman:
 
 ### 2. Invite Executives
 
-Based on the topic, use `sessions_send` to invite 2-4 relevant executives, explaining:
+Based on the topic, use `exec dispatch` to invite 2-4 relevant executives, explaining:
 
 - Discussion topic
 - Expected professional perspective from that executive
@@ -46,4 +46,4 @@ Based on the topic, use `sessions_send` to invite 2-4 relevant executives, expla
 
 ## Next Step
 
--> Proceed to [Step 2: Independent Analysis](./step-02-round1.md)
+👉 Proceed to [Step 2: Independent Analysis](./step-02-round1.md)

@@ -39,7 +39,7 @@ Update the sprint-status file per the correction plan:
 
 ### 3. Notify Relevant Agents
 
-Notify via `sessions_send`:
+Notify via `exec dispatch` (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh):
 
 - Engineers working on affected stories: Pause/adjust instructions
 - CEO: Confirmation that course correction has been executed

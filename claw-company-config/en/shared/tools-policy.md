@@ -37,24 +37,39 @@ All roles must comply with these policies when using tools, no exceptions.
 
 ## Communication Tool Policies
 
-### sessions_send — Inter-Agent Messaging
-- Can only send to Agents configured in openclaw.json
-- Messages should be structured: task description + expected output format + urgency
-- Never create loops (A->B->A->B), Gateway will detect and force-terminate
-- Do not resend while waiting for a reply
+### exec dispatch — Cross-Agent Dispatch (Primary Method)
 
-### sessions_spawn — Spawning Sub-Agents
+When CEO dispatches tasks to other executives, use the secure dispatch.sh script:
+
+```
+1. write("/tmp/claw-task-<agent-id>.txt", "Structured task description")
+2. exec("bash {{INSTALL_DIR}}/shared/dispatch.sh <agent-id> /tmp/claw-task-<agent-id>.txt 60")
+```
+
+- Task descriptions must be structured: task objective + expected output format + urgency level
+- **Never concatenate message text directly in the exec command** (prevents shell injection)
+- Strictly forbidden to create dispatch loops (A→B→A→B)
+- dispatch.sh automatically validates agent-id against a whitelist (cc-* format)
+- Other executives who need cross-Agent dispatch must also use the same dispatch.sh flow
+
+### sessions_send — ⚠️ Deprecated
+- sessions_send cannot wake Agents without an active session; it must not be used for dispatching
+- All cross-Agent dispatch must use exec dispatch
+
+### sessions_spawn — Spawn Sub-Agents (CTO Only)
+- Only CTO may use this to spawn engineer Sub-Agents (executed within CTO workspace)
 - Before spawning, confirm the task is well-defined: objective, constraints, expected output
 - One Sub-Agent handles one specific task, avoid vague instructions
 - Sub-Agent reports should be processed promptly, extracting valuable information
+- Other roles should not use sessions_spawn for cross-Agent communication
 
 ## Memory Path Conventions
 
 | Path | Purpose |
 |------|---------|
-| MEMORY.md | Hot memory (<=200 lines), store principles and patterns |
+| MEMORY.md | Hot memory (≤200 lines), store principles and patterns |
 | memory/YYYY-MM-DD.md | Daily event logs |
-| policies/*.md | Company policies (read on demand, see company-rules.md context triggers) |
+| policies/*.md | Company policies (read on demand, see company-rules.md contextual trigger rules) |
 
 ## Domain Tool Policy Modification Process
 
@@ -65,4 +80,4 @@ Each role may propose additions or modifications to their own domain tool polici
 - Role discovers the need to regulate certain operations during work
 - CHRO suggests during weekly reviews
 
-**Approval flow:** Proposal -> CEO review -> CAO compliance check -> Chairman approval (red light)
+**Approval flow:** Proposal → CEO review → CAO compliance check → Chairman approval (red light)

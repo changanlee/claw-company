@@ -47,7 +47,7 @@ This policy defines each Agent's access permissions and operational rules for Su
 
 ### CFO-to-COO Queries
 - **Scenario**: COO's dining recommendations need to check remaining dining budget
-- **Method**: COO requests CFO via `sessions_send`, or directly reads the budgets table (read-only)
+- **Method**: COO requests CFO via `exec dispatch`, or directly reads the budgets table (read-only)
 - **Prohibited**: COO must not directly modify budgets or transactions
 
 ### CAO Audit Access

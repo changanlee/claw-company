@@ -8,6 +8,7 @@
 6. Applies to all completions: tests passing, builds succeeding, bugs fixed, deployments working, migrations applied.
 7. Partial verification is not verification. If you tested 3 of 5 acceptance criteria, you verified 3 — not 5.
 8. Include the verification output in your task report. Let the evidence speak.
+9. If new issues are discovered during verification, fix first then report — no hiding or postponing.
 
 ## Anti-Rationalization Table
 

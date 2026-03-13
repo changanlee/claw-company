@@ -53,7 +53,7 @@ Write the final PRD to `{{INSTALL_DIR}}/workspace-cto/output/planning/prd.md`.
 
 ### 4. Submit for review
 
-Use `sessions_send` to submit the completed PRD to the CTO for review:
+Use `announce` to submit the completed PRD to the CTO for review:
 
 - Include PRD summary (project type, requirement count, risk count)
 - Note that all 8 steps have been completed

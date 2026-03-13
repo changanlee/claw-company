@@ -1,24 +1,26 @@
-# Executing Plans: Execute in Batches With Checkpoints
+# Execute in Batches With Checkpoints
 
-Don't execute an entire plan at once. Work in batches, report, and get feedback.
+## Core Principle
+
+Don't execute an entire plan at once — work in batches with checkpoints after each.
 
 ## Rules
 
-1. Execute in batches of 3-5 steps at a time.
-2. After each batch, report progress and wait for feedback before continuing.
-3. If blocked on any step, stop and ask — do not guess or improvise.
-4. Never skip verification steps defined in the plan.
-5. If reality diverges from the plan, update the plan before continuing execution.
-
-## Why This Matters
-
-Batch execution with checkpoints catches errors early and keeps the Chairman informed. Running an entire plan without feedback risks compounding mistakes.
+- Execute in batches of 3-5 steps, then report progress
+- Wait for feedback at each checkpoint before continuing
+- If blocked, stop and ask — don't guess
+- Don't skip verification steps in the plan
+- If progress deviates from expectations, update the plan rather than pushing through
 
 ## Applicability
 
-This principle applies to all tasks that involve executing a plan with multiple steps. Not limited to the examples below.
+This principle applies to all multi-step tasks that need to be executed in batches. Not limited to the examples below.
 
 Common examples:
-- Multi-step task execution across all domains
-- Sequential workflows requiring checkpoints
-- Any plan-driven work where progress needs to be tracked
+- Any multi-step task execution
+
+## Anti-Pattern
+
+- Executing all steps in one go before reporting
+- Making assumptions about solutions when hitting problems and pushing forward
+- Skipping verification steps to "save time"

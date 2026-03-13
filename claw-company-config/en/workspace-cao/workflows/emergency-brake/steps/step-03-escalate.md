@@ -24,7 +24,7 @@ Notify CEO to investigate the anomaly. If CEO doesn't respond within 30 minutes,
 
 ### 1. Notify CEO
 
-Use `sessions_send` to notify CEO:
+Use `exec dispatch` to notify CEO (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh):
 
 > "CEO, Emergency brake activated:
 > - Suspect Agent: [name]

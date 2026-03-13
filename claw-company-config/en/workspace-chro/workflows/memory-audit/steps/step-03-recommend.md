@@ -59,7 +59,7 @@ For each Agent needing cleanup, list:
 
 ### 3. Submit Report
 
-> **Note**: This workflow is triggered by cron. `sessions_send` is unavailable in cron environment (v2026.3.8 cron tight isolation). Report is auto-delivered via cron delivery announce mechanism.
+> **Note**: This workflow is triggered by cron. Use exec dispatch for dispatching (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh). exec is available in cron environment. Report is auto-delivered via cron delivery announce mechanism.
 
 - Output the report as the final response; cron announce pushes to channel (visible to CEO)
 - Also save report to `output/reports/memory-health-YYYY-MM-DD.md`

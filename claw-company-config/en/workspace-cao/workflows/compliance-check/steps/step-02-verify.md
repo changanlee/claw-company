@@ -41,8 +41,14 @@ Perform the following checks for each item:
 - Does it affect definition file protection
 
 **Communication compliance:**
-- Does it follow communication protocols (sessions_send usage rules)
-- Does it maintain CEO as sole external interface
+- Does it follow communication protocols (exec dispatch usage rules)
+- Do all operation results report back to CEO (yellow approval / red notification / green write to MEMORY.md)
+
+**Channel compliance:**
+- Do Agents with channels follow the approval process in `policies/channel-governance.md`
+- Do red-level operations directly assigned by Chairman include dispatch CEO notification
+- Are task sources correctly labeled (`[Source: CEO dispatch]` / `[Source: Chairman direct]` / `[Source: cron]`)
+- Are channel openings/closings subject to red-level approval
 
 **Memory compliance:**
 - Does it follow memory management rules (200-line cap, etc.)

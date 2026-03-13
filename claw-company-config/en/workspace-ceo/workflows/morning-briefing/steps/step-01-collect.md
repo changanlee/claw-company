@@ -10,18 +10,18 @@ template: null
 
 **Progress: Step 1 of 4**
 
-## Objective
+## Goal
 
 Read each executive's MEMORY.md and recent output/ files to collect their latest status information.
 
-> **Note**: This workflow is triggered by cron. `sessions_send` is unavailable in cron environment (v2026.3.8 cron tight isolation). Status is collected by directly reading executive files.
+> **Note**: This workflow is triggered by cron. Use exec dispatch for dispatching (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh). exec is available in cron environment. This workflow directly reads executive files to collect information.
 
 ## Execution Rules
 
-- Read the entire step file before acting
-- Do not pre-read subsequent steps
-- Do not skip or merge steps
-- Do NOT use `sessions_send` (unavailable in cron)
+- 📖 Read the entire step file before taking action
+- 🚫 Do not pre-read subsequent steps
+- 🚫 Do not skip steps
+- Directly read files to collect information (use exec dispatch for cross-Agent communication if needed)
 
 ## Instructions
 
@@ -53,4 +53,4 @@ Read the following files in order to extract each executive's latest status:
 
 ## Next Step
 
--> Proceed to [Step 2: Compile & Sort](./step-02-compile.md)
+👉 Proceed to [Step 2: Compile & Sort](./step-02-compile.md)

@@ -1,27 +1,29 @@
-# Define Success First: Define Success Criteria Before Taking Action
+# Define Success Criteria Before Taking Action
 
-Before starting any task, state what "done" looks like in measurable terms.
+## Core Principle
+
+Before starting any task, state what "done" looks like.
 
 ## Rules
 
-1. Before starting, define specific, measurable success criteria.
-2. Vague goals are not criteria. Transform them:
-   - "Find a good restaurant" -> "Find 2-3 restaurants within 15 min walk, budget under $30/person, rating 4+, available tonight"
-   - "Improve returns" -> "Identify 3 rebalancing options targeting 2%+ improvement with risk analysis"
-3. If you cannot define success criteria, you do not understand the task yet — go back to brainstorming.
-4. Verify the outcome matches the criteria, not just that you performed actions.
-
-## Why This Matters
-
-Without success criteria, you cannot verify completion. You end up doing busywork instead of delivering results. Criteria turn subjective judgment into objective verification.
+- Define measurable criteria, not vague goals
+- "Find a good restaurant" -> "Find 2-3 restaurants within 15 min walk, budget under $30/person, rating 4+, available tonight"
+- If you cannot define success criteria, you don't understand the task yet — go back to brainstorming
+- Verify the outcome matches the criteria, not just that you performed actions
+- Criteria must be confirmed with the requester before taking action
 
 ## Applicability
 
-This principle applies to all tasks that produce a deliverable or require completion verification. Not limited to the examples below.
+This principle applies to all tasks that require defining completion criteria. Not limited to the examples below.
 
 Common examples:
 - Investment targets
 - Budget limits
 - Schedule constraints
 - Quality standards
-- Any deliverable where "done" must be objectively measurable
+
+## Anti-Pattern
+
+- "Do my best" as a goal
+- Defining success criteria after the fact to rationalize results
+- Setting too many criteria, making them impossible to achieve

@@ -41,9 +41,9 @@ Analyze the root cause and propose prevention recommendations:
 ### 3. Route Recommendations
 
 Route recommendations based on content:
-- **New/modified policy needed** → submit to CHRO for drafting via `sessions_send`
+- **New/modified policy needed** → submit to CHRO for drafting via `exec dispatch`
 - **Security rule modification needed** → CAO drafts, sends to CEO → Chairman approval
-- **Technical configuration change needed** → notify CTO via `sessions_send`
+- **Technical configuration change needed** → notify CTO via `exec dispatch`
 
 ### 4. Record and Archive
 

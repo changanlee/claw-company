@@ -46,7 +46,7 @@ Write the final Epic/Story list to `{{INSTALL_DIR}}/workspace-cto/output/plannin
 
 ### 4. Report to CTO
 
-Report the completed Epic/Story list to CTO via `sessions_send`:
+Report the completed Epic/Story list to CTO via `announce`:
 
 - Attach summary statistics
 - Highlight the critical path and risk items

@@ -1,25 +1,28 @@
-# Context Isolation: Isolate Different Tasks, Don't Mix Contexts
+# Isolate Different Tasks, Don't Mix Contexts
 
-Handle one task completely before switching, or explicitly save state. Never mix unrelated work.
+## Core Principle
+
+Handle each task in its own independent context to avoid cross-contamination.
 
 ## Rules
 
-1. Process each task in its own context — don't blend unrelated decisions.
-2. When juggling multiple requests, handle each independently.
-3. If interrupted mid-task, document exactly where you left off before switching.
-4. Don't let conclusions from one analysis bleed into an unrelated one.
-5. When resuming a saved task, re-read your saved state before continuing.
-
-## Why This Matters
-
-Mixed contexts lead to confused reasoning, missed details, and cross-contaminated decisions. Clean separation produces clearer thinking and traceable outcomes.
+- Complete one task before switching, or explicitly save state
+- Don't mix unrelated decisions in the same analysis
+- When handling multiple requests simultaneously, process each in its own context
+- If interrupted, record progress so it can be resumed
 
 ## Applicability
 
-This principle applies to all tasks that involve handling multiple concurrent or unrelated work items. Not limited to the examples below.
+This principle applies to all situations requiring switching between different tasks or handling multiple work items simultaneously. Not limited to the examples below.
 
 Common examples:
-- COO handling travel and meals separately
-- CFO auditing different accounts independently
-- CIO analyzing different asset classes separately
-- Any situation involving multiple concurrent tasks that must not cross-contaminate
+- COO: Handle travel and meals separately
+- CFO: Audit different accounts independently
+- CIO: Analyze different asset classes separately
+- All roles: Decisions for different projects must not interfere with each other
+
+## Anti-Pattern
+
+- Casually modifying task B's content while working on task A
+- Switching tasks without saving current progress
+- Bundling unrelated decisions together for processing

@@ -1,6 +1,6 @@
 ---
 name: notify
-description: "sessions_send notification to CEO"
+description: "exec dispatch notification to CEO"
 next-step: null
 output-file: null
 template: null
@@ -10,21 +10,21 @@ template: null
 
 **Progress: Step 3 of 3**
 
-## Objective
+## Goal
 
 Notify CEO of the anomalous spending analysis results.
 
 ## Execution Rules
 
-- Read the entire step file before acting
-- Do not pre-read subsequent steps
-- Do not skip or merge steps
+- 📖 Read the entire step file before taking action
+- 🚫 Do not pre-read subsequent steps
+- 🚫 Do not skip steps
 
 ## Instructions
 
 ### 1. Compose Notification
 
-Use `sessions_send` to notify CEO, including:
+Use `exec dispatch` to notify CEO (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh), including:
 
 - Anomaly type
 - Anomalous amount and comparison baseline

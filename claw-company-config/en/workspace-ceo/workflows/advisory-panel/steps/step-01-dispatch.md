@@ -1,6 +1,6 @@
 ---
 name: dispatch
-description: "Determine which roles are needed + sessions_send queries"
+description: "Determine which roles are needed + exec dispatch queries"
 next-step: ./step-02-collect.md
 output-file: null
 template: null
@@ -10,15 +10,15 @@ template: null
 
 **Progress: Step 1 of 3**
 
-## Objective
+## Goal
 
 Determine which executives should provide professional opinions on the Chairman's question, and send consultation requests.
 
 ## Execution Rules
 
-- Read the entire step file before acting
-- Do not pre-read subsequent steps
-- Do not skip or merge steps
+- 📖 Read the entire step file before taking action
+- 🚫 Do not pre-read subsequent steps
+- 🚫 Do not skip steps
 
 ## Instructions
 
@@ -36,7 +36,7 @@ Select 1-4 executives as advisors based on the question's nature.
 
 ### 3. Send Consultation
 
-Use `sessions_send` to send targeted questions to each executive, explaining:
+Use `exec dispatch` to send targeted questions to each executive, explaining:
 
 - Background of the Chairman's question
 - Specific aspects expected from that executive's professional perspective
@@ -49,4 +49,4 @@ Use `sessions_send` to send targeted questions to each executive, explaining:
 
 ## Next Step
 
--> Proceed to [Step 2: Collect](./step-02-collect.md)
+👉 Proceed to [Step 2: Collect](./step-02-collect.md)

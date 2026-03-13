@@ -50,7 +50,7 @@ Define each Epic as follows:
 
 ### 4. Confirm with CTO
 
-Submit the Epic breakdown to CTO via `sessions_send` and await confirmation.
+Submit the Epic breakdown to CTO via `announce` and await confirmation.
 
 ## Completion Criteria
 

@@ -43,7 +43,7 @@ Extract:
 Check each Agent's memory/ directory for this week's activity:
 
 - Number and types of tasks processed
-- Cross-department coordination records (`sessions_send` targets and frequency)
+- Cross-department coordination records (`exec dispatch` targets and frequency)
 - Anomaly events or escalation records
 
 ### 3. Compile Raw Data

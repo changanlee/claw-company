@@ -23,7 +23,7 @@ CAO's complete audit lifecycle after discovering a problem. From creating an iss
 | Step | Name | Description | Approval |
 |------|------|-------------|----------|
 | 01 | Create | Create audit issue (ID, description, severity, responsible Agent, deadline) | — |
-| 02 | Notify | sessions_send to notify responsible Agent and CEO | — |
+| 02 | Notify | exec dispatch to notify responsible Agent and CEO | — |
 | 03 | Track | Track remediation progress | — |
 | 04 | Verify | Verify remediation effectiveness | — |
 | 05 | Close | Close issue, propose prevention rules | Green |

@@ -35,7 +35,7 @@ Analyze the following dimensions based on input data:
 
 ### 3. Confirm classification
 
-Write classification results into the PRD "Project Overview" section, and use `sessions_send` to confirm the classification with the CTO.
+Write classification results into the PRD "Project Overview" section, and use `announce` to confirm the classification with the CTO.
 
 Wait for CTO confirmation before proceeding.
 

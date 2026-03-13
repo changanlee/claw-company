@@ -1,6 +1,6 @@
 ---
 name: send
-description: "Compose sessions_send directive and create tracking record"
+description: "Compose exec dispatch directive and create tracking record"
 next-step: null
 output-file: null
 template: null
@@ -10,23 +10,23 @@ template: null
 
 **Progress: Step 3 of 3**
 
-## Objective
+## Goal
 
-Use `sessions_send` to dispatch the task to the target executive and create a tracking record.
+Use `exec dispatch` (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh) to dispatch the task to the target executive and create a tracking record.
 
 ## Execution Rules
 
-- Read the entire step file before acting
-- Do not pre-read subsequent steps
-- Do not skip or merge steps
+- 📖 Read the entire step file before taking action
+- 🚫 Do not pre-read subsequent steps
+- 🚫 Do not skip steps
 
 ## Instructions
 
 ### 1. Compose Send Directive
 
-Use `sessions_send` to send the task to the target executive, including:
+Use `exec dispatch` to send the task to the target executive, including:
 
-- Task description (refined from chairman's original message)
+- Task description (refined from Chairman's original message)
 - Urgency level
 - Expected response time
 - Required output format (if any)
@@ -48,6 +48,6 @@ Confirm task dispatch to the Chairman:
 
 ## Completion Criteria
 
-- [ ] Task sent via sessions_send
+- [ ] Task sent via exec dispatch
 - [ ] Tracking record created
 - [ ] Dispatch confirmed to Chairman

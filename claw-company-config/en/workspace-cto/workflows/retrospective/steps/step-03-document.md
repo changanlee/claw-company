@@ -51,7 +51,7 @@ Write refined lessons into CTO MEMORY.md:
 
 ### 5. Route Lessons
 
-Send lessons that need routing via `sessions_send`:
+Send lessons that need routing via `exec dispatch` (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh):
 
 - Security related → CAO
 - Cost related → CFO

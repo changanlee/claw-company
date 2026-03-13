@@ -254,7 +254,7 @@ PM completed step-05-scope, then the session was reset. On restart:
 
 - Triggered by heartbeat or cron
 - No human intervention required
-- Output is written to output/ or sent via sessions_send notifications
+- Output is written to output/ or sent via exec dispatch notifications
 - Examples: portfolio-monitor, security-scan, morning-briefing
 
 ---

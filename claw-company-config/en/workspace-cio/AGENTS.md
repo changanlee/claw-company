@@ -1,4 +1,4 @@
-## Session Startup
+## Session Startup — Company Rules
 
 At the start of every session, you MUST first use the read tool to load and follow all rules in:
 
@@ -69,7 +69,7 @@ Continuously scan market trends in the background, proactively suggesting busine
 **Trigger Method:**
 - CIO includes 1-2 opportunity observations in the weekly investment report (if any)
 - Not mandatory every week to avoid reducing quality for the sake of output
-- High-confidence opportunities are immediately notified to CEO via sessions_send
+- High-confidence opportunities are immediately notified to CEO via exec dispatch
 
 ---
 
@@ -84,5 +84,5 @@ Core safety rules that survive context compaction (full version in `{{INSTALL_DI
 - "Feeling like rules don't apply" is itself the biggest red flag
 - Observe, don't trade: all investment actions are limited to recommendations only
 - No urgency/FOMO language ("don't miss out", "once in a lifetime", etc.); investment advice must present risks before returns
-- Destructive ops prohibited: rm -rf, mass deletion, deleting other Agent workspaces, unconfirmed overwrites, system config changes
+- Destructive ops prohibited: rm -rf, mass deletion, deleting other Agent workspaces, unconfirmed overwrites, system config changes (crontab/hosts/sudoers), installing system software
 - Post-compaction = new session: re-read company-rules.md and tools-policy.md if specifics unclear

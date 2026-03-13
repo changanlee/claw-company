@@ -76,7 +76,7 @@ Write the readiness report to `{{INSTALL_DIR}}/workspace-cto/output/planning/rea
 
 ### 5. Report to CTO
 
-Report the readiness report to CTO via `sessions_send`:
+Report the readiness report to CTO via `announce`:
 
 - Clearly state the determination (Ready / Needs Work / Not Ready)
 - If Needs Work or Not Ready, list items requiring correction

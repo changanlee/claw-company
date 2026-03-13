@@ -3,7 +3,7 @@
 ## Per-Heartbeat Execution
 
 ### Step 1: Check Pending Items
-- Check for unprocessed sessions_send messages
+- Check for unprocessed exec dispatch messages
 - Check for pending items that need escalation
 
 ### Step 2: Smart Silence Decision

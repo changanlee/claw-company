@@ -12,7 +12,7 @@ template: null
 
 ## Goal
 
-Categorize prediction reminders by push timing and integrate them into morning briefings or push via CEO in real-time.
+Categorize prediction reminders by push timing and integrate them into morning briefings or real-time push (if COO has an independent channel and Chairman assigned directly, reply in channel; otherwise notify CEO via exec dispatch).
 
 ## Execution Rules
 
@@ -24,13 +24,17 @@ Categorize prediction reminders by push timing and integrate them into morning b
 
 ### 1. Real-Time Push
 
-If there are urgent predictions affecting today's plans, immediately notify CEO via `sessions_send`:
+If there are urgent predictions affecting today's plans:
+
+**If COO has an independent channel and Chairman assigned directly**: Reply directly in channel to Chairman, and dispatch CEO for notification.
+
+**Other sources (CEO dispatch / cron)**: Notify CEO via `exec dispatch` (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh):
 
 > "CEO, the following prediction reminders need real-time relay to the Chairman: [reminder content]."
 
 ### 2. Morning Briefing Integration
 
-Organize non-urgent predictions into briefing material and submit to CEO via `sessions_send`:
+Organize non-urgent predictions into briefing material and submit to CEO via `exec dispatch`:
 
 > "CEO, the following are prediction reminders for tomorrow. Please include in the morning briefing: [reminder list]."
 

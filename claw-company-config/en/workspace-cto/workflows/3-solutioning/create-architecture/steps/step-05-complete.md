@@ -56,7 +56,7 @@ Write the final architecture document to `{{INSTALL_DIR}}/workspace-cto/output/p
 
 ### 5. Submit for review
 
-Via `sessions_send`, submit the completed architecture document to CTO for review:
+Via `announce`, submit the completed architecture document to CTO for review:
 
 - Include architecture summary (architecture style, number of core components, number of ADRs)
 - Highlight decisions requiring special CTO attention

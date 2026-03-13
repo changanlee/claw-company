@@ -34,7 +34,7 @@ Write the modified PRD to `{{INSTALL_DIR}}/workspace-cto/output/planning/prd.md`
 
 ### 3. Report change summary
 
-Use `sessions_send` to report to the CTO:
+Use `announce` to report to the CTO:
 
 - List of changes (what was added / modified / deleted)
 - Number of affected sections

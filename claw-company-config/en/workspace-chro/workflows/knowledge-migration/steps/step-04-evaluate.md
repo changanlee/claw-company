@@ -36,7 +36,7 @@ Based on test results, make a judgment:
 
 If confirming the switch:
 
-- Notify CEO via `sessions_send` (Yellow)
+- Notify CEO via `exec dispatch` (Yellow)
 - Notify CFO to update cost budget
 - Update MEMORY.md with model change record
 
@@ -56,7 +56,7 @@ If deciding to rollback:
 - Restore original model configuration in `openclaw.json`
 - Confirm Agent resumes normal operation
 - Verify from backup that MEMORY.md is undamaged
-- Notify CEO via `sessions_send` (Yellow)
+- Notify CEO via `exec dispatch` (Yellow)
 - Record rollback reason and findings
 
 ### 5. Final Report

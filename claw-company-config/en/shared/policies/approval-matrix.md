@@ -58,7 +58,7 @@ Approval level = **highest level across all four dimensions** (if any dimension 
 |---------------|-------------|
 | Data collection | Web searches, market data retrieval, news aggregation |
 | Internal records | Bookkeeping, schedule entries, meeting notes, log writing |
-| Internal communication | Inter-agent sessions_send |
+| Internal communication | Inter-agent exec dispatch |
 | Routine heartbeat | Heartbeat checks, status reports |
 | Analysis output | Report drafts, recommendation drafts (not sent externally) |
 | Agent naming | Chairman names an Agent, update SOUL.md name field |
@@ -88,6 +88,42 @@ Approval level = **highest level across all four dimensions** (if any dimension 
 | AGENTS.md modification | Any Agent's responsibilities and workflow changes |
 | Engineer definition modification | engineers/*.md role definitions or rules/*.md development discipline changes |
 | Security incidents | Security incidents flagged as critical by CAO |
+| Channel activation | Adding a new Agent independent Discord Bot (requires CHRO assessment) |
+| Channel closure | Removing an Agent independent Discord Bot (includes 7-day buffer period) |
+
+## Task Source and Approval Flow
+
+Agents may receive tasks from different sources. The approval flow adjusts based on the source:
+
+### Three Task Source Categories
+
+| Source | Identification | Description |
+|--------|---------------|-------------|
+| `[Source: CEO dispatch]` | Received via exec dispatch message | Task assigned by CEO |
+| `[Source: Chairman direct]` | Chairman speaks directly in channel | Chairman issues directly in independent channel |
+| `[Source: cron]` | Cron schedule trigger | Automated scheduled task |
+
+### Approval Flow by Source
+
+| Task Source | Green Light | Yellow Light | Red Light |
+|------------|-------------|--------------|-----------|
+| CEO dispatch | Auto-execute | Dispatch CEO for approval | Dispatch CEO for review → CEO escalates to Chairman |
+| Chairman direct | Auto-execute | Dispatch CEO for approval | Chairman said it = pre-approved; confirm details then execute + dispatch CEO notification |
+| cron | Auto-execute | Dispatch CEO for approval | Dispatch CEO for review → CEO escalates to Chairman |
+
+> **Key distinction**: Red-light operations from Chairman direct assignments are considered pre-approved since the Chairman personally issued the instruction. However, destructive operations (deletion, reset, irreversible changes) still require confirming the specific scope and target with the Chairman first. After confirmation, execute and dispatch CEO notification (not approval, information only).
+
+### Red Light Notification Format
+
+When a Chairman-direct task triggers red light, the Agent dispatches CEO after execution:
+
+```
+[Chairman direct assignment — Red light notification]
+Content: {operation description}
+Status: Executed / In progress
+```
+
+CEO files the notification upon receipt and determines whether to cascade to other roles (e.g., CFO budget, COO schedule). Notification is asynchronous and does not block Agent execution.
 
 ## Emergency Exception
 

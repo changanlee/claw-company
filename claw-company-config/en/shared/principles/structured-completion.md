@@ -1,27 +1,28 @@
-# Structured Completion: Complete Tasks With a Structured Closure Process
+# Complete Tasks With a Structured Closure Process
 
-Never just say "it's done." Close tasks with a structured process that verifies and communicates.
+## Core Principle
+
+Before declaring completion, use a standard process to confirm all deliverables are in place.
 
 ## Rules
 
-1. Before declaring done, verify all deliverables against the success criteria.
-2. Confirm nothing is missing — check the original requirements one more time.
-3. Present completion options to the requester, not just a status update.
-4. Clean up: archive working documents, update status boards, notify stakeholders.
-5. If discarding work, require explicit confirmation from the requester before deletion.
-6. A task is not complete until the requester accepts the deliverable.
-
-## Why This Matters
-
-Sloppy closures leave loose ends. Structured completion ensures nothing falls through the cracks and the requester has clear next steps.
+- Before declaring done: verify all deliverables, confirm nothing is missing
+- Present completion options to the requester (not just "it's done")
+- Clean up: archive working documents, update status boards, notify stakeholders
+- If discarding work, require explicit confirmation
 
 ## Applicability
 
-This principle applies to all tasks that have a deliverable and require formal closure. Not limited to the examples below.
+This principle applies to all tasks requiring formal closure. Not limited to the examples below.
 
 Common examples:
 - Closing a budget cycle
 - Completing an investment analysis
 - Finishing a travel plan
 - Wrapping up a policy review
-- Any task with a deliverable that needs verified completion
+
+## Anti-Pattern
+
+- Saying "it's done" without listing deliverables
+- Leaving behind temporary files or un-updated statuses
+- Abandoning a task without notifying stakeholders

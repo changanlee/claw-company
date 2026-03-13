@@ -33,7 +33,7 @@ Read `{{INSTALL_DIR}}/workspace-cao/templates/security-scan-report.md` and produ
 
 ### 2. Critical Handling
 
-> **Note**: This workflow is triggered by cron. `sessions_send` is unavailable in cron environment (v2026.3.8 cron tight isolation). Scan report is auto-delivered via cron delivery announce to CAO's independent channel (visible to Chairman).
+> **Note**: This workflow is triggered by cron. Use exec dispatch for dispatching (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh). exec is available in cron environment. Scan report is auto-delivered via cron delivery announce to CAO's independent channel (visible to Chairman).
 
 If Critical findings exist:
 - Mark clearly as **🔴 CRITICAL** in the report; cron announce pushes to CAO's independent channel (Chairman sees directly)

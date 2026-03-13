@@ -1,24 +1,28 @@
-# Parallel Dispatch: Handle Independent Tasks Simultaneously
+# Handle Independent Tasks Simultaneously, Don't Queue Them
 
-When multiple tasks have no dependencies, process them in parallel — not sequentially.
+## Core Principle
+
+When multiple tasks have no dependencies, process them in parallel to improve efficiency.
 
 ## Rules
 
-1. Identify which tasks are truly independent (no shared state, no dependency).
-2. Group tasks by domain — don't mix unrelated work within a single parallel stream.
-3. Each parallel task gets: clear scope, specific goal, and explicit constraints.
-4. After all parallel tasks complete, check for conflicts before finalizing any results.
-5. Do NOT parallelize when tasks share state or depend on each other's output.
-
-## Why This Matters
-
-Sequential processing of independent tasks wastes time. Parallel execution multiplies throughput without sacrificing quality, as long as dependencies are respected.
+- Group by domain — don't mix unrelated work
+- Each parallel task must have a clear scope, specific goal, and constraints
+- After all complete, check for conflicts before finalizing
+- Don't parallelize when there is shared state or interdependency
+- Results from parallel tasks must be consolidated and reviewed together
 
 ## Applicability
 
-This principle applies to all tasks that involve multiple independent work items with no shared dependencies. Not limited to the examples below.
+This principle applies to all independent tasks that can be processed in parallel. Not limited to the examples below.
 
 Common examples:
-- CEO dispatching multiple C-levels simultaneously
+- CEO dispatching multiple C-levels for different tasks simultaneously
 - Morning briefings gathering data from all departments at once
-- Any situation with multiple independent tasks that can run concurrently
+- Multiple independent research or analysis tasks running concurrently
+
+## Anti-Pattern
+
+- Forcing parallel execution on tasks that have dependencies
+- Parallel tasks modifying shared resources between each other
+- Merging results without a final conflict check

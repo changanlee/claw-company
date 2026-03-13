@@ -1,14 +1,14 @@
 ---
 name: report
 description: "Produce org health weekly report"
-next-step: null
+next-step: ./step-04-channel.md
 output-file: null
 template: null
 ---
 
 # Step 3: Produce Report
 
-**Progress: Step 3 of 3**
+**Progress: Step 3 of 4**
 
 ## Goal
 
@@ -59,7 +59,7 @@ Produce a structured org health weekly report and submit to CEO for inclusion in
 
 ### 3. Submit Report
 
-> **Note**: This workflow is triggered by cron. `sessions_send` is unavailable in cron environment (v2026.3.8 cron tight isolation). Report is auto-delivered via cron delivery announce mechanism.
+> **Note**: This workflow is triggered by cron. Use exec dispatch for dispatching (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh). exec is available in cron environment. Report is auto-delivered via cron delivery announce mechanism.
 
 - Output the report as the final response; cron announce pushes to channel (visible to CEO)
 - Also save report to `output/reports/org-health-weekly-YYYY-MM-DD.md`
@@ -74,3 +74,7 @@ Produce a structured org health weekly report and submit to CEO for inclusion in
 - [ ] Report produced
 - [ ] Submitted to CEO
 - [ ] Records updated
+
+## Next Step
+
+👉 Proceed to [Step 4: Channel Review Trigger](./step-04-channel.md)

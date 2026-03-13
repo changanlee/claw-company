@@ -10,18 +10,18 @@ template: null
 
 **Progress: Step 3 of 3**
 
-## Objective
+## Goal
 
 Based on alert assessment results, determine whether to produce an alert file.
 
-> **Note**: This workflow is triggered by cron. `sessions_send` is unavailable in cron environment (v2026.3.8 cron tight isolation). Alerts are written to output/alerts/ files; CEO heartbeat automatically checks and processes them.
+> **Note**: This workflow is triggered by cron. Use exec dispatch for dispatching (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh). exec is available in cron environment. Alerts are written to output/alerts/ files; CEO heartbeat automatically checks and processes them.
 
 ## Execution Rules
 
-- Read the entire step file before acting
-- Do not pre-read subsequent steps
-- Do not skip or merge steps
-- Do NOT use `sessions_send` (unavailable in cron)
+- 📖 Read the entire step file before taking action
+- 🚫 Do not pre-read subsequent steps
+- 🚫 Do not skip steps
+- Write to output/alerts/ files (use exec dispatch for cross-Agent communication if needed)
 
 ## Instructions
 

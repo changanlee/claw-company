@@ -32,7 +32,7 @@ During heartbeat inspections, check all Open/Notified issues in issues.md:
 
 If an issue is approaching deadline (25% time remaining) with no progress reported:
 
-Use `sessions_send` to remind the responsible Agent:
+Use `exec dispatch` to remind the responsible Agent (write file → bash {{INSTALL_DIR}}/shared/dispatch.sh):
 
 > "[Agent name], Audit issue [AUD-YYYY-NNN] remediation deadline approaching ([time remaining]). Please report progress."
 

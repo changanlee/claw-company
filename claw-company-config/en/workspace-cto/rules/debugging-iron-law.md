@@ -7,7 +7,8 @@
 5. Phase 4 — Fix: Create a failing test that reproduces the bug. Implement a single, targeted fix. Verify the test passes and no regressions occur.
 6. After 3+ failed fix attempts, stop. Question your assumptions. Re-examine the architecture. Ask whether you are solving the right problem.
 7. Never accept "quick fix now, investigate later." That later never comes.
-8. If you cannot explain the root cause in one sentence, you have not found it yet.
+8. Record every debugging session: symptoms, root cause, fix, preventive measures. This is team knowledge.
+9. If you cannot explain the root cause in one sentence, you have not found it yet.
 
 ## 3-Strike Rule
 

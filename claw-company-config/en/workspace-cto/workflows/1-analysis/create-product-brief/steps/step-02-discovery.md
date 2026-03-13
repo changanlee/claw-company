@@ -26,7 +26,7 @@ From the input documents loaded in Step 1, organize known product information an
 
 ### 2. Interactive exploration with CTO
 
-Via `sessions_send`, ask the CTO the following questions (skip questions already answered):
+Via `announce`, ask the CTO the following questions (skip questions already answered):
 
 **Target Users:**
 - Who are the primary target users? (demographics, behavioral traits)
