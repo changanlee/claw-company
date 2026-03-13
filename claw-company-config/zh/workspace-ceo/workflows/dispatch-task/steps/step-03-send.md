@@ -1,6 +1,6 @@
 ---
 name: send
-description: "組合 sessions_send 指令，記錄追蹤"
+description: "組合 exec dispatch 指令，記錄追蹤"
 next-step: null
 output-file: null
 template: null
@@ -12,7 +12,7 @@ template: null
 
 ## 目標
 
-使用 `sessions_send` 將任務發送給目標高管，並記錄追蹤資訊。
+使用 `exec dispatch`（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）將任務發送給目標高管，並記錄追蹤資訊。
 
 ## 執行規則
 
@@ -24,7 +24,7 @@ template: null
 
 ### 1. 組合發送指令
 
-使用 `sessions_send` 向目標高管發送任務，訊息包含：
+使用 `exec dispatch` 向目標高管發送任務，訊息包含：
 
 - 任務描述（精煉董事長原文）
 - 急迫度標記
@@ -48,6 +48,6 @@ template: null
 
 ## 完成標準
 
-- [ ] 已使用 sessions_send 發送任務
+- [ ] 已使用 exec dispatch 發送任務
 - [ ] 已記錄追蹤資訊
 - [ ] 已向董事長確認分派

@@ -32,7 +32,7 @@ template: null
 
 若議題接近期限（剩餘 25% 時間）且無進度回報：
 
-使用 `sessions_send` 催促責任 Agent：
+使用 `exec dispatch` 催促責任 Agent（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）：
 
 > 「[Agent 名稱]，稽核議題 [AUD-YYYY-NNN] 修正期限將至（[剩餘時間]），請回報進度。」
 

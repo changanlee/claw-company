@@ -34,7 +34,7 @@ output-file: "output/planning/prd.md"
 
 ### 3. 回報變更摘要
 
-透過 `sessions_send` 向 CTO 回報：
+透過 `announce` 向 CTO 回報：
 
 - 變更項目清單（新增 / 修改 / 刪除了什麼）
 - 受影響的區段數量

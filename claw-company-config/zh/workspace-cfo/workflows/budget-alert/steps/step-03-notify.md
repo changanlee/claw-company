@@ -1,6 +1,6 @@
 ---
 name: notify
-description: "sessions_send 通知 CEO"
+description: "exec dispatch 通知 CEO"
 next-step: null
 output-file: null
 template: null
@@ -24,7 +24,7 @@ template: null
 
 ### 1. 組合通知
 
-使用 `sessions_send` 通知 CEO，內容包含：
+使用 `exec dispatch` 通知 CEO（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh），內容包含：
 
 - 異常類型
 - 異常金額與對比基準

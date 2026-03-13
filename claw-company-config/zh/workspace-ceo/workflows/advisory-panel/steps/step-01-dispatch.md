@@ -1,6 +1,6 @@
 ---
 name: dispatch
-description: "判斷需要哪些角色 + sessions_send 發問"
+description: "判斷需要哪些角色 + exec dispatch 發問"
 next-step: ./step-02-collect.md
 output-file: null
 template: null
@@ -36,7 +36,7 @@ template: null
 
 ### 3. 發送諮詢
 
-使用 `sessions_send` 向每位高管發送針對性問題，說明：
+使用 `exec dispatch` 向每位高管發送針對性問題，說明：
 
 - 董事長的問題背景
 - 期望該高管從其專業角度回答的具體面向

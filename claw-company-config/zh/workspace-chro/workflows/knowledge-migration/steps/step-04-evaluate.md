@@ -36,7 +36,7 @@ template: null
 
 若決定確認切換：
 
-- 透過 `sessions_send` 通知 CEO（黃燈）
+- 透過 `exec dispatch` 通知 CEO（黃燈）
 - 通知 CFO 更新成本預算
 - 更新 MEMORY.md 記錄模型變更
 
@@ -56,7 +56,7 @@ template: null
 - 恢復 `openclaw.json` 中的原模型配置
 - 確認 Agent 恢復正常運作
 - 從備份驗證 MEMORY.md 未受損
-- 透過 `sessions_send` 通知 CEO（黃燈）
+- 透過 `exec dispatch` 通知 CEO（黃燈）
 - 記錄回滾原因和發現
 
 ### 5. 最終報告

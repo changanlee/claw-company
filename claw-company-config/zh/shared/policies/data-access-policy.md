@@ -47,7 +47,7 @@
 
 ### CFO 向 COO 查詢
 - **場景**：COO 的飲食推薦需要查詢餐飲預算剩餘
-- **方式**：COO 透過 `sessions_send` 請求 CFO 查詢，或直接讀取 budgets 表（唯讀）
+- **方式**：COO 透過 `exec dispatch` 請求 CFO 查詢，或直接讀取 budgets 表（唯讀）
 - **不得**：COO 直接修改 budgets 或 transactions
 
 ### CAO 稽核存取

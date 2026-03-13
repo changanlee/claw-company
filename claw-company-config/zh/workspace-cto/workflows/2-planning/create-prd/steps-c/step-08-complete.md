@@ -53,7 +53,7 @@ steps-completed:
 
 ### 4. 送交審核
 
-透過 `sessions_send` 將完成的 PRD 送交 CTO 審核：
+透過 `announce` 將完成的 PRD 送交 CTO 審核：
 
 - 附上 PRD 摘要（專案類型、需求數量、風險數量）
 - 說明已完成所有 8 個步驟

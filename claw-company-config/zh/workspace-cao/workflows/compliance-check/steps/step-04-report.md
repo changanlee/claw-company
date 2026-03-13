@@ -34,7 +34,7 @@ template: null
 
 ### 2. 回覆草擬方
 
-使用 `sessions_send` 將審查報告回覆草擬方（通常是 CHRO）：
+使用 `exec dispatch` 將審查報告回覆草擬方（通常是 CHRO）：
 
 **全部合規：**
 > 「[草案名稱] 合規審查通過，可進入核決流程。」
@@ -47,7 +47,7 @@ template: null
 
 ### 3. 通知 CEO
 
-使用 `sessions_send` 通知 CEO 審查結果摘要。
+使用 `exec dispatch` 通知 CEO 審查結果摘要。
 
 ### 4. 記錄
 

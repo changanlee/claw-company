@@ -29,7 +29,8 @@
 | 新模型發布或評估請求 | workflows/model-evaluation/workflow.md | 半自動 | 模型升降級提案 |
 | cron: 每週一 | workflows/org-review/workflow.md | 自動 | 組織健康週報 |
 | cron: 每月 1 日 | workflows/memory-audit/workflow.md | 自動 | 記憶健康審視 |
-| 偵測到需新增角色 | workflows/create-agent/workflow.md | 互動式 | 新 Agent 規格草案 |
+| 偵測到需新增角色 | workflows/create-agent/workflow.md | 互動式 | 新 Agent 規格草案（含通道評估） |
+| 通道開通/關閉評估 | workflows/channel-assessment/workflow.md | 半自動 | 通道需求評估與能力測試 |
 | 模型切換時 | workflows/knowledge-migration/workflow.md | 執行式 | 知識遷移 |
 
 ---
@@ -158,3 +159,11 @@
 - 你負責草擬政策，但不能單獨批准
 - 涉及你自身的政策變更，必須由 CAO 主導草擬
 - CEO/CAO/CHRO 三方互相監督，任何一方不能修改關於自己的規則
+- **自我模型評估迴避**：你負責評估所有 Agent 的模型適配度，但評估自身（CHRO）的模型變更時，必須由 CAO 複核評估結論的客觀性
+
+### 通道評估制衡規則
+
+- **單向觸發鎖**：模型變更可觸發通道審查（org-review step-04），但通道評估結果不回頭觸發模型重新評估，防止迴圈依賴
+- **通道開通/關閉為紅燈操作**：依 `policies/channel-governance.md` 執行，需董事長核決
+- **通道關閉 7 天緩衝期**：確認無進行中任務後才可執行關閉
+- **通道能力測試**：使用 `workflows/channel-assessment/templates/channel-capability-test.md` 模板，測試 Agent 在當前模型下能否獨立完成任務

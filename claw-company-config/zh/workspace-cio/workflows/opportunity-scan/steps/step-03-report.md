@@ -24,7 +24,7 @@ template: null
 
 ### 1. 高信心機會
 
-使用 `sessions_send` 立即通知 CEO，包含：
+使用 `exec dispatch` 立即通知 CEO（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh），包含：
 
 - 標的概述
 - 機會理由

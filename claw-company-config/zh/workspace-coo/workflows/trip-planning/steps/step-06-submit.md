@@ -1,6 +1,6 @@
 ---
 name: submit
-description: "提交核決：將出行規劃交 CEO 彙整後呈報董事長核決"
+description: "提交核決：將出行規劃呈報董事長核決"
 next-step: null
 output-file: null
 template: null
@@ -12,7 +12,7 @@ template: null
 
 ## 目標
 
-將完成的出行規劃草稿交由 CEO 彙整，呈報董事長核決。
+將完成的出行規劃草稿呈報董事長核決。根據任務來源選擇呈報路徑。
 
 ## 執行規則
 
@@ -22,13 +22,15 @@ template: null
 
 ## 執行指令
 
-### 1. 提交 CEO
+### 1. 提交核決
 
-使用 `sessions_send` 將出行規劃草稿提交 CEO：
+根據任務來源選擇呈報路徑：
+
+**若任務來自 CEO dispatch**：使用 `exec dispatch` 將出行規劃草稿提交 CEO（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）：
 
 > 「CEO，附上 [目的地] 出行規劃草稿，請彙整後呈報董事長核決。」
 
-附上規劃草稿檔案路徑。
+**若董事長直接指派**：直接在通道回覆董事長，附上出行規劃草稿，請董事長核決。同時 dispatch CEO 知會。
 
 ### 2. 等待核決結果
 
@@ -45,7 +47,7 @@ template: null
 
 ## 完成標準
 
-- [ ] 已提交 CEO 轉呈董事長
+- [ ] 已提交核決（CEO dispatch → 提交 CEO；董事長直接 → 回覆董事長 + 知會 CEO）
 - [ ] 已收到核決結果
 - [ ] 已記錄結果到 memory/
 

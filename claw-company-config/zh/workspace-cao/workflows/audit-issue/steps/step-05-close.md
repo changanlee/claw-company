@@ -41,9 +41,9 @@ template: null
 ### 3. 路由建議
 
 根據建議內容決定路由：
-- **需要新增/修改政策** → 透過 `sessions_send` 交由 CHRO 草擬
+- **需要新增/修改政策** → 透過 `exec dispatch` 交由 CHRO 草擬
 - **需要修改安全規則** → CAO 自行草擬，送 CEO → 董事長核決
-- **需要調整技術配置** → 透過 `sessions_send` 通知 CTO
+- **需要調整技術配置** → 透過 `exec dispatch` 通知 CTO
 
 ### 4. 記錄與歸檔
 

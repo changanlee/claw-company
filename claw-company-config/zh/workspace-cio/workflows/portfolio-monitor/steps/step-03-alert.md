@@ -14,14 +14,14 @@ template: null
 
 根據警報判斷結果決定是否產出警報檔案。
 
-> **注意**：此流程由 cron 觸發，`sessions_send` 不可用（v2026.3.8 cron tight isolation）。改為寫入 output/alerts/ 檔案，CEO heartbeat 會自動檢查並處理。
+> **注意**：此流程由 cron 觸發。使用 exec dispatch 分派（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）。Cron 環境下 exec 可用。此流程改為寫入 output/alerts/ 檔案，CEO heartbeat 會自動檢查並處理。
 
 ## 執行規則
 
 - 📖 讀完整個步驟檔案再開始行動
 - 🚫 不預讀後續步驟
 - 🚫 不跳步
-- 🚫 不使用 `sessions_send`（cron 環境不可用）
+- 寫入 output/alerts/ 檔案（如需跨 Agent 通訊可用 exec dispatch）
 
 ## 執行指令
 

@@ -46,7 +46,7 @@ output-file: "output/planning/epics-and-stories.md"
 
 ### 4. 回報 CTO
 
-透過 `sessions_send` 將完成的 Epic/Story 清單回報 CTO：
+透過 `announce` 將完成的 Epic/Story 清單回報 CTO：
 
 - 附上摘要統計
 - 標註關鍵路徑與風險項目

@@ -1,14 +1,14 @@
 ---
 name: build
 description: "使用模板建立完整 6 檔規格包"
-next-step: ./step-04-review.md
+next-step: ./step-05-review.md
 output-file: null
 template: null
 ---
 
-# 步驟 3：建立規格包
+# 步驟 4：建立規格包
 
-**進度：步驟 3 / 共 5 步**
+**進度：步驟 4 / 共 6 步**
 
 ## 目標
 
@@ -79,4 +79,4 @@ template: null
 
 ## 下一步
 
-👉 前往 [步驟 4：三方審核](./step-04-review.md)
+👉 前往 [步驟 5：三方審核](./step-05-review.md)

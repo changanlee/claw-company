@@ -43,7 +43,7 @@ template: null
 檢查各 Agent 的 memory/ 目錄，收集本週活動：
 
 - 處理的任務數量與類型
-- 跨部門協調紀錄（`sessions_send` 對象與頻率）
+- 跨部門協調紀錄（`exec dispatch` 對象與頻率）
 - 異常事件或升級紀錄
 
 ### 3. 整理原始數據

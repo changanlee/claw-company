@@ -39,7 +39,7 @@ template: null
 
 ### 3. 通知相關 Agent
 
-透過 `sessions_send` 通知：
+透過 `exec dispatch` 通知（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）：
 
 - 正在開發受影響 story 的工程師：暫停/調整指令
 - CEO：航向修正已執行的確認

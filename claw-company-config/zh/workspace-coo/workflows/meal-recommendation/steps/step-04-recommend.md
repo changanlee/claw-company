@@ -39,7 +39,7 @@ template: ../../templates/meal-recommendation.md
 
 ### 3. 呈報董事長
 
-將推薦結果透過 CEO 呈報董事長，格式簡潔清楚。
+將推薦結果呈報董事長，格式簡潔清楚。若任務來自 CEO dispatch，透過 exec dispatch 回報 CEO；若董事長直接指派，直接在通道回覆。
 
 ### 4. 記錄結果
 

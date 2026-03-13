@@ -11,7 +11,7 @@
 2. **分析可能的下一步** — 根據以下資訊判斷：
    - 當前 Agent 的可用工作流程（AGENTS.md 中的表格）
    - 共用獨立任務（本目錄的 README.md）
-   - 是否需要轉交給其他 Agent（sessions_send）
+   - 是否需要轉交給其他 Agent（exec dispatch）
 
 3. **給出具體建議** — 格式：
 

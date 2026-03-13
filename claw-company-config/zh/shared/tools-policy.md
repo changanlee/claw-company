@@ -37,16 +37,31 @@
 
 ## 通訊工具使用規範
 
-### sessions_send — Agent 間傳訊
-- 只能傳送給 openclaw.json 中配置的 Agent
-- 訊息應結構化：任務描述 + 預期輸出格式 + 急迫度
-- 嚴禁製造迴圈（A→B→A→B），Gateway 會偵測並強制中斷
-- 等待對方回覆時不要重複發送
+### exec dispatch — 跨 Agent 分派（主要方式）
 
-### sessions_spawn — 生成 Sub-Agent
+CEO 分派任務給其他高管時，使用安全的 dispatch.sh 腳本：
+
+```
+1. write("/tmp/claw-task-<agent-id>.txt", "結構化任務描述")
+2. exec("bash {{INSTALL_DIR}}/shared/dispatch.sh <agent-id> /tmp/claw-task-<agent-id>.txt 60")
+```
+
+- 任務描述必須結構化：任務目標 + 預期輸出格式 + 急迫度
+- **絕對禁止在 exec 命令中直接拼接訊息文字**（防止 shell injection）
+- 嚴禁製造迴圈分派（A→B→A→B）
+- dispatch.sh 會自動驗證 agent-id 白名單（cc-* 格式）
+- 其他高管若需要跨 Agent 分派，也必須使用相同的 dispatch.sh 流程
+
+### sessions_send — ⚠️ 已棄用
+- sessions_send 無法喚醒無活躍 session 的 Agent，不可作為分派工具
+- 所有跨 Agent 分派改用 exec dispatch
+
+### sessions_spawn — 生成 Sub-Agent（CTO 專用）
+- 僅限 CTO 用於 spawn 工程師 Sub-Agent（在 CTO workspace 下執行）
 - spawn 前必須確認任務明確：目標、約束、預期產出
 - 一個 Sub-Agent 只做一個明確任務，避免模糊指令
 - Sub-Agent 的回報內容要即時處理，提取有價值的資訊
+- 其他角色不應使用 sessions_spawn 進行跨 Agent 通訊
 
 ## 記憶路徑慣例
 

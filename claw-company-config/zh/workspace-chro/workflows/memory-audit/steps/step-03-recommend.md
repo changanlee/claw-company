@@ -59,7 +59,7 @@ template: null
 
 ### 3. 發送報告
 
-> **注意**：此流程由 cron 觸發，`sessions_send` 不可用（v2026.3.8 cron tight isolation）。報告由 cron delivery announce 機制自動推送到通道。
+> **注意**：此流程由 cron 觸發。使用 exec dispatch 分派（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）。Cron 環境下 exec 可用。報告由 cron delivery announce 機制自動推送到通道。
 
 - 報告作為最終輸出，由 cron announce 推送到通道（CEO 可見）
 - 同時將報告存入 `output/reports/memory-health-YYYY-MM-DD.md`

@@ -51,7 +51,7 @@ template: ../../templates/retrospective.md
 
 ### 5. 路由教訓
 
-將需要路由的教訓透過 `sessions_send` 發送：
+將需要路由的教訓透過 `exec dispatch` 發送（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）：
 
 - 安全相關 → CAO
 - 成本相關 → CFO

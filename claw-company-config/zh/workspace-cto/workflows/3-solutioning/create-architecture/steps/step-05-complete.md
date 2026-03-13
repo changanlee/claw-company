@@ -56,7 +56,7 @@ steps-completed:
 
 ### 5. 送交審核
 
-透過 `sessions_send` 將完成的架構文件送交 CTO 審核：
+透過 `announce` 將完成的架構文件送交 CTO 審核：
 
 - 附上架構摘要（架構風格、核心元件數量、ADR 數量）
 - 標註需要 CTO 特別關注的決策

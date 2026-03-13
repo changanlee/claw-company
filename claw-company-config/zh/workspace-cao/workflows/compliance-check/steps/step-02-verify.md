@@ -41,8 +41,14 @@ template: null
 - 是否影響定義檔案保護
 
 **通訊合規：**
-- 是否遵循通訊準則（sessions_send 使用規範）
-- 是否維持 CEO 為唯一對外窗口
+- 是否遵循通訊準則（exec dispatch 使用規範）
+- 是否所有操作結果都有回報 CEO（黃燈審批 / 紅燈知會 / 綠燈寫 MEMORY.md）
+
+**通道合規：**
+- 有通道的 Agent 是否遵循 `policies/channel-governance.md` 的核決流程
+- 董事長直接指派的紅燈操作是否有 dispatch CEO 知會
+- 任務來源是否正確標記（`[來源: CEO dispatch]` / `[來源: 董事長直接]` / `[來源: cron]`）
+- 通道開通/關閉是否經紅燈核決
 
 **記憶合規：**
 - 是否遵循記憶管理規範（200 行上限等）

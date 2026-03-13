@@ -1,14 +1,14 @@
 ---
 name: report
 description: "產出組織健康週報"
-next-step: null
+next-step: ./step-04-channel.md
 output-file: null
 template: null
 ---
 
 # 步驟 3：產出週報
 
-**進度：步驟 3 / 共 3 步**
+**進度：步驟 3 / 共 4 步**
 
 ## 目標
 
@@ -59,7 +59,7 @@ template: null
 
 ### 3. 發送週報
 
-> **注意**：此流程由 cron 觸發，`sessions_send` 不可用（v2026.3.8 cron tight isolation）。週報由 cron delivery announce 機制自動推送到通道。
+> **注意**：此流程由 cron 觸發。使用 exec dispatch 分派（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）。Cron 環境下 exec 可用。週報由 cron delivery announce 機制自動推送到通道。
 
 - 週報作為最終輸出，由 cron announce 推送到通道（CEO 可見）
 - 同時將週報存入 `output/reports/org-health-weekly-YYYY-MM-DD.md`
@@ -74,3 +74,7 @@ template: null
 - [ ] 週報已產出
 - [ ] 已送交 CEO
 - [ ] 記錄已更新
+
+## 下一步
+
+👉 前往 [步驟 4：通道審查觸發](./step-04-channel.md)

@@ -73,7 +73,7 @@
 - 本月累計 vs 月度預算
 
 **異常處理：**
-- 發現單日異常消耗 → sessions_send 通知 CEO
+- 發現單日異常消耗 → exec dispatch 通知 CEO（write 寫檔 → dispatch.sh）
 - 發現持續超標趨勢 → 在週報中標記並建議調整
 
 ---

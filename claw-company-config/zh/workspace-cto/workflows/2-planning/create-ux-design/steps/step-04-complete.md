@@ -57,7 +57,7 @@ steps-completed:
 
 ### 5. 送交審核
 
-透過 `sessions_send` 將完成的 UX 設計文件送交 CTO 審核：
+透過 `announce` 將完成的 UX 設計文件送交 CTO 審核：
 
 - 附上設計摘要（頁面數量、核心流程數、元件數量）
 - 說明已完成所有 4 個步驟

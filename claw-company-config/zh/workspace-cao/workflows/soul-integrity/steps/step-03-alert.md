@@ -43,7 +43,7 @@ template: null
 
 ### 3. 同步通知 CEO
 
-在推送董事長後，使用 `sessions_send` 通知 CEO（僅通知，不等待核決）：
+在推送董事長後，使用 `exec dispatch` 通知 CEO（僅通知，不等待核決）：
 
 > 「CEO，CAO SOUL.md 完整性檢查發現異常，已直接通報董事長。」
 

@@ -14,14 +14,14 @@ template: null
 
 讀取各高管的 MEMORY.md 和近期 output/ 檔案，收集最新狀態資訊。
 
-> **注意**：此流程由 cron 觸發，cron 環境下 `sessions_send` 不可用（v2026.3.8 cron tight isolation）。改為直接讀取各高管的檔案。
+> **注意**：此流程由 cron 觸發。使用 exec dispatch 分派（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）。Cron 環境下 exec 可用。此流程直接讀取各高管的檔案收集資訊。
 
 ## 執行規則
 
 - 📖 讀完整個步驟檔案再開始行動
 - 🚫 不預讀後續步驟
 - 🚫 不跳步
-- 🚫 不使用 `sessions_send`（cron 環境不可用）
+- 直接讀取檔案收集資訊（如需跨 Agent 通訊可用 exec dispatch）
 
 ## 執行指令
 

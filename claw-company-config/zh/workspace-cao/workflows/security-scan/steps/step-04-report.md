@@ -33,7 +33,7 @@ template: ../../templates/security-scan-report.md
 
 ### 2. Critical 處理
 
-> **注意**：此流程由 cron 觸發，`sessions_send` 不可用（v2026.3.8 cron tight isolation）。掃描報告由 cron delivery announce 機制自動推送到 CAO 獨立通道（董事長可見）。
+> **注意**：此流程由 cron 觸發。使用 exec dispatch 分派（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）。Cron 環境下 exec 可用。掃描報告由 cron delivery announce 機制自動推送到 CAO 獨立通道（董事長可見）。
 
 若有 Critical 等級發現：
 - 在報告中明確標記 **🔴 CRITICAL**，cron announce 會推送到 CAO 獨立通道（董事長直接可見）

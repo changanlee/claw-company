@@ -32,5 +32,5 @@
 
 ### 步驟六：產出報告
 - 生成「組織健康週報」精煉摘要
-- 透過 sessions_send 發送給 CEO
+- 透過 exec dispatch 發送給 CEO
 - CEO 決定是否納入晨間簡報或直接轉呈董事長

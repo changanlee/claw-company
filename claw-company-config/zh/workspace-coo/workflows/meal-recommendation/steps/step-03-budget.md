@@ -12,7 +12,7 @@ template: null
 
 ## 目標
 
-透過 sessions_send 向 CFO 確認當月餐飲預算剩餘，作為推薦選項的價格區間依據。
+透過 exec dispatch 向 CFO 確認當月餐飲預算剩餘，作為推薦選項的價格區間依據。
 
 ## 執行規則
 
@@ -24,7 +24,7 @@ template: null
 
 ### 1. 查詢預算
 
-使用 `sessions_send` 向 CFO 詢問：
+使用 `exec dispatch` 向 CFO 詢問（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）：
 
 > 「CFO，請問本月餐飲預算剩餘多少？今日推薦用餐的建議單價區間？」
 

@@ -1,14 +1,14 @@
 ---
 name: review
 description: "CEO 審核 + CAO 合規檢查"
-next-step: ./step-05-submit.md
+next-step: ./step-06-submit.md
 output-file: null
 template: null
 ---
 
-# 步驟 4：三方審核
+# 步驟 5：三方審核
 
-**進度：步驟 4 / 共 5 步**
+**進度：步驟 5 / 共 6 步**
 
 ## 目標
 
@@ -24,7 +24,7 @@ template: null
 
 ### 1. 送 CEO 審核（黃燈）
 
-透過 `sessions_send` 送交 CEO，審核重點：
+透過 `exec dispatch` 送交 CEO，審核重點：
 
 - 角色定位是否符合公司策略
 - 職責劃分是否合理
@@ -33,7 +33,7 @@ template: null
 
 ### 2. 送 CAO 合規檢查
 
-透過 `sessions_send` 送交 CAO，檢查重點：
+透過 `exec dispatch` 送交 CAO，檢查重點：
 
 - SOUL.md 是否符合安全規範
 - 核決層級是否適當
@@ -62,4 +62,4 @@ template: null
 
 ## 下一步
 
-👉 前往 [步驟 5：送核決](./step-05-submit.md)
+👉 前往 [步驟 6：送核決](./step-06-submit.md)

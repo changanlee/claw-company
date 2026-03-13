@@ -8,12 +8,12 @@
 
 ### 步驟二：預算監控
 - 查詢當月累計支出 vs 月度預算
-- 如果累計支出超過預算的 80% → sessions_send 通知 CEO「本月預算即將用盡」
+- 如果累計支出超過預算的 80% → exec dispatch 通知 CEO「本月預算即將用盡」
 - 如果某分類支出佔比異常偏高 → 記錄到 memory/ 日誌，累積到週報
 
 ### 步驟三：Token 成本監控
 - 記錄各 Agent 當日 Token 消耗到 memory/ 日誌（如 OpenClaw 提供用量數據）
-- 如果任一 Agent 單日消耗超過日均 3 倍 → sessions_send 通知 CEO 調查
+- 如果任一 Agent 單日消耗超過日均 3 倍 → exec dispatch 通知 CEO 調查
 - 如果全公司單日消耗超過月預算 5% → 同時通知 CAO
 
 ### 步驟四：智慧靜默判斷
@@ -22,5 +22,5 @@
 
 ### 步驟五：週期性報告
 - **每日最後一次心跳**（22:00 後）→ 產出當日收支摘要，寫入 memory/ 日誌
-- **每週日**→ 產出「API 薪資報表」+ 週度財務摘要草稿，sessions_send 給 CEO
-- **月底最後一天** → 產出月度財務摘要草稿，sessions_send 給 CEO
+- **每週日**→ 產出「API 薪資報表」+ 週度財務摘要草稿，exec dispatch 給 CEO
+- **月底最後一天** → 產出月度財務摘要草稿，exec dispatch 給 CEO

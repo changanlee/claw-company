@@ -42,7 +42,7 @@ template: null
 - Agent 能否正常回應
 - MEMORY.md 能否正常讀取
 - 心跳能否正常執行
-- `sessions_send` 能否正常發送
+- `exec dispatch` 能否正常發送
 
 ### 4. 記錄切換狀態
 

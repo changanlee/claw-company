@@ -76,7 +76,7 @@ output-file: "output/planning/readiness-report.md"
 
 ### 5. 回報 CTO
 
-透過 `sessions_send` 將就緒性報告回報 CTO：
+透過 `announce` 將就緒性報告回報 CTO：
 
 - 明確告知判定結果（Ready / Needs Work / Not Ready）
 - 如為 Needs Work 或 Not Ready，列出需要修正的項目

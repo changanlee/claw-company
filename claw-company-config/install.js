@@ -419,7 +419,7 @@ async function uninstall() {
  *
  * Cron delivery (--to) is separate — it targets specific guild channels or phone numbers.
  *
- * @returns {{ ceoBind, caoBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds }}
+ * @returns {{ ceoBind, caoBind, ctoBind, cooBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds }}
  */
 async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFound) {
   logInfo('Binding channels...', '綁定通道...');
@@ -429,9 +429,11 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
   // Primary channel (non-Discord) for CEO — e.g. WhatsApp, Telegram
   const primaryChannel = channelsFound.find(ch => !ch.startsWith('discord')) || channelsFound[0] || null;
 
-  // Defaults
+  // Defaults — CEO/CAO get primary channel, CTO/COO start null (Discord-only agents)
   let ceoBind = primaryChannel;
   let caoBind = primaryChannel;
+  let ctoBind = null;
+  let cooBind = null;
   let ceoDeliveryTarget = null;
   let caoDeliveryTarget = null;
 
@@ -471,8 +473,8 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
         '  Discord 多 Bot 路由：'
       ));
       log(msg(
-        '  Each claw-company agent (CEO/CAO) needs its own Discord bot.',
-        '  每個 claw-company agent（CEO/CAO）需要獨立的 Discord Bot。'
+        '  Each claw-company agent (CEO/CAO/CTO/COO) needs its own Discord bot.',
+        '  每個 claw-company agent（CEO/CAO/CTO/COO）需要獨立的 Discord Bot。'
       ));
       log(msg(
         '  Unassigned channels fall back to the native agent (default).',
@@ -515,8 +517,8 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
       if (availableAccounts.length < 2) {
         log('');
         log(msg(
-          '  For full multi-bot routing, you need at least 3 Discord bots:',
-          '  完整多 Bot 路由建議至少 3 個 Discord Bot：'
+          '  For full multi-bot routing, you need at least 5 Discord bots:',
+          '  完整多 Bot 路由建議至少 5 個 Discord Bot：'
         ));
         log(msg(
           '    1) CEO bot — bound to CEO agent (main entry point)',
@@ -527,8 +529,16 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
           '    2) CAO Bot — 綁定 CAO agent（稽核專線）'
         ));
         log(msg(
-          '    3) Native bot — default fallback (no binding needed)',
-          '    3) 原生 Bot — 預設 fallback（不需要 binding）'
+          '    3) CTO bot — bound to CTO agent (tech channel)',
+          '    3) CTO Bot — 綁定 CTO agent（技術專線）'
+        ));
+        log(msg(
+          '    4) COO bot — bound to COO agent (ops channel)',
+          '    4) COO Bot — 綁定 COO agent（生活管理專線）'
+        ));
+        log(msg(
+          '    5) Native bot — default fallback (no binding needed)',
+          '    5) 原生 Bot — 預設 fallback（不需要 binding）'
         ));
         log('');
         const addBots = await ask(rl, msg(
@@ -632,6 +642,34 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
           caoBind = availableAccounts[caoIdx - 1].binding;
         }
 
+        // CTO account
+        let ctoIdx = -1;
+        while (ctoIdx < 0 || ctoIdx > availableAccounts.length) {
+          const input = await ask(rl, msg(
+            `  CTO Discord account (0-${availableAccounts.length}): `,
+            `  CTO Discord 帳號 (0-${availableAccounts.length})：`
+          ));
+          ctoIdx = parseInt(input, 10);
+          if (isNaN(ctoIdx)) ctoIdx = -1;
+        }
+        if (ctoIdx > 0) {
+          ctoBind = availableAccounts[ctoIdx - 1].binding;
+        }
+
+        // COO account
+        let cooIdx = -1;
+        while (cooIdx < 0 || cooIdx > availableAccounts.length) {
+          const input = await ask(rl, msg(
+            `  COO Discord account (0-${availableAccounts.length}): `,
+            `  COO Discord 帳號 (0-${availableAccounts.length})：`
+          ));
+          cooIdx = parseInt(input, 10);
+          if (isNaN(cooIdx)) cooIdx = -1;
+        }
+        if (cooIdx > 0) {
+          cooBind = availableAccounts[cooIdx - 1].binding;
+        }
+
         log('');
       } else if (availableAccounts.length === 1) {
         if (primaryChannel && !primaryChannel.startsWith('discord')) {
@@ -651,11 +689,19 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
             `  CEO → Discord account "${availableAccounts[0].account}"`,
             `  CEO → Discord 帳號「${availableAccounts[0].account}」`
           ));
-          log(msg(
-            '  To add CAO audit channel: openclaw channels add --channel discord --account audit --token <TOKEN>',
-            '  若需 CAO 稽核專線：openclaw channels add --channel discord --account audit --token <TOKEN>'
-          ));
         }
+        log(msg(
+          '  To add more agent channels, register additional Discord bots:',
+          '  若需更多 Agent 獨立通道，請註冊更多 Discord Bot：'
+        ));
+        log(msg(
+          '    openclaw channels add --channel discord --account <name> --token <TOKEN>',
+          '    openclaw channels add --channel discord --account <名稱> --token <TOKEN>'
+        ));
+        log(msg(
+          '  Then re-run: node install.js --update-channels',
+          '  然後重新執行：node install.js --update-channels'
+        ));
       }
 
       // Resolve Discord cron delivery targets (guild channel IDs, NOT account names)
@@ -737,11 +783,11 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
     }
   }
 
-  // Unbind ALL existing Discord bindings for CEO/CAO before re-binding
+  // Unbind ALL existing Discord bindings for CEO/CAO/CTO/COO before re-binding
   // 'unbind --bind discord' only removes discord:default, NOT discord:ceo etc.
   // Must unbind each account-level binding individually.
   const discordAccountNames = Object.keys(discordConfig?.accounts || {});
-  for (const agent of ['ceo', 'cao']) {
+  for (const agent of ['ceo', 'cao', 'cto', 'coo']) {
     // Always try base 'discord' (covers discord:default)
     tryExec(['openclaw', 'agents', 'unbind', '--agent', `${AGENT_PREFIX}${agent}`, '--bind', 'discord']);
     // Also unbind each named account (discord:ceo, discord:audit, etc.)
@@ -774,7 +820,29 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
     }
   }
 
-  if (failedBindCmds.length === 0 && (ceoBind || caoBind)) {
+  // Bind CTO (independent tech channel)
+  if (ctoBind) {
+    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cto`, '--bind', ctoBind];
+    const result = tryExec(cmdArgs);
+    if (result.ok) {
+      logOk(`${AGENT_PREFIX}cto -> ${ctoBind}`);
+    } else {
+      failedBindCmds.push(cmdToString(cmdArgs));
+    }
+  }
+
+  // Bind COO (independent ops channel)
+  if (cooBind) {
+    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}coo`, '--bind', cooBind];
+    const result = tryExec(cmdArgs);
+    if (result.ok) {
+      logOk(`${AGENT_PREFIX}coo -> ${cooBind}`);
+    } else {
+      failedBindCmds.push(cmdToString(cmdArgs));
+    }
+  }
+
+  if (failedBindCmds.length === 0 && (ceoBind || caoBind || ctoBind || cooBind)) {
     log(msg(
       '  ⚠ Restart gateway for binding changes to take effect.',
       '  ⚠ 需要重啟 gateway 才能讓 binding 變更生效。'
@@ -782,7 +850,7 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
   }
 
   log('');
-  return { ceoBind, caoBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds };
+  return { ceoBind, caoBind, ctoBind, cooBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds };
 }
 
 
@@ -2229,7 +2297,7 @@ async function main() {
   // Bind channels
   // ============================================
   const channelResult = await setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFound);
-  const { ceoBind, caoBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds } = channelResult;
+  const { ceoBind, caoBind, ctoBind, cooBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds } = channelResult;
 
   log('');
 

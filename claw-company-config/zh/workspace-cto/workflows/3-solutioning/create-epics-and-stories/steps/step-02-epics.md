@@ -50,7 +50,7 @@ next-step: ./step-03-stories.md
 
 ### 4. 與 CTO 確認
 
-透過 `sessions_send` 向 CTO 提交 Epic 拆解結果，等待確認。
+透過 `announce` 向 CTO 提交 Epic 拆解結果，等待確認。
 
 ## 完成條件
 

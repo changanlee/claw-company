@@ -50,7 +50,7 @@ next-step: null
 
 ### 4. 回報 CTO
 
-透過 `sessions_send` 向 CTO 回報驗證結果：
+透過 `announce` 向 CTO 回報驗證結果：
 
 - 驗證結果摘要
 - 總體建議

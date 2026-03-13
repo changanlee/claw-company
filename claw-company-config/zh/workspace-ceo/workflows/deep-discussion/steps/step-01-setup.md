@@ -1,6 +1,6 @@
 ---
 name: setup
-description: "確認議題 + sessions_send 邀請高管"
+description: "確認議題 + exec dispatch 邀請高管"
 next-step: ./step-02-round1.md
 output-file: null
 template: null
@@ -32,7 +32,7 @@ template: null
 
 ### 2. 邀請高管
 
-根據議題性質，使用 `sessions_send` 邀請 2-4 位相關高管，說明：
+根據議題性質，使用 `exec dispatch` 邀請 2-4 位相關高管，說明：
 
 - 討論議題
 - 期望從該高管獲得的專業觀點方向

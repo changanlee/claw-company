@@ -1,14 +1,14 @@
 ---
 name: propose
 description: "產出升降級提案（受影響 Agent、當前 vs 建議模型、理由、預估成本變化、風險）"
-next-step: ./step-04-submit.md
+next-step: ./step-04-capability.md
 output-file: output/assessments/model-evaluation-YYYY-MM-DD.md
 template: ../../templates/model-evaluation.md
 ---
 
 # 步驟 3：產出提案
 
-**進度：步驟 3 / 共 4 步**
+**進度：步驟 3 / 共 5 步**
 
 ## 目標
 
@@ -57,4 +57,4 @@ template: ../../templates/model-evaluation.md
 
 ## 下一步
 
-👉 前往 [步驟 4：分級送審](./step-04-submit.md)
+👉 前往 [步驟 4：能力測試](./step-04-capability.md)

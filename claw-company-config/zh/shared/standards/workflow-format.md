@@ -254,7 +254,7 @@ PM 在 step-05-scope 完成後 session 被 reset。重新啟動時：
 
 - 由 heartbeat 或 cron 觸發
 - 不需要人類介入
-- 產出自動寫入 output/ 或透過 sessions_send 通知
+- 產出自動寫入 output/ 或透過 exec dispatch 通知
 - 範例：portfolio-monitor, security-scan, morning-briefing
 
 ---

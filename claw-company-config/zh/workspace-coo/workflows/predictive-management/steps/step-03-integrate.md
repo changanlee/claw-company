@@ -12,7 +12,7 @@ template: null
 
 ## 目標
 
-將預測提醒依推送時機分類，整合到晨間簡報或透過 CEO 即時推送。
+將預測提醒依推送時機分類，整合到晨間簡報或即時推送（若有獨立通道直接通知董事長，否則透過 exec dispatch 通知 CEO）。
 
 ## 執行規則
 
@@ -24,13 +24,17 @@ template: null
 
 ### 1. 即時推送
 
-若有影響今日安排的緊急預測，立即透過 `sessions_send` 通知 CEO：
+若有影響今日安排的緊急預測：
+
+**若有獨立通道且董事長直接指派**：直接在通道回覆董事長，並 dispatch CEO 知會。
+
+**其他來源（CEO dispatch / cron）**：透過 `exec dispatch` 通知 CEO（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）：
 
 > 「CEO，以下預測提醒需即時轉達董事長：[提醒內容]。」
 
 ### 2. 晨間簡報整合
 
-將非緊急預測整理為簡報素材，透過 `sessions_send` 提交 CEO，供晨間簡報使用：
+將非緊急預測整理為簡報素材，透過 `exec dispatch` 提交 CEO，供晨間簡報使用：
 
 > 「CEO，以下為明日預測提醒，請納入晨間簡報：[提醒清單]。」
 

@@ -24,7 +24,7 @@ template: null
 
 ### 1. 送 CEO 審核（黃燈）
 
-透過 `sessions_send` 將政策草案送交 CEO，請 CEO 審核：
+透過 `exec dispatch` 將政策草案送交 CEO，請 CEO 審核：
 
 - 政策是否符合公司整體方向
 - 是否有遺漏的利害關係人
@@ -33,7 +33,7 @@ template: null
 
 ### 2. 送 CAO 合規檢查
 
-同步透過 `sessions_send` 送交 CAO，請 CAO 檢查：
+同步透過 `exec dispatch` 送交 CAO，請 CAO 檢查：
 
 - 是否與現有政策衝突
 - 是否符合安全規範

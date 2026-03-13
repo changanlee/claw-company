@@ -40,7 +40,7 @@ template: null
 
 ### 3. 查詢預算
 
-使用 `sessions_send` 向 CFO 確認出行預算配額。
+使用 `exec dispatch` 向 CFO 確認出行預算配額（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）。
 
 ### 4. 整理需求摘要
 

@@ -1,14 +1,14 @@
 ---
 name: design
 description: "設計角色規格（職責、模型級別、成本預估、從哪些 Agent 分出職責）"
-next-step: ./step-03-build.md
+next-step: ./step-03-channel.md
 output-file: null
 template: null
 ---
 
 # 步驟 2：設計規格
 
-**進度：步驟 2 / 共 5 步**
+**進度：步驟 2 / 共 6 步**
 
 ## 目標
 
@@ -69,4 +69,4 @@ template: null
 
 ## 下一步
 
-👉 前往 [步驟 3：建立規格包](./step-03-build.md)
+👉 前往 [步驟 3：通道評估](./step-03-channel.md)

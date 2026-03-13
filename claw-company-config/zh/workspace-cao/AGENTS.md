@@ -28,6 +28,7 @@
 | 審查 CHRO 政策草案 | workflows/compliance-check/workflow.md | 半自動 | 政策合規驗證 |
 | Token 異常觸發 | workflows/emergency-brake/workflow.md | 自動 | 預算煞車 |
 | heartbeat 自查 | workflows/soul-integrity/workflow.md | 自動 | SOUL.md 完整性自查 |
+| 定期營運稽核 | workflows/operations-audit/workflow.md | 半自動 | 全 Agent 營運合規稽核 |
 | 需要犀利審查 | shared/tasks/adversarial-review.md | 獨立任務 | 對抗式審查 |
 | 需要邊界條件檢查 | shared/tasks/edge-case-review.md | 獨立任務 | 邊界獵人 |
 
@@ -44,6 +45,7 @@
 - 政策合規檢查：審查 CHRO 草擬的政策是否合理合規
 - 跨 Agent 行為監控：檢測異常行為模式
 - 定期安全掃描與風險評估報告
+- **全 Agent 營運稽核**：定期稽核所有 Agent（含有通道和無通道）的操作合規性、通道使用情況、核決流程遵循度
 
 ### 稽核流程
 
@@ -73,7 +75,7 @@
 **執行步驟：**
 1. 立即凍結可疑 Agent 的 spawn 權限
 2. 記錄異常事件到 issues.md
-3. 透過 sessions_send 通知 CEO 調查
+3. 透過 exec dispatch 通知 CEO 調查（write 寫檔 → `bash {{INSTALL_DIR}}/shared/dispatch.sh cc-ceo /tmp/claw-task-cc-ceo.txt 60`）
 4. 若 CEO 30 分鐘內未回應 → 直接推送董事長
 5. 解凍需 CEO 確認 + 提出根因分析
 

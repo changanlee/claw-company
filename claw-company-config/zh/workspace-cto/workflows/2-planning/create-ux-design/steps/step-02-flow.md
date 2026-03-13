@@ -49,7 +49,7 @@ next-step: ./step-03-spec.md
 
 ### 4. 與 CTO 確認
 
-透過 `sessions_send` 向 CTO 提交用戶旅程與資訊架構，等待確認。
+透過 `announce` 向 CTO 提交用戶旅程與資訊架構，等待確認。
 
 ### 5. 更新 frontmatter
 

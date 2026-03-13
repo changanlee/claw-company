@@ -6,9 +6,9 @@ output-file: null
 template: null
 ---
 
-# 步驟 4：分級送審
+# 步驟 5：分級送審
 
-**進度：步驟 4 / 共 4 步**
+**進度：步驟 5 / 共 5 步**
 
 ## 目標
 
@@ -24,7 +24,7 @@ template: null
 
 ### 1. 黃燈提案（降級）
 
-透過 `sessions_send` 送交 CEO 審批：
+透過 `exec dispatch` 送交 CEO 審批：
 
 > **模型調整提案（黃燈）**
 >
@@ -38,7 +38,7 @@ CEO 審批後，啟動 knowledge-migration 流程執行切換。
 
 ### 2. 紅燈提案（升級/換供應商）
 
-透過 `sessions_send` 送交 CEO，由 CEO 呈報董事長：
+透過 `exec dispatch` 送交 CEO，由 CEO 呈報董事長：
 
 > **模型調整提案（紅燈）**
 >

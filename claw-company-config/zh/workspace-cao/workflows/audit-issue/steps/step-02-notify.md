@@ -1,6 +1,6 @@
 ---
 name: notify
-description: "通知：sessions_send 通知責任 Agent 和 CEO"
+description: "通知：exec dispatch 通知責任 Agent 和 CEO"
 next-step: ./step-03-track.md
 output-file: null
 template: null
@@ -12,7 +12,7 @@ template: null
 
 ## 目標
 
-透過 sessions_send 通知責任 Agent 和 CEO，確保相關方知悉問題並開始處理。
+透過 exec dispatch 通知責任 Agent 和 CEO，確保相關方知悉問題並開始處理。
 
 ## 執行規則
 
@@ -24,7 +24,7 @@ template: null
 
 ### 1. 通知責任 Agent
 
-使用 `sessions_send` 向責任 Agent 發送通知：
+使用 `exec dispatch` 向責任 Agent 發送通知（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）：
 
 > 「[Agent 名稱]，稽核議題通知：
 > - 議題 ID：[AUD-YYYY-NNN]
@@ -35,7 +35,7 @@ template: null
 
 ### 2. 通知 CEO
 
-使用 `sessions_send` 向 CEO 發送通知：
+使用 `exec dispatch` 向 CEO 發送通知：
 
 > 「CEO，新稽核議題 [AUD-YYYY-NNN]（[嚴重度]）：
 > - 問題：[描述]

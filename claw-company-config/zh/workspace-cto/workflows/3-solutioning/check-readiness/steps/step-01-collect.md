@@ -56,7 +56,7 @@ next-step: ./step-02-validate.md
 
 如有必要文件缺失：
 
-- 透過 `sessions_send` 通知 CTO 缺失的文件
+- 透過 `announce` 通知 CTO 缺失的文件
 - 等待 CTO 指示：補充文件 或 繼續檢查已有文件
 
 ## 完成條件

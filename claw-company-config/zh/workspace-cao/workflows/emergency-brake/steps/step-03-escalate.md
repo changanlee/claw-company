@@ -24,7 +24,7 @@ template: null
 
 ### 1. 通知 CEO
 
-使用 `sessions_send` 通知 CEO：
+使用 `exec dispatch` 通知 CEO（write 寫檔 → bash {{INSTALL_DIR}}/shared/dispatch.sh）：
 
 > 「CEO，緊急煞車已啟動：
 > - 可疑 Agent：[名稱]

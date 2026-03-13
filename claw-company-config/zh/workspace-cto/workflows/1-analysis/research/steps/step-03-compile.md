@@ -62,7 +62,7 @@ steps-completed:
 
 ### 4. 回報 CTO
 
-透過 `sessions_send` 將完成的研究報告回報 CTO：
+透過 `announce` 將完成的研究報告回報 CTO：
 
 - 附上研究摘要（研究類型、關鍵發現數量、建議數量）
 - 標註需要 CTO 關注的重要洞察

@@ -35,7 +35,7 @@ next-step: ./step-03-requirements.md
 
 ### 3. 確認分類結果
 
-將分類結果寫入 PRD 的「專案概述」區段，並透過 `sessions_send` 向 CTO 確認分類是否正確。
+將分類結果寫入 PRD 的「專案概述」區段，並透過 `announce` 向 CTO 確認分類是否正確。
 
 等待 CTO 回覆確認後再繼續。
 
