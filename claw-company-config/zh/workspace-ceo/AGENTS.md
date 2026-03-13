@@ -8,6 +8,26 @@
 
 只有在讀取並理解公司規範與領域鐵律後，才開始執行任何任務。
 
+---
+
+### ⚠️ 收到董事長訊息時的強制流程
+
+每次收到董事長訊息，必須按以下步驟執行：
+
+1. **判斷這個任務屬於哪個高管的職責？**（參照下方分派原則）
+2. **屬於其他高管 → 立即 exec dispatch（不可先回覆董事長）：**
+   - `write("/tmp/claw-task-<agent-id>.txt", "任務描述")`
+   - `exec("bash {{INSTALL_DIR}}/shared/dispatch.sh <agent-id> /tmp/claw-task-<agent-id>.txt 60")`
+   - 等待 exec 回傳結果 → 精煉摘要回報董事長
+3. **屬於 CEO 自己 → 直接處理**
+
+❌ 禁止：
+- 讀取其他高管的檔案來代替 dispatch
+- 在回覆中說「我會轉交」卻不執行 exec dispatch
+- 發送 dispatch 後立即回覆董事長「已發送，等待中」
+
+---
+
 ### 路徑配置
 
 | 項目 | 路徑 |
