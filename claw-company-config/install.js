@@ -645,6 +645,8 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
       }
     }
     if (botToken) {
+      const apiSpinner = new Spinner(msg('Fetching Discord channel names...', '查詢 Discord 頻道名稱...'));
+      apiSpinner.start();
       for (const guildId of Object.keys(discordConfig.guilds || {})) {
         const channels = await fetchJson(
           `https://discord.com/api/v10/guilds/${guildId}/channels`,
@@ -656,6 +658,7 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
           }
         }
       }
+      apiSpinner.succeed(msg(`Found ${Object.keys(channelNameMap).length} channel names`, `取得 ${Object.keys(channelNameMap).length} 個頻道名稱`));
     }
   }
 
@@ -748,21 +751,33 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
       }
     }
   }
+  const unbindSpinner = new Spinner(msg('Clearing old bindings...', '清除舊綁定...'));
+  unbindSpinner.start();
   for (const agent of BIND_AGENTS) {
     for (const key of allBindKeys) {
       tryExec(['openclaw', 'agents', 'unbind', '--agent', `${AGENT_PREFIX}${agent}`, '--bind', key]);
     }
   }
+  unbindSpinner.succeed(msg('Old bindings cleared', '舊綁定已清除'));
 
   // [9] Bind each agent to their selected accounts
+  const bindSpinner = new Spinner(msg('Applying new bindings...', '套用新綁定...'));
+  bindSpinner.start();
   for (const agent of BIND_AGENTS) {
     for (const binding of agentBindings[agent]) {
       const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}${agent}`, '--bind', binding];
       const result = tryExec(cmdArgs);
-      if (result.ok) {
-        logOk(`${AGENT_PREFIX}${agent} -> ${binding}`);
-      } else {
+      if (!result.ok) {
         failedBindCmds.push(cmdToString(cmdArgs));
+      }
+    }
+  }
+  bindSpinner.stop();
+  // Show individual results after spinner
+  for (const agent of BIND_AGENTS) {
+    for (const binding of agentBindings[agent]) {
+      if (!failedBindCmds.some(c => c.includes(binding))) {
+        logOk(`${AGENT_PREFIX}${agent} -> ${binding}`);
       }
     }
   }
