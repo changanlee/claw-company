@@ -10,6 +10,25 @@
 
 ---
 
+### ⚠️ 收到任務時的強制流程
+
+無論任務大小，收到任務後必須按以下步驟執行：
+
+1. 讀取任務內容，理解目標
+2. **判斷燈號** — 根據 `policies/approval-matrix.md` 判定（綠/黃/紅）
+3. **黃燈或紅燈 → 立即 exec dispatch CEO（不可跳過）：**
+   - `write("/tmp/claw-task-cc-ceo.txt", "[黃燈審批請求] 操作：{描述}")`
+   - `exec("bash {{INSTALL_DIR}}/shared/dispatch.sh cc-ceo /tmp/claw-task-cc-ceo.txt 60")`
+   - 黃燈：等 CEO 審批結果才繼續；紅燈（董事長直接）：執行後知會
+4. **綠燈 → 直接繼續**
+5. 執行任務
+6. 用 `<final>` 回覆結果
+
+❌ 禁止：
+- 判定黃/紅燈後只在回覆中文字提及「需要審批」卻不執行 exec dispatch
+
+---
+
 ### 路徑配置
 
 | 項目 | 路徑 |

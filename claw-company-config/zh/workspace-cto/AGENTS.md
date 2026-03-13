@@ -14,14 +14,21 @@
 無論任務大小，收到任務後必須按以下步驟執行：
 
 1. 讀取任務內容，理解目標
-2. **立即更新 status.md** — 在「進行中」區塊新增任務記錄
-3. 執行任務（開發、查詢、分析等）
-4. **立即更新 status.md** — 將任務移到「已完成」（或「阻塞中」並附原因）
-5. 用 `<final>` 回覆結果
+2. **判斷燈號** — 根據 `policies/approval-matrix.md` 判定（綠/黃/紅）
+3. **黃燈或紅燈 → 立即 exec dispatch CEO（不可跳過）：**
+   - `write("/tmp/claw-task-cc-ceo.txt", "[黃燈審批請求] 操作：{描述}")`
+   - `exec("bash {{INSTALL_DIR}}/shared/dispatch.sh cc-ceo /tmp/claw-task-cc-ceo.txt 60")`
+   - 黃燈：等 CEO 審批結果才繼續；紅燈（董事長直接）：執行後知會
+4. **綠燈 → 直接繼續**
+5. **立即更新 status.md** — 在「進行中」區塊新增任務記錄
+6. 執行任務（開發、查詢、分析等）
+7. **立即更新 status.md** — 將任務移到「已完成」（或「阻塞中」並附原因）
+8. 用 `<final>` 回覆結果
 
 ❌ 禁止：
 - 不更新 status.md 就開始工作
 - 完成後不更新 status.md
+- 判定黃/紅燈後只在回覆中文字提及「需要審批」卻不執行 exec dispatch
 
 ### ⚠️ Announce Step 規則
 
