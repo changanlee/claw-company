@@ -411,446 +411,315 @@ async function uninstall() {
 // ============================================
 
 /**
- * Detect channels and bind CEO/CAO.
+ * Channel-agnostic binding setup for CEO/CAO/CTO/COO.
  *
- * Routing rule: OpenClaw binds agents to **channel accounts** (e.g. "whatsapp",
- * "telegram:default", "discord:ceo"), NOT to guild channel IDs.
- * Discord per-channel routing requires separate bot accounts.
+ * Each agent can bind to MULTIPLE channel:account pairs.
+ * One channel:account can only belong to one agent (exclusive pool consumption).
+ * Quick mode: CEO gets all. Custom mode: per-agent multi-select.
  *
- * Cron delivery (--to) is separate — it targets specific guild channels or phone numbers.
- *
- * @returns {{ ceoBind, caoBind, ctoBind, cooBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds }}
+ * @returns {{ agentBindings, cronDelivery, failedBindCmds }}
  */
 async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFound) {
   logInfo('Binding channels...', '綁定通道...');
 
   const failedBindCmds = [];
+  const BIND_AGENTS = ['ceo', 'cao', 'cto', 'coo'];
 
-  // Primary channel (non-Discord) for CEO — e.g. WhatsApp, Telegram
-  const primaryChannel = channelsFound.find(ch => !ch.startsWith('discord')) || channelsFound[0] || null;
+  // [1] Parse channelsFound → [{binding, channel, account}]
+  const allEntries = channelsFound.map(ch => {
+    const parts = ch.split(':');
+    return { binding: ch, channel: parts[0], account: parts[1] || null };
+  });
 
-  // Defaults — CEO/CAO get primary channel, CTO/COO start null (Discord-only agents)
-  let ceoBind = primaryChannel;
-  let caoBind = primaryChannel;
-  let ctoBind = null;
-  let cooBind = null;
-  let ceoDeliveryTarget = null;
-  let caoDeliveryTarget = null;
-
-  // ---- Discord account-based routing ----
+  // [2] Discord top-level token conflict fix
   const discordConfig = nativeJson.channels?.discord;
+  if (discordConfig && discordConfig.enabled !== false &&
+      discordConfig.token && discordConfig.accounts && Object.keys(discordConfig.accounts).length > 0) {
+    const topToken = discordConfig.token;
+    const accountTokens = Object.values(discordConfig.accounts).map(a => a.token).filter(Boolean);
+    if (accountTokens.includes(topToken)) {
+      logWarn(
+        'Removing top-level discord.token (duplicates account token — would create conflicting clients)',
+        '移除頂層 discord.token（與帳號 token 重複，會產生衝突的 client）'
+      );
+      delete discordConfig.token;
+      fs.writeFileSync(nativeJsonPath, JSON.stringify(nativeJson, null, 2) + '\n');
+    }
+  }
+
+  // [3] Exclude accounts claimed by non-claw-company agents (all channel types)
+  const existingBindings = Array.isArray(nativeJson.bindings) ? nativeJson.bindings : [];
+  const claimedSet = new Set(); // "channel:account" strings claimed by non-cc agents
+  for (const b of existingBindings) {
+    const agentId = b.agentId || '';
+    if (agentId.startsWith(AGENT_PREFIX)) continue;
+    const bindChannel = b.match?.channel || '';
+    const bindAccount = b.match?.accountId || '';
+    const key = bindAccount ? `${bindChannel}:${bindAccount}` : bindChannel;
+    claimedSet.add(key);
+  }
+
+  const pool = allEntries.filter(e => {
+    const key = e.account ? `${e.channel}:${e.account}` : e.channel;
+    const claimed = claimedSet.has(key);
+    if (claimed) {
+      log(msg(
+        `    [skip] ${e.binding} — bound to another agent`,
+        `    [skip] ${e.binding} — 已綁定其他 agent`
+      ));
+    }
+    return !claimed;
+  });
+
+  // [4] Show available pool
+  log('');
+  log(msg('  Available channel accounts:', '  可用的通道帳號：'));
+  if (pool.length === 0) {
+    log(msg('    (none)', '    （無）'));
+  } else {
+    for (let i = 0; i < pool.length; i++) {
+      log(`    ${i + 1}) ${pool[i].binding}`);
+    }
+  }
+
+  // [5] Mode selection
+  const agentBindings = { ceo: [], cao: [], cto: [], coo: [] };
+
+  if (pool.length > 0) {
+    log('');
+    log(msg(
+      '  Binding mode:  1) Quick (CEO gets all)  2) Custom (per-agent)',
+      '  綁定模式：  1) 快速（CEO 取得全部）  2) 自訂（逐一分配）'
+    ));
+    let mode = '';
+    while (mode !== '1' && mode !== '2') {
+      mode = (await ask(rl, msg('  Choose (1/2): ', '  選擇 (1/2)：'))).trim();
+    }
+
+    if (mode === '1') {
+      // Quick: CEO gets all
+      agentBindings.ceo = pool.map(e => e.binding);
+      log(msg(
+        `  CEO ← ${agentBindings.ceo.join(', ')}`,
+        `  CEO ← ${agentBindings.ceo.join(', ')}`
+      ));
+    } else {
+      // Custom: CEO→CAO→CTO→COO, each multi-select, remove from remaining pool
+      const remaining = [...pool];
+      for (const agent of BIND_AGENTS) {
+        if (remaining.length === 0) break;
+        log('');
+        log(msg(
+          `  ${agent.toUpperCase()} — select accounts (comma-separated, 0 to skip):`,
+          `  ${agent.toUpperCase()} — 選擇帳號（逗號分隔，0 跳過）：`
+        ));
+        for (let i = 0; i < remaining.length; i++) {
+          log(`    ${i + 1}) ${remaining[i].binding}`);
+        }
+        const input = (await ask(rl, msg(
+          `  ${agent.toUpperCase()}: `,
+          `  ${agent.toUpperCase()}：`
+        ))).trim();
+        if (input === '0' || !input) continue;
+        const indices = input.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 1 && n <= remaining.length);
+        const unique = [...new Set(indices)].sort((a, b) => b - a); // descending for safe splice
+        const selected = unique.map(i => remaining[i - 1]);
+        for (const idx of unique) remaining.splice(idx - 1, 1);
+        agentBindings[agent] = selected.map(e => e.binding);
+      }
+    }
+  }
+
+  // [6] Account exhaustion guidance
+  const hasBindings = Object.values(agentBindings).some(b => b.length > 0);
+  const totalBound = Object.values(agentBindings).reduce((s, b) => s + b.length, 0);
+  if (pool.length === 0 || totalBound < BIND_AGENTS.length) {
+    log('');
+    log(msg('  Need more channel accounts?', '  需要更多通道帳號？'));
+    const detectedTypes = new Set(allEntries.map(e => e.channel));
+    const guides = {
+      telegram: '    telegram → @BotFather',
+      discord: '    discord  → Discord Developer Portal',
+      whatsapp: '    whatsapp → Meta Business API',
+    };
+    for (const [type, hint] of Object.entries(guides)) {
+      if (detectedTypes.has(type) || detectedTypes.size === 0) log(hint);
+    }
+    if (!detectedTypes.has('telegram') && !detectedTypes.has('discord') && !detectedTypes.has('whatsapp')) {
+      log(msg(
+        '    openclaw channels add --channel <type>',
+        '    openclaw channels add --channel <類型>'
+      ));
+    }
+    log(msg(
+      '    Then re-run: node install.js --update-channels',
+      '    完成後執行：node install.js --update-channels'
+    ));
+  }
+
+  // Discord guild channel reminder
   if (discordConfig && discordConfig.enabled !== false) {
-    // P0 fix: remove top-level discord.token when accounts exist with same token
-    // Having both creates two Discord clients competing for the same bot token
-    if (discordConfig.token && discordConfig.accounts && Object.keys(discordConfig.accounts).length > 0) {
-      const topToken = discordConfig.token;
-      const accountTokens = Object.values(discordConfig.accounts)
-        .map(acc => acc.token)
-        .filter(Boolean);
-      if (accountTokens.includes(topToken)) {
-        logWarn(
-          'Removing top-level discord.token (duplicates account token — would create conflicting clients)',
-          '移除頂層 discord.token（與帳號 token 重複，會產生衝突的 client）'
-        );
-        delete discordConfig.token;
-        // Write fix immediately so gateway doesn't hit this
-        fs.writeFileSync(nativeJsonPath, JSON.stringify(nativeJson, null, 2) + '\n');
+    if (!discordConfig.guilds || Object.keys(discordConfig.guilds).length === 0) {
+      log('');
+      logWarn(
+        'No Discord guild channels configured. Bots may not receive messages in server channels.',
+        '未配置 Discord guild channel。Bot 可能無法在伺服器頻道中接收訊息。'
+      );
+      log(msg(
+        '  Configure in openclaw.json → channels.discord.guilds.<guildId>.channels.<channelId>.allow: true',
+        '  配置位置：openclaw.json → channels.discord.guilds.<guildId>.channels.<channelId>.allow: true'
+      ));
+    }
+  }
+
+  // [7] Cron delivery selection (only for CEO and CAO)
+  const cronDelivery = {};
+  const cronAgents = ['ceo', 'cao'];
+  // Collect Discord guild channels for potential --to selection
+  const allGuildChannels = [];
+  if (discordConfig?.guilds) {
+    for (const [, guildObj] of Object.entries(discordConfig.guilds)) {
+      if (!guildObj?.channels) continue;
+      for (const [chId, chCfg] of Object.entries(guildObj.channels)) {
+        if (chCfg && chCfg.allow !== false) allGuildChannels.push(chId);
       }
     }
+  }
 
-    // Collect Discord accounts from channelsFound (format: "discord" or "discord:accountName")
-    const discordAccounts = channelsFound
-      .filter(ch => ch.startsWith('discord'))
-      .map(ch => {
-        const parts = ch.split(':');
-        return { binding: ch, account: parts[1] || 'default' };
-      });
+  for (const agent of cronAgents) {
+    const bindings = agentBindings[agent];
+    if (!bindings || bindings.length === 0) continue; // skip — will use --no-deliver
 
-    if (discordAccounts.length > 0) {
+    let chosen = null;
+    if (bindings.length === 1) {
+      chosen = bindings[0];
+    } else {
+      // >=2 bindings: ask which one for cron delivery
       log('');
       log(msg(
-        '  Discord multi-bot routing:',
-        '  Discord 多 Bot 路由：'
+        `  ${agent.toUpperCase()} cron delivery — select channel:`,
+        `  ${agent.toUpperCase()} 排程推送 — 選擇通道：`
       ));
-      log(msg(
-        '  Each claw-company agent (CEO/CAO/CTO/COO) needs its own Discord bot.',
-        '  每個 claw-company agent（CEO/CAO/CTO/COO）需要獨立的 Discord Bot。'
-      ));
-      log(msg(
-        '  Unassigned channels fall back to the native agent (default).',
-        '  未分配的通道自動歸原生 Agent（default）。'
-      ));
-      log('');
-      log(msg(
-        '  Detected Discord bot accounts:',
-        '  偵測到的 Discord Bot 帳號：'
-      ));
-      for (const acc of discordAccounts) {
-        log(`    - ${acc.account} (bind as: ${acc.binding})`);
+      for (let i = 0; i < bindings.length; i++) {
+        log(`    ${i + 1}) ${bindings[i]}`);
       }
-
-      // Check existing bindings to exclude accounts claimed by non-claw-company agents
-      const existingBindings = Array.isArray(nativeJson.bindings) ? nativeJson.bindings : [];
-      const claimedAccounts = new Map(); // accountName -> agentId
-      for (const b of existingBindings) {
-        const agentId = b.agentId || '';
-        if (agentId.startsWith(AGENT_PREFIX)) continue; // skip our own
-        const bindType = b.match?.channel || '';
-        const bindAccount = b.match?.accountId || '';
-        if (bindType === 'discord') {
-          claimedAccounts.set(bindAccount || 'default', agentId);
-        }
+      let idx = -1;
+      while (idx < 1 || idx > bindings.length) {
+        const input = await ask(rl, msg(
+          `  ${agent.toUpperCase()} delivery (1-${bindings.length}): `,
+          `  ${agent.toUpperCase()} 推送通道 (1-${bindings.length})：`
+        ));
+        idx = parseInt(input, 10);
+        if (isNaN(idx)) idx = -1;
       }
+      chosen = bindings[idx - 1];
+    }
 
-      const availableAccounts = discordAccounts.filter(acc => {
-        const claimer = claimedAccounts.get(acc.account);
-        if (claimer) {
-          log(msg(
-            `    ⊘ ${acc.account} — bound to ${claimer}`,
-            `    ⊘ ${acc.account} — 已綁定 ${claimer}`
-          ));
+    const parts = chosen.split(':');
+    const chBase = parts[0];
+    const chAccount = parts[1] || null;
+    let target = null;
+
+    if (chBase === 'discord') {
+      // Discord: need guild channel ID as --to
+      if (allGuildChannels.length === 1) {
+        target = `channel:${allGuildChannels[0]}`;
+      } else if (allGuildChannels.length > 1) {
+        log('');
+        log(msg(
+          `  Select Discord channel for ${agent.toUpperCase()} cron delivery:`,
+          `  選擇 ${agent.toUpperCase()} 排程推送的 Discord 頻道：`
+        ));
+        for (let i = 0; i < allGuildChannels.length; i++) {
+          log(`    ${i + 1}) ${allGuildChannels[i]}`);
         }
-        return !claimer;
-      });
-
-      // Guide: offer to register more bots interactively
-      if (availableAccounts.length < 2) {
-        log('');
-        log(msg(
-          '  For full multi-bot routing, you need at least 5 Discord bots:',
-          '  完整多 Bot 路由建議至少 5 個 Discord Bot：'
-        ));
-        log(msg(
-          '    1) CEO bot — bound to CEO agent (main entry point)',
-          '    1) CEO Bot — 綁定 CEO agent（主入口）'
-        ));
-        log(msg(
-          '    2) CAO bot — bound to CAO agent (audit channel)',
-          '    2) CAO Bot — 綁定 CAO agent（稽核專線）'
-        ));
-        log(msg(
-          '    3) CTO bot — bound to CTO agent (tech channel)',
-          '    3) CTO Bot — 綁定 CTO agent（技術專線）'
-        ));
-        log(msg(
-          '    4) COO bot — bound to COO agent (ops channel)',
-          '    4) COO Bot — 綁定 COO agent（生活管理專線）'
-        ));
-        log(msg(
-          '    5) Native bot — default fallback (no binding needed)',
-          '    5) 原生 Bot — 預設 fallback（不需要 binding）'
-        ));
-        log('');
-        const addBots = await ask(rl, msg(
-          '  Register additional Discord bots now? (y/N): ',
-          '  現在註冊新的 Discord Bot？(y/N)：'
-        ));
-        if (addBots.trim().toLowerCase().startsWith('y')) {
-          let adding = true;
-          while (adding) {
-            const accName = await ask(rl, msg(
-              '    Account name (e.g. ceo, audit): ',
-              '    帳號名稱（例如 ceo、audit）：'
-            ));
-            const accToken = await ask(rl, msg(
-              '    Bot token: ',
-              '    Bot Token：'
-            ));
-            if (accName.trim() && accToken.trim()) {
-              const result = tryExec([
-                'openclaw', 'channels', 'add',
-                '--channel', 'discord',
-                '--account', accName.trim(),
-                '--token', accToken.trim(),
-              ]);
-              if (result.ok) {
-                logOk(`Discord account "${accName.trim()}" added`);
-                // Add to available accounts for binding selection
-                const newBinding = `discord:${accName.trim()}`;
-                discordAccounts.push({ binding: newBinding, account: accName.trim() });
-                availableAccounts.push({ binding: newBinding, account: accName.trim() });
-              } else {
-                logWarn(
-                  `Failed to add account: ${result.stderr}`,
-                  `新增帳號失敗：${result.stderr}`
-                );
-              }
-            }
-            const more = await ask(rl, msg(
-              '    Add another? (y/N): ',
-              '    繼續新增？(y/N)：'
-            ));
-            adding = more.trim().toLowerCase().startsWith('y');
-          }
-          // Re-read json after adding accounts (channels add modifies openclaw.json)
-          Object.assign(nativeJson, readJsonc(nativeJsonPath));
-        }
-      }
-
-      // Guide: remind about guild channel allowlist
-      if (!discordConfig.guilds || Object.keys(discordConfig.guilds).length === 0) {
-        log('');
-        logWarn(
-          'No Discord guild channels configured. Bots may not receive messages in server channels.',
-          '未配置 Discord guild channel。Bot 可能無法在伺服器頻道中接收訊息。'
-        );
-        log(msg(
-          '  Configure in openclaw.json → channels.discord.guilds.<guildId>.channels.<channelId>.allow: true',
-          '  配置位置：openclaw.json → channels.discord.guilds.<guildId>.channels.<channelId>.allow: true'
-        ));
-      }
-
-      if (availableAccounts.length >= 2) {
-        // Multiple Discord accounts: interactive assignment
-        log('');
-        log(msg(
-          '  Assign Discord bot accounts to agents:',
-          '  分配 Discord 機器人帳號給 Agent：'
-        ));
-        log('');
-        for (let i = 0; i < availableAccounts.length; i++) {
-          log(`    ${i + 1}) ${availableAccounts[i].account}`);
-        }
-        log(`    0) ${msg('Skip (do not bind to Discord)', '跳過（不綁 Discord）')}`);
-        log('');
-
-        // CEO account
-        let ceoIdx = -1;
-        while (ceoIdx < 0 || ceoIdx > availableAccounts.length) {
+        let chIdx = -1;
+        while (chIdx < 1 || chIdx > allGuildChannels.length) {
           const input = await ask(rl, msg(
-            `  CEO Discord account (0-${availableAccounts.length}): `,
-            `  CEO Discord 帳號 (0-${availableAccounts.length})：`
+            `  ${agent.toUpperCase()} delivery channel (1-${allGuildChannels.length}): `,
+            `  ${agent.toUpperCase()} 推送頻道 (1-${allGuildChannels.length})：`
           ));
-          ceoIdx = parseInt(input, 10);
-          if (isNaN(ceoIdx)) ceoIdx = -1;
+          chIdx = parseInt(input, 10);
+          if (isNaN(chIdx)) chIdx = -1;
         }
-        if (ceoIdx > 0) {
-          ceoBind = availableAccounts[ceoIdx - 1].binding;
-        }
-
-        // CAO account
-        let caoIdx = -1;
-        while (caoIdx < 0 || caoIdx > availableAccounts.length) {
-          const input = await ask(rl, msg(
-            `  CAO Discord account (0-${availableAccounts.length}): `,
-            `  CAO Discord 帳號 (0-${availableAccounts.length})：`
-          ));
-          caoIdx = parseInt(input, 10);
-          if (isNaN(caoIdx)) caoIdx = -1;
-        }
-        if (caoIdx > 0) {
-          caoBind = availableAccounts[caoIdx - 1].binding;
-        }
-
-        // CTO account
-        let ctoIdx = -1;
-        while (ctoIdx < 0 || ctoIdx > availableAccounts.length) {
-          const input = await ask(rl, msg(
-            `  CTO Discord account (0-${availableAccounts.length}): `,
-            `  CTO Discord 帳號 (0-${availableAccounts.length})：`
-          ));
-          ctoIdx = parseInt(input, 10);
-          if (isNaN(ctoIdx)) ctoIdx = -1;
-        }
-        if (ctoIdx > 0) {
-          ctoBind = availableAccounts[ctoIdx - 1].binding;
-        }
-
-        // COO account
-        let cooIdx = -1;
-        while (cooIdx < 0 || cooIdx > availableAccounts.length) {
-          const input = await ask(rl, msg(
-            `  COO Discord account (0-${availableAccounts.length}): `,
-            `  COO Discord 帳號 (0-${availableAccounts.length})：`
-          ));
-          cooIdx = parseInt(input, 10);
-          if (isNaN(cooIdx)) cooIdx = -1;
-        }
-        if (cooIdx > 0) {
-          cooBind = availableAccounts[cooIdx - 1].binding;
-        }
-
-        log('');
-      } else if (availableAccounts.length === 1) {
-        if (primaryChannel && !primaryChannel.startsWith('discord')) {
-          // CEO already has non-Discord primary, offer Discord for CAO
-          log('');
-          const useCao = await ask(rl, msg(
-            `  Bind CAO to Discord account "${availableAccounts[0].account}"? (Y/n): `,
-            `  將 CAO 綁定到 Discord 帳號「${availableAccounts[0].account}」？(Y/n)：`
-          ));
-          if (!useCao.trim() || useCao.trim().toLowerCase().startsWith('y')) {
-            caoBind = availableAccounts[0].binding;
-          }
-        } else {
-          // Only Discord available — CEO gets it
-          ceoBind = availableAccounts[0].binding;
-          log(msg(
-            `  CEO → Discord account "${availableAccounts[0].account}"`,
-            `  CEO → Discord 帳號「${availableAccounts[0].account}」`
-          ));
-        }
-        log(msg(
-          '  To add more agent channels, register additional Discord bots:',
-          '  若需更多 Agent 獨立通道，請註冊更多 Discord Bot：'
-        ));
-        log(msg(
-          '    openclaw channels add --channel discord --account <name> --token <TOKEN>',
-          '    openclaw channels add --channel discord --account <名稱> --token <TOKEN>'
-        ));
-        log(msg(
-          '  Then re-run: node install.js --update-channels',
-          '  然後重新執行：node install.js --update-channels'
-        ));
+        target = `channel:${allGuildChannels[chIdx - 1]}`;
       }
+    } else {
+      // Non-Discord: extract target from config
+      target = extractChannelTarget(chosen, nativeJson);
+    }
 
-      // Resolve Discord cron delivery targets (guild channel IDs, NOT account names)
-      // Cron --to for Discord uses "channel:<guildChannelId>" to target a specific text channel
-      // JSON guilds config doesn't store channel names, so list IDs for user to pick
-      const allGuildChannels = [];
-      if (discordConfig.guilds) {
-        for (const [, guildObj] of Object.entries(discordConfig.guilds)) {
-          if (!guildObj?.channels) continue;
-          for (const [chId, chCfg] of Object.entries(guildObj.channels)) {
-            if (chCfg && chCfg.allow !== false) allGuildChannels.push(chId);
-          }
-        }
-      }
+    cronDelivery[agent] = { channel: chBase, account: chAccount, to: target };
+  }
 
-      if (allGuildChannels.length > 0 && ceoBind && ceoBind.startsWith('discord') && !ceoDeliveryTarget) {
-        if (allGuildChannels.length === 1) {
-          ceoDeliveryTarget = `channel:${allGuildChannels[0]}`;
-        } else {
-          log('');
-          log(msg(
-            '  Select Discord channel for CEO cron delivery (morning briefing etc.):',
-            '  選擇 CEO 排程推送的 Discord 頻道（晨間簡報等）：'
-          ));
-          for (let i = 0; i < allGuildChannels.length; i++) {
-            log(`    ${i + 1}) ${allGuildChannels[i]}`);
-          }
-          log(msg(
-            '  (Check Discord channel settings to match IDs to names)',
-            '  （對照 Discord 頻道設定確認 ID 對應的頻道名稱）'
-          ));
-          let ceoChIdx = -1;
-          while (ceoChIdx < 1 || ceoChIdx > allGuildChannels.length) {
-            const input = await ask(rl, msg(
-              `  CEO delivery channel (1-${allGuildChannels.length}): `,
-              `  CEO 推送頻道 (1-${allGuildChannels.length})：`
-            ));
-            ceoChIdx = parseInt(input, 10);
-            if (isNaN(ceoChIdx)) ceoChIdx = -1;
-          }
-          ceoDeliveryTarget = `channel:${allGuildChannels[ceoChIdx - 1]}`;
-        }
-      }
-      if (allGuildChannels.length > 0 && caoBind && caoBind.startsWith('discord') && !caoDeliveryTarget) {
-        if (allGuildChannels.length === 1) {
-          caoDeliveryTarget = `channel:${allGuildChannels[0]}`;
-        } else {
-          // Default to a different channel than CEO if possible
-          const ceoChId = ceoDeliveryTarget ? ceoDeliveryTarget.replace('channel:', '') : null;
-          const remaining = allGuildChannels.filter(ch => ch !== ceoChId);
-          if (remaining.length === 1) {
-            caoDeliveryTarget = `channel:${remaining[0]}`;
-            log(msg(
-              `  CAO delivery channel: ${remaining[0]} (auto-selected, different from CEO)`,
-              `  CAO 推送頻道：${remaining[0]}（自動選擇，與 CEO 不同）`
-            ));
-          } else {
-            log('');
-            log(msg(
-              '  Select Discord channel for CAO cron delivery (security scan):',
-              '  選擇 CAO 排程推送的 Discord 頻道（安全掃描）：'
-            ));
-            for (let i = 0; i < allGuildChannels.length; i++) {
-              log(`    ${i + 1}) ${allGuildChannels[i]}`);
-            }
-            let caoChIdx = -1;
-            while (caoChIdx < 1 || caoChIdx > allGuildChannels.length) {
-              const input = await ask(rl, msg(
-                `  CAO delivery channel (1-${allGuildChannels.length}): `,
-                `  CAO 推送頻道 (1-${allGuildChannels.length})：`
-              ));
-              caoChIdx = parseInt(input, 10);
-              if (isNaN(caoChIdx)) caoChIdx = -1;
-            }
-            caoDeliveryTarget = `channel:${allGuildChannels[caoChIdx - 1]}`;
-          }
+  // [8] Unbind all claw-company bindings across ALL channel types
+  // Collect all known channel:account combos from config
+  const allBindKeys = new Set();
+  if (nativeJson.channels) {
+    for (const [chName, chConfig] of Object.entries(nativeJson.channels)) {
+      if (typeof chConfig !== 'object' || chConfig === null) continue;
+      allBindKeys.add(chName); // base channel
+      if (chConfig.accounts && typeof chConfig.accounts === 'object') {
+        for (const accName of Object.keys(chConfig.accounts)) {
+          if (accName === 'default') continue;
+          allBindKeys.add(`${chName}:${accName}`);
         }
       }
     }
   }
-
-  // Unbind ALL existing Discord bindings for CEO/CAO/CTO/COO before re-binding
-  // 'unbind --bind discord' only removes discord:default, NOT discord:ceo etc.
-  // Must unbind each account-level binding individually.
-  const discordAccountNames = Object.keys(discordConfig?.accounts || {});
-  for (const agent of ['ceo', 'cao', 'cto', 'coo']) {
-    // Always try base 'discord' (covers discord:default)
-    tryExec(['openclaw', 'agents', 'unbind', '--agent', `${AGENT_PREFIX}${agent}`, '--bind', 'discord']);
-    // Also unbind each named account (discord:ceo, discord:audit, etc.)
-    for (const accName of discordAccountNames) {
-      if (accName === 'default') continue; // already covered by bare 'discord'
-      tryExec(['openclaw', 'agents', 'unbind', '--agent', `${AGENT_PREFIX}${agent}`, '--bind', `discord:${accName}`]);
+  for (const agent of BIND_AGENTS) {
+    for (const key of allBindKeys) {
+      tryExec(['openclaw', 'agents', 'unbind', '--agent', `${AGENT_PREFIX}${agent}`, '--bind', key]);
     }
   }
 
-  // Bind CEO
-  if (ceoBind) {
-    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}ceo`, '--bind', ceoBind];
-    const result = tryExec(cmdArgs);
-    if (result.ok) {
-      logOk(`${AGENT_PREFIX}ceo -> ${ceoBind}`);
-    } else {
-      failedBindCmds.push(cmdToString(cmdArgs));
+  // [9] Bind each agent to their selected accounts
+  for (const agent of BIND_AGENTS) {
+    for (const binding of agentBindings[agent]) {
+      const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}${agent}`, '--bind', binding];
+      const result = tryExec(cmdArgs);
+      if (result.ok) {
+        logOk(`${AGENT_PREFIX}${agent} -> ${binding}`);
+      } else {
+        failedBindCmds.push(cmdToString(cmdArgs));
+      }
     }
   }
 
-  // Bind CAO (separate channel if available)
-  if (caoBind) {
-    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cao`, '--bind', caoBind];
-    const result = tryExec(cmdArgs);
-    if (result.ok) {
-      const shared = caoBind === ceoBind ? ' (shared)' : '';
-      logOk(`${AGENT_PREFIX}cao -> ${caoBind}${shared}`);
-    } else {
-      failedBindCmds.push(cmdToString(cmdArgs));
-    }
-  }
-
-  // Bind CTO (independent tech channel)
-  if (ctoBind) {
-    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}cto`, '--bind', ctoBind];
-    const result = tryExec(cmdArgs);
-    if (result.ok) {
-      logOk(`${AGENT_PREFIX}cto -> ${ctoBind}`);
-    } else {
-      failedBindCmds.push(cmdToString(cmdArgs));
-    }
-  }
-
-  // Bind COO (independent ops channel)
-  if (cooBind) {
-    const cmdArgs = ['openclaw', 'agents', 'bind', '--agent', `${AGENT_PREFIX}coo`, '--bind', cooBind];
-    const result = tryExec(cmdArgs);
-    if (result.ok) {
-      logOk(`${AGENT_PREFIX}coo -> ${cooBind}`);
-    } else {
-      failedBindCmds.push(cmdToString(cmdArgs));
-    }
-  }
-
-  if (failedBindCmds.length === 0 && (ceoBind || caoBind || ctoBind || cooBind)) {
+  if (failedBindCmds.length === 0 && hasBindings) {
     log(msg(
       '  ⚠ Restart gateway for binding changes to take effect.',
       '  ⚠ 需要重啟 gateway 才能讓 binding 變更生效。'
     ));
   }
 
+  // [10] Return new format
   log('');
-  return { ceoBind, caoBind, ctoBind, cooBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds };
+  return { agentBindings, cronDelivery, failedBindCmds };
+}
+
+/**
+ * Extract delivery target (--to) for a channel binding from native config.
+ * Works for all channel types (WhatsApp, Telegram, Discord excluded here).
+ */
+function extractChannelTarget(channelName, json) {
+  if (!json?.channels || !channelName) return null;
+  const parts = channelName.split(':');
+  const baseName = parts[0];
+  const account = parts[1];
+  const config = json.channels[baseName];
+  if (!config || typeof config !== 'object') return null;
+  if (account && config.accounts && config.accounts[account]) {
+    const acc = config.accounts[account];
+    return acc.to || acc.chatId || acc.chat_id || acc.target || null;
+  }
+  if (config.to || config.phoneNumber || config.phone || config.target) {
+    return config.to || config.phoneNumber || config.phone || config.target;
+  }
+  if (baseName === 'whatsapp' && Array.isArray(config.allowFrom) && config.allowFrom.length > 0) {
+    return config.allowFrom[0];
+  }
+  return null;
 }
 
 
@@ -875,54 +744,50 @@ async function main() {
     const nativeJson = readJsonc(nativeJsonPath);
     const rl = createRl();
 
-    // Offer to add new Discord bot accounts before detecting channels
-    const discordConfig = nativeJson.channels?.discord;
-    if (discordConfig && discordConfig.enabled !== false) {
-      const existingAccounts = Object.keys(discordConfig.accounts || {});
-      log(msg(
-        `\n  Current Discord accounts: ${existingAccounts.length > 0 ? existingAccounts.join(', ') : '(none)'}`,
-        `\n  目前的 Discord 帳號：${existingAccounts.length > 0 ? existingAccounts.join(', ') : '（無）'}`
-      ));
-      const addMore = await ask(rl, msg(
-        '  Add a new Discord bot account? (y/N): ',
-        '  新增 Discord Bot 帳號？(y/N)：'
-      ));
-      if (addMore.trim().toLowerCase().startsWith('y')) {
-        let adding = true;
-        while (adding) {
-          const accName = await ask(rl, msg(
-            '    Account name (e.g. ceo, audit): ',
-            '    帳號名稱（例如 ceo、audit）：'
-          ));
-          const accToken = await ask(rl, msg(
-            '    Bot token: ',
-            '    Bot Token：'
-          ));
-          if (accName.trim() && accToken.trim()) {
-            const result = tryExec([
-              'openclaw', 'channels', 'add',
-              '--channel', 'discord',
-              '--account', accName.trim(),
-              '--token', accToken.trim(),
-            ]);
-            if (result.ok) {
-              logOk(`Discord account "${accName.trim()}" added`);
-            } else {
-              logWarn(
-                `Failed to add account: ${result.stderr}`,
-                `新增帳號失敗：${result.stderr}`
-              );
-            }
+    // Offer to add new channel accounts before detecting channels
+    const addMore = await ask(rl, msg(
+      '\n  Add a new channel account? (y/N): ',
+      '\n  新增通道帳號？(y/N)：'
+    ));
+    if (addMore.trim().toLowerCase().startsWith('y')) {
+      let adding = true;
+      while (adding) {
+        const chType = (await ask(rl, msg(
+          '    Channel type (e.g. discord, telegram): ',
+          '    通道類型（如 discord, telegram）：'
+        ))).trim();
+        const accName = (await ask(rl, msg(
+          '    Account name: ',
+          '    帳號名稱：'
+        ))).trim();
+        const accToken = (await ask(rl, msg(
+          '    Bot Token: ',
+          '    Bot Token：'
+        ))).trim();
+        if (chType && accName && accToken) {
+          const result = tryExec([
+            'openclaw', 'channels', 'add',
+            '--channel', chType,
+            '--account', accName,
+            '--token', accToken,
+          ]);
+          if (result.ok) {
+            logOk(msg(`Account "${accName}" added to ${chType}`, `${chType} 帳號「${accName}」已新增`));
+          } else {
+            logWarn(
+              `Failed to add account: ${result.stderr}`,
+              `新增帳號失敗：${result.stderr}`
+            );
           }
-          const more = await ask(rl, msg(
-            '    Add another? (y/N): ',
-            '    繼續新增？(y/N)：'
-          ));
-          adding = more.trim().toLowerCase().startsWith('y');
         }
-        // Re-read json after adding accounts
-        Object.assign(nativeJson, readJsonc(nativeJsonPath));
+        const more = await ask(rl, msg(
+          '    Add another? (y/N): ',
+          '    繼續新增？(y/N)：'
+        ));
+        adding = more.trim().toLowerCase().startsWith('y');
       }
+      // Re-read json after adding accounts
+      Object.assign(nativeJson, readJsonc(nativeJsonPath));
     }
 
     // Detect channels (re-read after potential account additions)
@@ -2297,7 +2162,7 @@ async function main() {
   // Bind channels
   // ============================================
   const channelResult = await setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFound);
-  const { ceoBind, caoBind, ctoBind, cooBind, ceoDeliveryTarget, caoDeliveryTarget, primaryChannel, failedBindCmds } = channelResult;
+  const { agentBindings, cronDelivery, failedBindCmds } = channelResult;
 
   log('');
 
@@ -2354,39 +2219,9 @@ async function main() {
   // For 'announce' jobs, results are delivered via --channel + --announce + --to.
   // For 'none' jobs, results are written to output/ files; CEO heartbeat picks them up.
 
-  // Extract delivery target for non-Discord channels (WhatsApp, Telegram)
-  function extractChannelTarget(channelName) {
-    if (!nativeJson.channels || !channelName) return null;
-    const parts = channelName.split(':');
-    const baseName = parts[0];
-    const account = parts[1];
-    const config = nativeJson.channels[baseName];
-    if (!config || typeof config !== 'object') return null;
-    // Telegram-style with accounts
-    if (account && config.accounts && config.accounts[account]) {
-      const acc = config.accounts[account];
-      return acc.to || acc.chatId || acc.chat_id || acc.target || null;
-    }
-    // Explicit target fields
-    if (config.to || config.phoneNumber || config.phone || config.target) {
-      return config.to || config.phoneNumber || config.phone || config.target;
-    }
-    // WhatsApp: use first allowFrom entry as delivery target
-    if (baseName === 'whatsapp' && Array.isArray(config.allowFrom) && config.allowFrom.length > 0) {
-      return config.allowFrom[0];
-    }
-    return null;
-  }
-
-  // Resolve cron delivery channel (base name), account, and target (--to destination)
-  // --channel expects base name (e.g. "whatsapp", "discord"), --to expects destination
-  // --account is needed for Discord multi-bot to specify which bot sends the delivery
-  const ceoCronChannel = (ceoBind || primaryChannel || '').split(':')[0] || null;
-  const caoCronChannel = (caoBind || primaryChannel || '').split(':')[0] || null;
-  const ceoCronAccount = (ceoBind || '').includes(':') ? (ceoBind || '').split(':')[1] : null;
-  const caoCronAccount = (caoBind || '').includes(':') ? (caoBind || '').split(':')[1] : null;
-  const primaryTarget = ceoDeliveryTarget || extractChannelTarget(ceoCronChannel);
-  const caoTarget = caoDeliveryTarget || extractChannelTarget(caoCronChannel);
+  // Cron delivery is pre-computed in setupChannelBindings()
+  const ceoCron = cronDelivery.ceo || { channel: null, account: null, to: null };
+  const caoCron = cronDelivery.cao || { channel: null, account: null, to: null };
   const missingTargets = [];
 
   // Auto-detect system timezone for cron --tz (IANA format)
@@ -2416,8 +2251,24 @@ async function main() {
       '  範例：Asia/Taipei, America/New_York, Europe/London'
     ));
     const tzInput = await ask(rl, msg('  Your timezone (Enter to skip): ', '  你的時區（Enter 跳過）：'));
+    // Validate timezone
     if (tzInput.trim()) {
-      cronTz = tzInput.trim();
+      let tz = tzInput.trim();
+      while (true) {
+        try {
+          Intl.DateTimeFormat(undefined, { timeZone: tz });
+          cronTz = tz;
+          break;
+        } catch {
+          logWarn(
+            `Invalid timezone "${tz}". Use IANA format (e.g. Asia/Taipei)`,
+            `無效時區「${tz}」。請使用 IANA 格式（如 Asia/Taipei）`
+          );
+          const retry = await ask(rl, msg('  Your timezone: ', '  你的時區：'));
+          if (!retry.trim()) { cronTz = ''; break; }
+          tz = retry.trim();
+        }
+      }
     } else {
       cronTz = ''; // Will use server time (UTC)
     }
@@ -2451,9 +2302,9 @@ async function main() {
       agent: `${AGENT_PREFIX}ceo`,
       model: tiers.CEO,
       message: 'Execute morning briefing: read MEMORY.md and recent output/ files from all executives (CFO, CIO, COO, CTO, CHRO, CAO) to collect latest status. Compile into briefing with action items for Chairman. Refer to briefing-template.md. Do NOT use sessions_send (unavailable in cron).',
-      channel: ceoCronChannel,
-      account: ceoCronAccount,
-      to: primaryTarget,
+      channel: ceoCron.channel,
+      account: ceoCron.account,
+      to: ceoCron.to,
     },
     {
       name: 'investment-monitor',
@@ -2469,9 +2320,9 @@ async function main() {
       agent: `${AGENT_PREFIX}chro`,
       model: tiers.CHRO,
       message: 'Audit MEMORY.md health across all agents: check line counts vs 200-line limit, duplicates, stale entries, archive logs >30 days. Write health report to output/reports/. Do NOT use sessions_send (unavailable in cron).',
-      channel: ceoCronChannel,
-      account: ceoCronAccount,
-      to: primaryTarget,
+      channel: ceoCron.channel,
+      account: ceoCron.account,
+      to: ceoCron.to,
     },
     {
       name: 'weekly-org-review',
@@ -2479,9 +2330,9 @@ async function main() {
       agent: `${AGENT_PREFIX}chro`,
       model: tiers.CHRO,
       message: 'Produce weekly org health report: agent performance summary, capability gaps, model config suggestions, skill usage stats. Write report to output/reports/. Do NOT use sessions_send (unavailable in cron).',
-      channel: ceoCronChannel,
-      account: ceoCronAccount,
-      to: primaryTarget,
+      channel: ceoCron.channel,
+      account: ceoCron.account,
+      to: ceoCron.to,
     },
     {
       name: 'security-scan',
@@ -2489,9 +2340,9 @@ async function main() {
       agent: `${AGENT_PREFIX}cao`,
       model: tiers.CAO,
       message: 'Run full security scan: verify SOUL.md integrity, check recent session logs for anomalies, validate security rules compliance. Produce security scan report. Do NOT use sessions_send (unavailable in cron). Report is delivered via cron announce.',
-      channel: caoCronChannel,
-      account: caoCronAccount,
-      to: caoTarget,
+      channel: caoCron.channel,
+      account: caoCron.account,
+      to: caoCron.to,
     },
     {
       name: 'cto-memory-cleanup',
