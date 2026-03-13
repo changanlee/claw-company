@@ -10,8 +10,9 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { spawnSync } = require('child_process');
+const { spawnSync, spawn } = require('child_process');
 const readline = require('readline');
+const https = require('https');
 
 // ============================================
 // Constants
@@ -191,6 +192,54 @@ function ask(rl, question) {
 /** Replace {{INSTALL_DIR}} in a string. */
 function replaceInstallDir(text) {
   return text.replaceAll('{{INSTALL_DIR}}', INSTALL_DIR);
+}
+
+/** Fetch JSON from a URL with headers. Returns parsed JSON or null on error/timeout. */
+function fetchJson(url, headers = {}) {
+  return new Promise((resolve) => {
+    const req = https.get(url, { headers }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); } catch { resolve(null); }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.setTimeout(10000, () => { req.destroy(); resolve(null); });
+  });
+}
+
+/** Simple CLI spinner for long-running operations. */
+class Spinner {
+  constructor(text) {
+    this.text = text;
+    this.frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+    this.i = 0;
+    this.timer = null;
+  }
+  start() {
+    if (!process.stdout.isTTY) { log(`  ... ${this.text}`); return this; }
+    process.stdout.write(`  ${this.frames[0]} ${this.text}`);
+    this.timer = setInterval(() => {
+      process.stdout.write(`\r  ${this.frames[this.i++ % this.frames.length]} ${this.text}`);
+    }, 80);
+    return this;
+  }
+  succeed(text) {
+    this.stop();
+    log(`  [OK] ${text || this.text}`);
+  }
+  fail(text) {
+    this.stop();
+    log(`  [FAIL] ${text || this.text}`);
+  }
+  stop() {
+    if (this.timer) { clearInterval(this.timer); this.timer = null; }
+    if (process.stdout.isTTY) {
+      process.stdout.clearLine(0);
+      process.stdout.cursorTo(0);
+    }
+  }
 }
 
 /** Try symlink, fallback to copy on Windows or permission errors. Warns once on first fallback. */
@@ -586,6 +635,30 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
     }
   }
 
+  // Fetch Discord channel names via API for friendly display
+  const channelNameMap = {};
+  if (allGuildChannels.length > 0 && discordConfig) {
+    let botToken = discordConfig.token;
+    if (!botToken && discordConfig.accounts) {
+      for (const acc of Object.values(discordConfig.accounts)) {
+        if (acc && acc.token) { botToken = acc.token; break; }
+      }
+    }
+    if (botToken) {
+      for (const guildId of Object.keys(discordConfig.guilds || {})) {
+        const channels = await fetchJson(
+          `https://discord.com/api/v10/guilds/${guildId}/channels`,
+          { Authorization: `Bot ${botToken}` }
+        );
+        if (Array.isArray(channels)) {
+          for (const ch of channels) {
+            if (ch.id && ch.name) channelNameMap[ch.id] = ch.name;
+          }
+        }
+      }
+    }
+  }
+
   for (const agent of cronAgents) {
     const bindings = agentBindings[agent];
     if (!bindings || bindings.length === 0) continue; // skip — will use --no-deliver
@@ -623,7 +696,13 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
     if (chBase === 'discord') {
       // Discord: need guild channel ID as --to
       if (allGuildChannels.length === 1) {
-        target = `channel:${allGuildChannels[0]}`;
+        const autoChId = allGuildChannels[0];
+        const autoChName = channelNameMap[autoChId];
+        log(msg(
+          `  ${agent.toUpperCase()} delivery → ${autoChName ? `${autoChId} (#${autoChName})` : autoChId}`,
+          `  ${agent.toUpperCase()} 推送 → ${autoChName ? `${autoChId} (#${autoChName})` : autoChId}`
+        ));
+        target = `channel:${autoChId}`;
       } else if (allGuildChannels.length > 1) {
         log('');
         log(msg(
@@ -631,7 +710,9 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
           `  選擇 ${agent.toUpperCase()} 排程推送的 Discord 頻道：`
         ));
         for (let i = 0; i < allGuildChannels.length; i++) {
-          log(`    ${i + 1}) ${allGuildChannels[i]}`);
+          const chId = allGuildChannels[i];
+          const chName = channelNameMap[chId];
+          log(`    ${i + 1}) ${chName ? `${chId} (#${chName})` : chId}`);
         }
         let chIdx = -1;
         while (chIdx < 1 || chIdx > allGuildChannels.length) {
@@ -968,14 +1049,16 @@ async function main() {
 
     // Verify by reindexing (use longer timeout for large memory stores)
     log('');
-    log(msg('Reindexing memory...', '重建記憶索引...'));
+    const reindexSpinner = new Spinner(msg('Reindexing memory...', '重建記憶索引...'));
+    reindexSpinner.start();
     const reindexResult = spawnSync('openclaw', ['memory', 'index', '--force'], { encoding: 'utf-8', timeout: 120000 });
     if (reindexResult.status === 0) {
-      logOk(msg('Memory reindex complete', '記憶索引重建完成'));
+      reindexSpinner.succeed(msg('Memory reindex complete', '記憶索引重建完成'));
     } else {
+      reindexSpinner.fail(msg('Memory reindex failed', '記憶索引重建失敗'));
       logWarn(
-        'Memory reindex failed or timed out. Run manually: openclaw memory index --force',
-        '記憶索引重建失敗或超時。請手動執行：openclaw memory index --force'
+        'Run manually: openclaw memory index --force',
+        '請手動執行：openclaw memory index --force'
       );
     }
 
@@ -1427,10 +1510,7 @@ async function main() {
   // ============================================
   // Deploy
   // ============================================
-  logInfo(
-    `Installing to ${INSTALL_DIR}...`,
-    `安裝至 ${INSTALL_DIR}...`
-  );
+  log(`\n[1/7] ${msg(`Deploying files to ${INSTALL_DIR}...`, `部署檔案至 ${INSTALL_DIR}...`)}`);
   log('');
   fs.mkdirSync(INSTALL_DIR, { recursive: true });
 
@@ -1707,6 +1787,8 @@ async function main() {
   // ============================================
   // Install memory-lancedb-pro plugin
   // ============================================
+  log(`\n[2/7] ${msg('Memory plugin', '記憶插件')}`);
+
   const skipMemoryPlugin = process.argv.includes('--skip-memory-plugin');
   const pluginPath = path.join(OPENCLAW_DIR, MEMORY_PLUGIN_DIR);
   let memoryPluginInstalled = false;
@@ -1744,14 +1826,17 @@ async function main() {
 
       // Try git clone first
       fs.mkdirSync(path.join(OPENCLAW_DIR, 'plugins'), { recursive: true });
+      const cloneSpinner = new Spinner(msg('Cloning repository...', '下載倉庫...'));
+      cloneSpinner.start();
       const cloneResult = tryExec([
         'git', 'clone', '--branch', MEMORY_PLUGIN_VERSION, '--depth', '1',
         MEMORY_PLUGIN_REPO, pluginPath,
       ]);
 
       if (cloneResult.ok) {
-        logOk('git clone');
+        cloneSpinner.succeed('git clone');
       } else {
+        cloneSpinner.fail('git clone');
         logWarn(
           `git clone failed: ${cloneResult.stderr}. Trying npm install...`,
           `git clone 失敗：${cloneResult.stderr}。嘗試 npm install...`
@@ -1765,6 +1850,8 @@ async function main() {
         spawnSync('npm', ['init', '-y'], {
           encoding: 'utf-8', timeout: 30000, cwd: npmTmpDir,
         });
+        const npmFallbackSpinner = new Spinner(msg('npm install (fallback)...', 'npm install（備援）...'));
+        npmFallbackSpinner.start();
         const npmInstallResult = spawnSync('npm', ['install', `memory-lancedb-pro@${MEMORY_PLUGIN_VERSION}`], {
           encoding: 'utf-8', timeout: 120000, cwd: npmTmpDir,
         });
@@ -1774,8 +1861,9 @@ async function main() {
           if (fs.existsSync(hoistSrc)) {
             fs.mkdirSync(pluginPath, { recursive: true });
             fs.cpSync(hoistSrc, pluginPath, { recursive: true });
-            logOk('npm install + hoist (fallback)');
+            npmFallbackSpinner.succeed('npm install + hoist (fallback)');
           } else {
+            npmFallbackSpinner.fail('npm install');
             logWarn(
               'npm install succeeded but package not found in node_modules. Check package name.',
               'npm install 成功但 node_modules 中找不到套件，請確認套件名稱。'
@@ -1783,6 +1871,7 @@ async function main() {
           }
           try { fs.rmSync(npmTmpDir, { recursive: true, force: true }); } catch (_) {}
         } else {
+          npmFallbackSpinner.fail('npm install');
           try { fs.rmSync(npmTmpDir, { recursive: true, force: true }); } catch (_) {}
           logWarn(
             'Memory plugin installation failed. You can install it manually later.',
@@ -1798,14 +1887,16 @@ async function main() {
 
       // npm install dependencies
       if (fs.existsSync(path.join(pluginPath, 'package.json'))) {
-        logInfo('Installing plugin dependencies...', '安裝插件相依套件...');
+        const depSpinner = new Spinner(msg('Installing plugin dependencies...', '安裝插件相依套件...'));
+        depSpinner.start();
         const depResult = spawnSync('npm', ['install', '--production'], {
           encoding: 'utf-8', timeout: 120000, cwd: pluginPath,
         });
         if (depResult.status === 0) {
-          logOk('npm install (dependencies)');
+          depSpinner.succeed('npm install (dependencies)');
           memoryPluginInstalled = true;
         } else {
+          depSpinner.fail('npm install (dependencies)');
           logWarn(
             `npm install failed: ${(depResult.stderr || '').slice(0, 200)}`,
             `npm install 失敗：${(depResult.stderr || '').slice(0, 200)}`
@@ -1820,10 +1911,7 @@ async function main() {
   // ============================================
   // Inject settings into native openclaw.json
   // ============================================
-  logInfo(
-    'Injecting settings into native openclaw.json...',
-    '注入設定到原生 openclaw.json...'
-  );
+  log(`\n[3/7] ${msg('Injecting settings into native openclaw.json...', '注入設定到原生 openclaw.json...')}`);
 
   // If configPath was a backup (old symlink scenario), restore it first
   if (configPath !== nativeJsonPath) {
@@ -2046,7 +2134,7 @@ async function main() {
   // ============================================
   // Register agents via CLI
   // ============================================
-  logInfo('Registering agents...', '註冊 Agent...');
+  log(`\n[4/7] ${msg('Registering agents...', '註冊 Agent...')}`);
 
   const agentDefs = [
     { id: 'ceo', tier: tiers.CEO },
@@ -2161,6 +2249,7 @@ async function main() {
   // ============================================
   // Bind channels
   // ============================================
+  log(`\n[5/7] ${msg('Binding channels...', '綁定通道...')}`);
   const channelResult = await setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFound);
   const { agentBindings, cronDelivery, failedBindCmds } = channelResult;
 
@@ -2169,7 +2258,7 @@ async function main() {
   // ============================================
   // Register cron jobs
   // ============================================
-  logInfo('Registering cron jobs...', '註冊排程任務...');
+  log(`\n[6/7] ${msg('Registering cron jobs...', '註冊排程任務...')}`);
 
   // Remove existing cron jobs by UUID before re-adding (prevent duplicates on re-install)
   const managedCronNames = new Set([
@@ -2422,6 +2511,7 @@ async function main() {
   // ============================================
   // Inject per-agent skill allowlist (after all CLI ops that modify openclaw.json)
   // ============================================
+  log(`\n[7/7] ${msg('Configuring skill allowlist...', '配置 Skill 白名單...')}`);
   const skillAllowlistPath = path.join(SCRIPT_DIR, 'skill-allowlist.json');
   if (fs.existsSync(skillAllowlistPath)) {
     try {
@@ -2498,8 +2588,6 @@ async function main() {
   log(msg('  Post-install:', '  安裝後步驟：'));
   log(msg('  1. Verify config: openclaw channels list && openclaw agents bindings', '  1. 驗證配置：openclaw channels list && openclaw agents bindings'));
   log(msg('  2. Run "openclaw doctor --fix" to migrate any legacy cron config', '  2. 執行 "openclaw doctor --fix" 遷移舊版 cron 配置'));
-  log(msg('  3. Restart gateway (required for binding changes to take effect)', '  3. 重啟 gateway（binding 變更需要重啟才生效）'));
-  log(msg('     pkill -f openclaw; sleep 3 && nohup openclaw gateway &', '     pkill -f openclaw; sleep 3 && nohup openclaw gateway &'));
   log('');
 
   // Show failed commands for manual execution
@@ -2559,18 +2647,13 @@ async function main() {
       '  3. node install.js --setup-memory  （自動配置 systemd + 驗證）'
     ));
     log(msg(
-      '  4. openclaw gateway start (or: sudo systemctl restart openclaw-gateway)',
-      '  4. openclaw gateway start（或：sudo systemctl restart openclaw-gateway）'
-    ));
-    log(msg(
-      '  5. Send a test message to CEO Bot via your configured platform',
-      '  5. 透過已配置的平台發送測試訊息給 CEO Bot'
+      '  4. Send a test message to CEO Bot via your configured platform',
+      '  4. 透過已配置的平台發送測試訊息給 CEO Bot'
     ));
   } else {
-    log('  1. openclaw gateway start');
     log(msg(
-      '  2. Send a test message to CEO Bot via your configured platform',
-      '  2. 透過已配置的平台發送測試訊息給 CEO Bot'
+      '  1. Send a test message to CEO Bot via your configured platform',
+      '  1. 透過已配置的平台發送測試訊息給 CEO Bot'
     ));
   }
   // Check if gateway runs under systemd and JINA_API_KEY is missing from service env
@@ -2621,6 +2704,46 @@ async function main() {
   log(`  ${msg('Update channel bindings', '更新通道綁定')}：node install.js --update-channels`);
   log(`  ${msg('Update skill allowlist only', '僅更新 Skill 白名單')}：node install.js --update-skills`);
   log(`  ${msg('Setup memory plugin (Jina key)', '配置記憶插件（Jina Key）')}：node install.js --setup-memory`);
+
+  // ============================================
+  // Gateway restart prompt
+  // ============================================
+  log('');
+  const restartAnswer = await ask(rl, msg(
+    'Restart gateway now? (Y/n): ',
+    '是否立即重啟 gateway？(Y/n)：'
+  ));
+  if (restartAnswer.toLowerCase() !== 'n') {
+    const gwSpinner = new Spinner(msg('Restarting gateway...', '重啟 gateway...'));
+    gwSpinner.start();
+
+    // Try systemd first
+    const systemdResult = tryExec(['sudo', 'systemctl', 'restart', 'openclaw-gateway']);
+    if (systemdResult.ok) {
+      gwSpinner.succeed(msg('Gateway restarted (systemd)', 'Gateway 已重啟（systemd）'));
+    } else {
+      // Fallback: pkill + detached spawn
+      tryExec(['pkill', '-f', 'openclaw']);
+      // Brief pause for cleanup
+      spawnSync('sleep', ['2'], { encoding: 'utf-8' });
+      const gw = spawn('openclaw', ['gateway'], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      gw.unref();
+      gwSpinner.succeed(msg('Gateway restart initiated', 'Gateway 重啟已發起'));
+      log(msg(
+        '  Verify: ps aux | grep openclaw',
+        '  驗證：ps aux | grep openclaw'
+      ));
+    }
+  } else {
+    log(msg(
+      '  Restart later: pkill -f openclaw; sleep 3 && nohup openclaw gateway &',
+      '  稍後重啟：pkill -f openclaw; sleep 3 && nohup openclaw gateway &'
+    ));
+  }
+
   log('');
   rl.close();
 }
