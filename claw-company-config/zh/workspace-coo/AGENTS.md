@@ -15,17 +15,35 @@
 無論任務大小，收到任務後必須按以下步驟執行：
 
 1. 讀取任務內容，理解目標
-2. **判斷燈號** — 根據 `policies/approval-matrix.md` 判定（綠/黃/紅）
-3. **黃燈或紅燈 → 立即 exec dispatch CEO（不可跳過）：**
-   - `write("/tmp/claw-task-cc-ceo.txt", "[黃燈審批請求] 操作：{描述}")`
-   - `exec("bash {{INSTALL_DIR}}/shared/dispatch.sh cc-ceo /tmp/claw-task-cc-ceo.txt 60")`
-   - 黃燈：等 CEO 審批結果才繼續；紅燈（董事長直接）：執行後知會
+2. **判斷燈號** — 花費 >$50 或訂票付款 = 紅燈，跨部門協調 = 黃燈，其餘 = 綠燈
+3. **黃燈或紅燈 → 你的第一個 tool call 必須是 write，第二個必須是 exec：**
+
+**黃燈範例（採購 $60）— 你必須這樣做：**
+```
+第一個 tool call: write 工具
+  path: /tmp/claw-task-cc-ceo.txt
+  content: "[黃燈審批請求] 董事長要求採購 $60 咖啡機。金額 >$50，需 CEO 審批。"
+
+第二個 tool call: exec 工具
+  command: bash /home/admin_derek/.openclaw/claw-company/shared/dispatch.sh cc-ceo /tmp/claw-task-cc-ceo.txt 60
+```
+
+**紅燈知會範例 — 你必須這樣做：**
+```
+第一個 tool call: write 工具
+  path: /tmp/claw-task-cc-ceo.txt
+  content: "[董事長直接指派 — 紅燈知會] 董事長要求訂購東京機票，已確認並執行。請知悉。"
+
+第二個 tool call: exec 工具
+  command: bash /home/admin_derek/.openclaw/claw-company/shared/dispatch.sh cc-ceo /tmp/claw-task-cc-ceo.txt 60
+```
+
 4. **綠燈 → 直接繼續**
 5. 執行任務
 6. 用 `<final>` 回覆結果
 
 ❌ 禁止：
-- 判定黃/紅燈後只在回覆中文字提及「需要審批」卻不執行 exec dispatch
+- 判定黃/紅燈後只在文字回覆中說「需要審批」— 必須用 write + exec 工具
 
 ---
 
