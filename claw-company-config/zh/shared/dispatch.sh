@@ -39,8 +39,15 @@ if [[ -z "$MSG" ]]; then
   exit 1
 fi
 
+# 偵測呼叫者 agent-id（從環境變數或預設 CEO）
+CALLER="${OPENCLAW_AGENT_ID:-cc-ceo}"
+
+# 加上來源標記，讓接收方能辨識任務來源
+TAGGED_MSG="[來源: ${CALLER} dispatch]
+${MSG}"
+
 # 執行分派
-openclaw agent --agent "$AGENT" -m "$MSG" --timeout "$TIMEOUT"
+openclaw agent --agent "$AGENT" -m "$TAGGED_MSG" --timeout "$TIMEOUT"
 
 # 清理暫存檔
 rm -f "$MSG_FILE"
