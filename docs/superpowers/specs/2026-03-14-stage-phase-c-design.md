@@ -45,12 +45,12 @@
 |------|------|----------|
 | `public/js/game.js` | 修改 | preload 改為動態 spritesheet 載入（含 loaderror fallback） |
 | `public/js/agents.js` | 修改 | 色塊矩形 → `this.scene.add.sprite()` + 動畫播放 + state-to-pose 映射 |
-| `public/js/interactions.js` | 修改 | dispatch/approve 效果改用 sprite 座標系（container offset 調整） |
-| `public/js/chairman.js` | 修改 | idle behavior 狀態對應 pose 播放 |
+| `public/js/interactions.js` | 修改 | sprite origin 從中心改為底部後，效果物件 y-offset 可能需微調（視覺測試後確認） |
+| `public/js/chairman.js` | 修改 | 可能不需改動（updateState 已處理 pose 切換），視覺測試後確認 |
 | `themes/modern-office/theme.json` | 修改 | 新增 `characterPattern`、`animationFps`，保留既有欄位 |
 | `config/runtime-config.json` | 修改 | 新增 `defaultGender` 欄位 |
 | `config/agents.json` | 修改 | 新增 `gender`、`personality` 欄位（保留所有既有欄位） |
-| `server/index.js` | 修改 | `/api/config` 回傳 characterPattern 資訊 |
+| `server/index.js` | 修改 | `/api/config` 回傳 `defaultGender`（從 runtime-config.json 讀取） |
 | `scripts/generate-sprites.js` | 新建 | 程式生成 fallback spritesheet（RGBA 透明背景） |
 | `scripts/verify-assets.js` | 新建 | 掃描目錄驗證素材完整性 |
 | `tests/theme-manager.test.js` | 修改 | 新增 characterPattern 驗證 |
@@ -188,7 +188,14 @@ updateState(agentId, newState, detail) {
     }
   }
 
-  // ... 其餘邏輯（status dot、alpha、break room）不變
+  // Status dot：加入 approving 映射
+  const dotColors = {
+    idle: 0x22c55e, working: 0x3b82f6, researching: 0x8b5cf6,
+    executing: 0xf59e0b, dispatching: 0x06b6d4, awaiting: 0xfbbf24,
+    error: 0xef4444, offline: 0x64748b,
+    approving: 0xf59e0b  // ← 新增：同 executing 色
+  };
+  // ... 其餘邏輯（alpha、break room）不變
 }
 ```
 
