@@ -6,6 +6,36 @@ const { WebSocketServer } = require('ws');
 const ThemeManager = require('./theme-manager');
 const Simulator = require('./simulator');
 
+// Parse YAML frontmatter from IDENTITY.md (name, icon fields)
+function parseIdentityFrontmatter(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return {};
+  const result = {};
+  for (const line of match[1].split('\n')) {
+    const m = line.match(/^(\w+):\s*"?([^"]*)"?\s*$/);
+    if (m) result[m[1]] = m[2];
+  }
+  return result;
+}
+
+// Load agent identities from claw-company-config IDENTITY.md files
+function loadIdentities(configDir, locale) {
+  const identities = {};
+  const lang = locale === 'zh-TW' ? 'zh' : 'en';
+  const roleMap = { ceo: 'cc-ceo', cfo: 'cc-cfo', cio: 'cc-cio', cto: 'cc-cto', coo: 'cc-coo', chro: 'cc-chro', cao: 'cc-cao' };
+
+  for (const [role, agentId] of Object.entries(roleMap)) {
+    const idPath = path.join(configDir, lang, `workspace-${role}`, 'IDENTITY.md');
+    if (fs.existsSync(idPath)) {
+      const parsed = parseIdentityFrontmatter(fs.readFileSync(idPath, 'utf-8'));
+      if (parsed.name) {
+        identities[agentId] = { name: parsed.name, icon: parsed.icon || null };
+      }
+    }
+  }
+  return identities;
+}
+
 function createServer(opts = {}) {
   const configPath = path.join(__dirname, '..', 'config', 'runtime-config.json');
   const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
@@ -14,6 +44,18 @@ function createServer(opts = {}) {
 
   const agentsPath = path.join(__dirname, '..', 'config', 'agents.json');
   const agentDefs = JSON.parse(fs.readFileSync(agentsPath, 'utf-8'));
+
+  // Load identities from claw-company-config (live names)
+  const ccConfigDir = path.join(__dirname, '..', '..', 'claw-company-config');
+  if (fs.existsSync(ccConfigDir)) {
+    const identities = loadIdentities(ccConfigDir, config.locale);
+    for (const [agentId, identity] of Object.entries(identities)) {
+      if (agentDefs[agentId]) {
+        agentDefs[agentId].name = identity.name;
+        if (identity.icon) agentDefs[agentId].icon = identity.icon;
+      }
+    }
+  }
 
   const themesDir = path.join(__dirname, '..', 'themes');
   const themeManager = new ThemeManager(themesDir);
@@ -32,8 +74,19 @@ function createServer(opts = {}) {
   });
 
   app.get('/api/config', (req, res) => {
+    // Re-read identities on each request so name changes are live
+    const liveAgents = JSON.parse(JSON.stringify(agentDefs));
+    if (fs.existsSync(ccConfigDir)) {
+      const identities = loadIdentities(ccConfigDir, config.locale);
+      for (const [agentId, identity] of Object.entries(identities)) {
+        if (liveAgents[agentId]) {
+          liveAgents[agentId].name = identity.name;
+          if (identity.icon) liveAgents[agentId].icon = identity.icon;
+        }
+      }
+    }
     res.json({
-      agents: agentDefs,
+      agents: liveAgents,
       theme: config.theme,
       locale: config.locale,
       easterEggs: config.easterEggs || false

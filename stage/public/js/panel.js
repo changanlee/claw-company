@@ -38,13 +38,14 @@ class DataPanel {
         .map(([id, agent]) => {
           const def = this.agentDefs[id] || {};
           const role = I18n.t(`role.${def.role || id}`);
+          const displayName = def.name ? `${def.icon || ''}${def.name}(${role})`.trim() : role;
           const status = I18n.t(`status.${agent.state}`);
           const dotColor = agent.state === 'error' ? '#ef4444'
             : agent.state === 'offline' ? '#64748b'
             : agent.state === 'idle' ? '#22c55e' : '#3b82f6';
           return `<div class="panel-agent">
             <span class="dot" style="background:${dotColor}"></span>
-            <span class="name">${role}</span>
+            <span class="name">${displayName}</span>
             <span class="status">${status}</span>
           </div>`;
         }).join('');

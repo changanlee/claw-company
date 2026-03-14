@@ -20,8 +20,12 @@ class AgentManager {
     const sprite = this.scene.add.rectangle(0, 0, 40, 60, color);
     sprite.setOrigin(0.5, 1);
 
-    // Name tag
-    const nameTag = this.scene.add.text(0, -70, I18n.t(`role.${def.role}`), {
+    // Name tag: "Name (Role)" or just "Role" if no name
+    const roleText = I18n.t(`role.${def.role}`);
+    const displayName = def.name
+      ? `${def.icon || ''}${def.name}(${roleText})`.trim()
+      : roleText;
+    const nameTag = this.scene.add.text(0, -70, displayName, {
       fontSize: '14px',
       fontFamily: 'monospace',
       color: '#ffffff',
