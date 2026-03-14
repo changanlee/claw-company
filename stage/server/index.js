@@ -112,6 +112,7 @@ function createServer(opts = {}) {
       agents: liveAgents,
       theme: config.theme,
       locale: config.locale,
+      defaultGender: config.defaultGender || 'male',
       easterEggs: config.easterEggs || false
     });
   });
