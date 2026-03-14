@@ -31,13 +31,44 @@
   function preload() {
     // Background
     this.load.image('background', `/themes/${config.theme}/background.png`);
-    // Character placeholder
-    this.load.image('char_default', `/themes/${config.theme}/sprites/characters/default.png`);
-    // Furniture
-    this.load.image('desk', `/themes/${config.theme}/sprites/furniture/desk.png`);
-    this.load.image('sofa', `/themes/${config.theme}/sprites/furniture/sofa.png`);
+
+    // Furniture — load each key from theme manifest
+    // Multiple keys may point to the same file (e.g. big-desk → desk.png);
+    // Phaser handles duplicate URLs gracefully, each key gets its own texture reference
+    const furniture = (themeManifest.theme && themeManifest.theme.furniture) || {};
+    for (const [name, relPath] of Object.entries(furniture)) {
+      this.load.image(name, `/themes/${config.theme}/${relPath}`);
+    }
+
     // Effects
     this.load.image('document', `/themes/${config.theme}/sprites/effects/document.png`);
+
+    // Character spritesheets (dynamic loading based on characterPattern)
+    const pattern = themeManifest.theme && themeManifest.theme.characterPattern;
+    if (pattern) {
+      const poses = ['idle','working','researching','executing','dispatching','awaiting','error'];
+      for (const agent of Object.values(config.agents)) {
+        const gender = agent.gender || config.defaultGender || 'male';
+        for (const pose of poses) {
+          const key = `${agent.role}-${gender}-${pose}`;
+          const path = pattern
+            .replace('{gender}', gender)
+            .replace('{role}', agent.role)
+            .replace('{pose}', pose);
+          this.load.spritesheet(key, `/themes/${config.theme}/${path}`, {
+            frameWidth: 48, frameHeight: 64
+          });
+        }
+      }
+    } else {
+      // Fallback: old single-image mode
+      this.load.image('char_default', `/themes/${config.theme}/sprites/characters/default.png`);
+    }
+
+    // Graceful handling of missing assets during incremental production
+    this.load.on('loaderror', (file) => {
+      console.warn(`Asset not found: ${file.key} — will use fallback`);
+    });
   }
 
   function create() {
@@ -81,7 +112,7 @@
     }
 
     // Create agents
-    agentManager = new AgentManager(this, config.agents, themeManifest);
+    agentManager = new AgentManager(this, config.agents, themeManifest, config.defaultGender);
     agentManager.createAll();
 
     // Chairman controller
