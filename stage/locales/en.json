@@ -8,6 +8,9 @@
   "status.awaiting": "Awaiting",
   "status.error": "Error",
   "status.offline": "Offline",
+  "status.monitoring": "Monitoring",
+  "status.reviewing": "Reviewing",
+  "status.approving": "Approving",
   "chairman.monitoring": "Monitoring",
   "chairman.reviewing": "Reviewing",
   "chairman.approving": "Approving",
@@ -27,5 +30,15 @@
   "role.cto": "CTO",
   "role.coo": "COO",
   "role.chro": "CHRO",
-  "role.cao": "CAO"
+  "role.cao": "CAO",
+  "event.dispatch": "dispatch",
+  "event.report": "report",
+  "event.approve": "approved",
+  "event.reject": "rejected",
+  "event.alert": "alert",
+  "idle.drink-coffee": "drink coffee",
+  "idle.look-window": "look outside",
+  "idle.read-paper": "read paper",
+  "idle.wander": "wander",
+  "idle.nap": "nap"
 }

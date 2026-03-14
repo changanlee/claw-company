@@ -38,8 +38,12 @@ class DataPanel {
         .map(([id, agent]) => {
           const def = this.agentDefs[id] || {};
           const role = I18n.t(`role.${def.role || id}`);
-          const displayName = def.name ? `${def.icon || ''}${def.name}(${role})`.trim() : role;
-          const status = I18n.t(`status.${agent.state}`);
+          const displayName = def.name ? `${def.name}(${role})`.trim() : role;
+          // Chairman uses chairman.* keys, agents use status.* keys
+          const statusKey = def.role === 'chairman' ? `chairman.${agent.state}` : `status.${agent.state}`;
+          let status = I18n.t(statusKey);
+          if (status === statusKey) status = I18n.t(`status.${agent.state}`);
+          if (status === `status.${agent.state}`) status = agent.state;
           const dotColor = agent.state === 'error' ? '#ef4444'
             : agent.state === 'offline' ? '#64748b'
             : agent.state === 'idle' ? '#22c55e' : '#3b82f6';
@@ -60,14 +64,30 @@ class DataPanel {
       }).join('');
   }
 
+  _agentRole(agentId) {
+    const def = this.agentDefs[agentId] || {};
+    const roleKey = `role.${def.role || agentId}`;
+    const role = I18n.t(roleKey);
+    return role !== roleKey ? role : agentId;
+  }
+
   _describeEvent(e) {
     switch (e.type) {
-      case 'dispatch': return `${e.from} → ${e.to}: dispatch`;
-      case 'report': return `${e.from} → ${e.to}: report`;
-      case 'approve': return `chairman: approved`;
-      case 'reject': return `chairman: rejected`;
-      case 'alert': return `${e.agent}: alert (${e.level})`;
-      case 'status_change': return `${e.agent}: ${e.state}`;
+      case 'dispatch': return `${this._agentRole(e.from)} → ${this._agentRole(e.to)}: ${I18n.t('event.dispatch')}`;
+      case 'report': return `${this._agentRole(e.from)} → ${this._agentRole(e.to || 'cc-ceo')}: ${I18n.t('event.report')}`;
+      case 'approve': return `${this._agentRole('chairman')}: ${I18n.t('event.approve')}`;
+      case 'reject': return `${this._agentRole('chairman')}: ${I18n.t('event.reject')}`;
+      case 'alert': {
+        const agent = this._agentRole(e.agent);
+        return `${agent}: ${I18n.t('event.alert')}`;
+      }
+      case 'status_change': {
+        const agent = this._agentRole(e.agent);
+        const statusKey = `status.${e.state}`;
+        let status = I18n.t(statusKey);
+        if (status === statusKey) status = e.state;
+        return `${agent}: ${status}`;
+      }
       default: return e.type;
     }
   }

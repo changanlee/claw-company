@@ -23,7 +23,7 @@ class AgentManager {
     // Name tag: "Name (Role)" or just "Role" if no name
     const roleText = I18n.t(`role.${def.role}`);
     const displayName = def.name
-      ? `${def.icon || ''}${def.name}(${roleText})`.trim()
+      ? `${def.name}(${roleText})`.trim()
       : roleText;
     const nameTag = this.scene.add.text(0, -70, displayName, {
       fontSize: '14px',

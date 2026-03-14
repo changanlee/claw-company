@@ -8,6 +8,9 @@
   "status.awaiting": "等待中",
   "status.error": "異常",
   "status.offline": "離線",
+  "status.monitoring": "監看中",
+  "status.reviewing": "審閱中",
+  "status.approving": "批准中",
   "chairman.monitoring": "監看中",
   "chairman.reviewing": "審閱中",
   "chairman.approving": "批准中",
@@ -27,5 +30,15 @@
   "role.cto": "技術長",
   "role.coo": "營運長",
   "role.chro": "人資長",
-  "role.cao": "稽核長"
+  "role.cao": "稽核長",
+  "event.dispatch": "分派",
+  "event.report": "回報",
+  "event.approve": "已批准",
+  "event.reject": "已駁回",
+  "event.alert": "警報",
+  "idle.drink-coffee": "喝咖啡",
+  "idle.look-window": "看窗外",
+  "idle.read-paper": "看報紙",
+  "idle.wander": "走走",
+  "idle.nap": "打盹"
 }

@@ -30,7 +30,9 @@ class ChairmanController {
     const next = () => {
       const behavior = this._pickBehavior();
       if (behavior) {
-        this.agentManager.showBubble('chairman', behavior.action.replace(/-/g, ' '));
+        const idleKey = `idle.${behavior.action}`;
+        const idleText = I18n.t(idleKey);
+        this.agentManager.showBubble('chairman', idleText !== idleKey ? idleText : behavior.action.replace(/-/g, ' '));
         this.idleTimer = this.scene.time.delayedCall(behavior.duration, next);
       }
     };
