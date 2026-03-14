@@ -1,0 +1,8 @@
+{
+  "bubble.idle": ["待命中", "隨時準備好", "一切平靜"],
+  "bubble.working": ["專注模式", "處理中", "有進展了"],
+  "bubble.error": ["有點不對勁...", "調查中", "發現 bug 了"],
+  "bubble.dispatching": ["下達指令", "分派任務中"],
+  "bubble.chairman.monitoring": ["觀察團隊中", "一切盡在掌控"],
+  "bubble.chairman.idle": ["真安靜啊", "來杯茶吧"]
+}

@@ -1,0 +1,27 @@
+{
+  "dispatch": {
+    "object": "document",
+    "trail": "none",
+    "duration": 800
+  },
+  "report": {
+    "object": "document",
+    "trail": "none",
+    "duration": 800
+  },
+  "approve": {
+    "object": "stamp",
+    "particle": "green-sparkle",
+    "duration": 600
+  },
+  "reject": {
+    "object": null,
+    "particle": null,
+    "duration": 400
+  },
+  "alert": {
+    "object": null,
+    "particle": null,
+    "duration": 1000
+  }
+}
