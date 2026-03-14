@@ -71,6 +71,64 @@
     agentManager = new AgentManager(this, config.agents, themeManifest);
     agentManager.createAll();
 
+    // Chairman controller
+    chairmanCtrl = new ChairmanController(this, agentManager, themeManifest.idleBehaviors);
+
+    // Interaction manager
+    interactionMgr = new InteractionManager(this, agentManager, themeManifest.animations);
+
+    // Data panel
+    dataPanel = new DataPanel(config.agents);
+
+    // Easter eggs
+    if (config.easterEggs) {
+      // Cat visitor: random interval 30-60 min
+      const scheduleCat = () => {
+        const delay = (30 + Math.random() * 30) * 60 * 1000;
+        scene.time.delayedCall(delay, () => {
+          const cat = scene.add.rectangle(0, 950, 20, 15, 0xffa500);
+          cat.setDepth(LAYOUT.depth.effects + 50);
+          scene.tweens.add({
+            targets: cat,
+            x: 1920,
+            duration: 12000,
+            onComplete: () => { cat.destroy(); scheduleCat(); }
+          });
+        });
+      };
+      scheduleCat();
+
+      // Night owl: check every minute, add candle to working agents after midnight
+      scene.time.addEvent({
+        delay: 60000,
+        loop: true,
+        callback: () => {
+          const hour = new Date().getHours();
+          if (hour >= 0 && hour < 6) {
+            for (const [id, entry] of Object.entries(agentManager.sprites)) {
+              if (entry.state === 'working' || entry.state === 'executing') {
+                if (!entry._nightOwl) {
+                  const candle = scene.add.circle(
+                    entry.container.x + 25, entry.container.y - 30,
+                    4, 0xffa500
+                  );
+                  candle.setDepth(LAYOUT.depth.effects);
+                  scene.tweens.add({
+                    targets: candle, alpha: { from: 0.6, to: 1 },
+                    yoyo: true, repeat: -1, duration: 500
+                  });
+                  entry._nightOwl = candle;
+                }
+              } else if (entry._nightOwl) {
+                entry._nightOwl.destroy();
+                entry._nightOwl = null;
+              }
+            }
+          }
+        }
+      });
+    }
+
     // Connect WebSocket
     connectWebSocket();
   }
@@ -109,6 +167,7 @@
           for (const [id, agent] of Object.entries(msg.data.agents)) {
             agentManager.updateState(id, agent.state);
           }
+          dataPanel.updateAgents(msg.data.agents);
           break;
 
         case 'event':
@@ -116,8 +175,7 @@
           break;
 
         case 'chairman_update':
-          // Chairman state handled via agents.js
-          agentManager.updateState('chairman', msg.data.state);
+          chairmanCtrl.updateState(msg.data.state, msg.data);
           break;
       }
     };
@@ -133,25 +191,36 @@
   }
 
   function handleEvent(event) {
+    // Update data panel
+    dataPanel.addEvent(event);
+    if (agentManager && agentManager.sprites) {
+      const agentsState = {};
+      for (const [id, s] of Object.entries(agentManager.sprites)) {
+        agentsState[id] = { state: s.state };
+      }
+      dataPanel.updateAgents(agentsState);
+    }
+
     switch (event.type) {
       case 'status_change':
         agentManager.updateState(event.agent, event.state, event.detail);
         break;
       case 'dispatch':
         agentManager.updateState(event.to, 'working');
-        agentManager.showBubble(event.to, I18n.t('status.dispatching'));
-        // TODO: InteractionManager dispatch animation (Task 10)
+        interactionMgr.playDispatch(event.from, event.to);
         break;
       case 'report':
-        agentManager.showBubble(event.from, I18n.t('status.working'));
+        interactionMgr.playDispatch(event.from, event.to || 'cc-ceo');
         break;
       case 'approve':
+        interactionMgr.playApprove('chairman');
         agentManager.updateState('chairman', 'approving');
         break;
       case 'reject':
-        agentManager.updateState('chairman', 'idle');
+        interactionMgr.playReject();
         break;
       case 'alert':
+        interactionMgr.playAlert(event.agent);
         agentManager.updateState(event.agent, 'error');
         break;
     }
