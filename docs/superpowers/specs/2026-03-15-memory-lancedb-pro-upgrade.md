@@ -68,22 +68,19 @@ const MEMORY_PLUGIN_VERSION = 'v1.1.0-beta.8';
       "rerankProvider": "jina",
       "rerankApiKey": "${JINA_API_KEY}",
       "candidatePoolSize": 20,
-      "hardMinScore": 0.35
+      "hardMinScore": 0.35,
+      "timeDecayHalfLifeDays": 60,
+      "lengthNormAnchor": 500,
+      "reinforcementFactor": 0.5,
+      "maxHalfLifeMultiplier": 3
     },
     "autoCapture": true,
     "autoRecall": true,
     "autoRecallMinLength": 8,
     "autoRecallMinRepeated": 2,
     "smartExtraction": false,
-    "llm": {
-      "apiKey": "${LLM_API_KEY}",
-      "model": "gpt-4o-mini",
-      "baseURL": "https://api.openai.com/v1"
-    },
+    "selfImprovement": { "enabled": false },
     "sessionStrategy": "none",
-    "decay": {
-      "timeDecayHalfLifeDays": 60
-    },
     "scopes": {
       "default": "project:claw-company",
       "definitions": {
@@ -122,14 +119,27 @@ const MEMORY_PLUGIN_VERSION = 'v1.1.0-beta.8';
 | `hardMinScore` | `0.35` | 低品質記憶直接丟棄 |
 | `autoRecallMinRepeated` | `2` | 同一記憶間隔 2 輪才重複注入，減少噪音 |
 | `smartExtraction` | `false` | Phase 1 關鍵：關閉 LLM 提取 |
-| `llm` 區塊 | 預留 `${LLM_API_KEY}` | Phase 2 只需在 .env 加 key + 改 smartExtraction: true |
+| `selfImprovement.enabled` | `false` | Phase 1 關閉，避免在 agent workspace 產生未預期的 .learnings 檔案 |
 | `sessionStrategy` | `"none"` | Phase 3 改為 `"memoryReflection"` |
-| `decay.timeDecayHalfLifeDays` | `60` | 與 memory-policy.md 一致 |
+| `retrieval.timeDecayHalfLifeDays` | `60` | 與 memory-policy.md 一致（注意：屬於 retrieval，非 decay） |
+| `retrieval.lengthNormAnchor` | `500` | 超過 500 字的記憶降分 |
+| `retrieval.reinforcementFactor` | `0.5` | 常用記憶 halfLife 延長因子 |
+| `retrieval.maxHalfLifeMultiplier` | `3` | halfLife 最多延長 3 倍 |
 
-### LLM_API_KEY 處理
+### Phase 1 不含 `llm` 區塊
 
-- Phase 1：`smartExtraction: false` → LLM client 不初始化 → `${LLM_API_KEY}` 不存在不會崩
-- Phase 2：取得 LLM key 後在 `~/.openclaw/.env` 加 `LLM_API_KEY=sk-...`，改 `smartExtraction: true`
+Phase 1 的 config **不包含 `llm` 區塊**。原因：
+- `smartExtraction: false` 時 LLM client 不會被初始化
+- 但 `resolveEnvVars()` 可能在 config parse 階段就嘗試解析 `${LLM_API_KEY}`，導致缺 env var 時拋錯
+- Phase 2 啟用時再加入 `llm` 區塊：
+
+```json
+"llm": {
+  "apiKey": "${LLM_API_KEY}",
+  "model": "gpt-4o-mini",
+  "baseURL": "https://api.openai.com/v1"
+}
+```
 
 ## Section 2：安裝流程
 
@@ -166,7 +176,7 @@ const MEMORY_PLUGIN_VERSION = 'v1.1.0-beta.8';
 | 3 | autoCapture 正常 | 跟 CEO 對話一輪，結束後查 LanceDB | 新記憶寫入 |
 | 4 | autoRecall 正常 | 觸發一次 recall（問一個舊話題） | 注入 `<relevant-memories>` |
 | 5 | smartExtraction 未觸發 | 觀察 agent_end log | 無 LLM timeout、無 30s 延遲 |
-| 6 | Tier 系統運作 | 多次 recall 同一記憶後查 metadata | tier 從 peripheral → working |
+| 6 | Tier 系統運作 | 用 `memory-pro search` CLI 手動查詢同一記憶 3+ 次後查 metadata（注意：auto-recall 不計入 access_count，需用手動查詢） | tier 從 peripheral → working |
 | 7 | autoRecallMinRepeated | 連續 2 輪問相同問題 | 第 2 輪不重複注入同一記憶 |
 
 驗證順序：1→2（不破壞既有）→ 3→4（核心功能）→ 5→6→7（新功能）
@@ -180,7 +190,9 @@ const MEMORY_PLUGIN_VERSION = 'v1.1.0-beta.8';
 | Scope 隔離 | 行為一致，每 agent 獨立 scope |
 | Jina embedding | jina-embeddings-v5-text-small 在新版 dimension table 有對應 |
 | Jina rerank | rerankProvider: "jina" 完全支援 |
-| OpenClaw hooks | 4 個新 hook 都是 opt-in，Phase 1 不觸發 |
+| OpenClaw hooks | 4 個新 hook（`agent:bootstrap`、`after_tool_call`、`before_prompt_build`、`session_end`）都是 opt-in，Phase 1 不觸發 |
+| `openai` SDK | 新版依賴 `openai@^6.21.0`，若 VPS 有其他 plugin 依賴舊版可能衝突 |
+| `selfImprovement` | 預設 enabled，Phase 1 明確關閉避免產生未預期的 .learnings 檔案 |
 
 ## 風險與回退
 
@@ -197,8 +209,12 @@ const MEMORY_PLUGIN_VERSION = 'v1.1.0-beta.8';
 3. install.js 改 `smartExtraction: true`
 4. 重跑 install.js + 驗證
 
+### Phase 2 同時啟用
+
+- `selfImprovement: { enabled: true }` — 可與 Smart Extraction 一起開啟
+
 ### Phase 3：Memory Reflection
 
 1. install.js 改 `sessionStrategy: "memoryReflection"`
 2. 重跑 install.js + 驗證
-3. 確認 OpenClaw 版本支援 `after_tool_call`、`before_prompt_build`、`session_end` hooks
+3. 確認 VPS 上的 OpenClaw 版本支援 `after_tool_call`、`before_prompt_build`、`session_end` hook 類型（這是 OpenClaw 平台版本限制，非 plugin 問題）
