@@ -22,6 +22,10 @@ const OPENCLAW_DIR = path.join(os.homedir(), '.openclaw');
 const INSTALL_DIR = path.join(OPENCLAW_DIR, 'claw-company');
 const AGENTS = ['ceo', 'cfo', 'cio', 'coo', 'cto', 'chro', 'cao'];
 const AGENT_PREFIX = 'cc-';
+// Single source of truth: agents whose cron jobs need delivery channel selection.
+// Add agent here when its cron job has announce !== false.
+// CHRO piggybacks on CEO's delivery config, so not listed separately.
+const CRON_DELIVERY_AGENTS = ['ceo', 'cao'];
 const REQUIRED_MIN_VERSION = '2026.3.8';
 const MEMORY_PLUGIN_REPO = 'https://github.com/win4r/memory-lancedb-pro.git';
 const MEMORY_PLUGIN_VERSION = 'v1.0.32';
@@ -169,7 +173,25 @@ function parseJsonFromOutput(raw) {
   if (arrStart >= 0 && objStart >= 0) start = Math.min(arrStart, objStart);
   else if (arrStart >= 0) start = arrStart;
   else if (objStart >= 0) start = objStart;
-  return JSON.parse(start >= 0 ? raw.slice(start) : raw);
+  if (start < 0) return JSON.parse(raw);
+  // Track bracket depth to find exact JSON end, skipping string contents.
+  // This handles trailing plugin log lines that contain [] characters.
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < raw.length; i++) {
+    const ch = raw[i];
+    if (escape) { escape = false; continue; }
+    if (ch === '\\' && inString) { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '[' || ch === '{') depth++;
+    if (ch === ']' || ch === '}') {
+      depth--;
+      if (depth === 0) return JSON.parse(raw.slice(start, i + 1));
+    }
+  }
+  return JSON.parse(raw.slice(start));
 }
 
 /** Build a display-friendly command string for fallback output. */
@@ -464,7 +486,8 @@ async function uninstall() {
  *
  * Each agent can bind to MULTIPLE channel:account pairs.
  * One channel:account can only belong to one agent (exclusive pool consumption).
- * Quick mode: CEO gets all. Custom mode: per-agent multi-select.
+ * Quick mode: auto-match by account name (discord:ceo→CEO, discord:cto→CTO, etc.), unmatched→CEO.
+ * Custom mode: per-agent multi-select.
  *
  * @returns {{ agentBindings, cronDelivery, failedBindCmds }}
  */
@@ -537,8 +560,8 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
   if (pool.length > 0) {
     log('');
     log(msg(
-      '  Binding mode:  1) Quick (CEO gets all)  2) Custom (per-agent)',
-      '  綁定模式：  1) 快速（CEO 取得全部）  2) 自訂（逐一分配）'
+      '  Binding mode:  1) Quick (auto-match by account name)  2) Custom (per-agent)',
+      '  綁定模式：  1) 快速（依帳號名稱自動配對）  2) 自訂（逐一分配）'
     ));
     let mode = '';
     while (mode !== '1' && mode !== '2') {
@@ -546,12 +569,29 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
     }
 
     if (mode === '1') {
-      // Quick: CEO gets all
-      agentBindings.ceo = pool.map(e => e.binding);
-      log(msg(
-        `  CEO ← ${agentBindings.ceo.join(', ')}`,
-        `  CEO ← ${agentBindings.ceo.join(', ')}`
-      ));
+      // Quick: auto-match by account name, unmatched go to CEO
+      const matched = new Set();
+      for (const entry of pool) {
+        const acct = (entry.account || '').toLowerCase();
+        for (const agent of BIND_AGENTS) {
+          if (acct === agent && !matched.has(entry.binding)) {
+            agentBindings[agent].push(entry.binding);
+            matched.add(entry.binding);
+            break;
+          }
+        }
+      }
+      // Unmatched entries (e.g. whatsapp, no account suffix) → CEO
+      for (const entry of pool) {
+        if (!matched.has(entry.binding)) {
+          agentBindings.ceo.push(entry.binding);
+        }
+      }
+      for (const agent of BIND_AGENTS) {
+        if (agentBindings[agent].length > 0) {
+          log(`  ${agent.toUpperCase()} ← ${agentBindings[agent].join(', ')}`);
+        }
+      }
     } else {
       // Custom: CEO→CAO→CTO→COO, each multi-select, remove from remaining pool
       const remaining = [...pool];
@@ -621,9 +661,9 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
     }
   }
 
-  // [7] Cron delivery selection (only for CEO and CAO)
+  // [7] Cron delivery selection — agents listed in CRON_DELIVERY_AGENTS
   const cronDelivery = {};
-  const cronAgents = ['ceo', 'cao'];
+  const cronAgents = CRON_DELIVERY_AGENTS;
   // Collect Discord guild channels for potential --to selection
   const allGuildChannels = [];
   if (discordConfig?.guilds) {
@@ -662,6 +702,7 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
     }
   }
 
+  log(msg('\n  --- Cron Delivery ---', '\n  --- 排程推送 ---'));
   for (const agent of cronAgents) {
     const bindings = agentBindings[agent];
     if (!bindings || bindings.length === 0) continue; // skip — will use --no-deliver
@@ -698,12 +739,25 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
 
     if (chBase === 'discord') {
       // Discord: need guild channel ID as --to
-      if (allGuildChannels.length === 1) {
+      // Auto-match: if a guild channel name contains the agent id (e.g. #cc-ceo for ceo)
+      const agentId = `${AGENT_PREFIX}${agent}`;
+      const autoMatch = allGuildChannels.find(chId => {
+        const name = channelNameMap[chId];
+        return name && name.toLowerCase().includes(agentId);
+      });
+      if (autoMatch) {
+        const autoName = channelNameMap[autoMatch];
+        log(msg(
+          `  ${agent.toUpperCase()} delivery → ${autoName ? `#${autoName}` : autoMatch} (auto-matched)`,
+          `  ${agent.toUpperCase()} 推送 → ${autoName ? `#${autoName}` : autoMatch}（自動配對）`
+        ));
+        target = `channel:${autoMatch}`;
+      } else if (allGuildChannels.length === 1) {
         const autoChId = allGuildChannels[0];
         const autoChName = channelNameMap[autoChId];
         log(msg(
-          `  ${agent.toUpperCase()} delivery → ${autoChName ? `${autoChId} (#${autoChName})` : autoChId}`,
-          `  ${agent.toUpperCase()} 推送 → ${autoChName ? `${autoChId} (#${autoChName})` : autoChId}`
+          `  ${agent.toUpperCase()} delivery → ${autoChName ? `#${autoChName}` : autoChId}`,
+          `  ${agent.toUpperCase()} 推送 → ${autoChName ? `#${autoChName}` : autoChId}`
         ));
         target = `channel:${autoChId}`;
       } else if (allGuildChannels.length > 1) {
@@ -731,11 +785,16 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
     } else {
       // Non-Discord: extract target from config
       target = extractChannelTarget(chosen, nativeJson);
+      log(msg(
+        `  ${agent.toUpperCase()} delivery → ${chosen}`,
+        `  ${agent.toUpperCase()} 推送 → ${chosen}`
+      ));
     }
 
     cronDelivery[agent] = { channel: chBase, account: chAccount, to: target };
   }
 
+  log(msg('\n  --- Channel Binding ---', '\n  --- 通道綁定 ---'));
   // [8] Unbind all claw-company bindings across ALL channel types
   // Collect all known channel:account combos from config
   const allBindKeys = new Set();
@@ -751,14 +810,21 @@ async function setupChannelBindings(rl, nativeJson, nativeJsonPath, channelsFoun
       }
     }
   }
-  const unbindSpinner = new Spinner(msg('Clearing old bindings...', '清除舊綁定...'));
-  unbindSpinner.start();
   for (const agent of BIND_AGENTS) {
+    const agentId = `${AGENT_PREFIX}${agent}`;
+    const unbindSpinner = new Spinner(msg(
+      `Clearing old bindings for ${agentId}...`,
+      `清除 ${agentId} 舊綁定...`
+    ));
+    unbindSpinner.start();
     for (const key of allBindKeys) {
-      tryExec(['openclaw', 'agents', 'unbind', '--agent', `${AGENT_PREFIX}${agent}`, '--bind', key]);
+      tryExec(['openclaw', 'agents', 'unbind', '--agent', agentId, '--bind', key]);
     }
+    unbindSpinner.succeed(msg(
+      `${agentId} old bindings cleared`,
+      `${agentId} 舊綁定已清除`
+    ));
   }
-  unbindSpinner.succeed(msg('Old bindings cleared', '舊綁定已清除'));
 
   // [9] Bind each agent to their selected accounts
   const bindSpinner = new Spinner(msg('Applying new bindings...', '套用新綁定...'));
@@ -2352,8 +2418,7 @@ async function main() {
   // For 'none' jobs, results are written to output/ files; CEO heartbeat picks them up.
 
   // Cron delivery is pre-computed in setupChannelBindings()
-  const ceoCron = cronDelivery.ceo || { channel: null, account: null, to: null };
-  const caoCron = cronDelivery.cao || { channel: null, account: null, to: null };
+  // Access via cronDelivery[agentName]?.channel etc. — no hardcoded intermediates.
   const missingTargets = [];
 
   // Auto-detect system timezone for cron --tz (IANA format)
@@ -2427,6 +2492,8 @@ async function main() {
     }
   }
 
+  // When adding a delivery-needing cron job for a new agent,
+  // also add that agent to CRON_DELIVERY_AGENTS at the top of this file.
   const cronJobs = [
     {
       name: 'morning-briefing',
@@ -2434,9 +2501,9 @@ async function main() {
       agent: `${AGENT_PREFIX}ceo`,
       model: tiers.CEO,
       message: 'Execute morning briefing: read MEMORY.md and recent output/ files from all executives (CFO, CIO, COO, CTO, CHRO, CAO) to collect latest status. Compile into briefing with action items for Chairman. Refer to briefing-template.md. Do NOT use sessions_send (unavailable in cron).',
-      channel: ceoCron.channel,
-      account: ceoCron.account,
-      to: ceoCron.to,
+      channel: cronDelivery.ceo?.channel,
+      account: cronDelivery.ceo?.account,
+      to: cronDelivery.ceo?.to,
     },
     {
       name: 'investment-monitor',
@@ -2452,9 +2519,9 @@ async function main() {
       agent: `${AGENT_PREFIX}chro`,
       model: tiers.CHRO,
       message: 'Audit MEMORY.md health across all agents: check line counts vs 200-line limit, duplicates, stale entries, archive logs >30 days. Write health report to output/reports/. Do NOT use sessions_send (unavailable in cron).',
-      channel: ceoCron.channel,
-      account: ceoCron.account,
-      to: ceoCron.to,
+      channel: cronDelivery.ceo?.channel,
+      account: cronDelivery.ceo?.account,
+      to: cronDelivery.ceo?.to,
     },
     {
       name: 'weekly-org-review',
@@ -2462,9 +2529,9 @@ async function main() {
       agent: `${AGENT_PREFIX}chro`,
       model: tiers.CHRO,
       message: 'Produce weekly org health report: agent performance summary, capability gaps, model config suggestions, skill usage stats. Write report to output/reports/. Do NOT use sessions_send (unavailable in cron).',
-      channel: ceoCron.channel,
-      account: ceoCron.account,
-      to: ceoCron.to,
+      channel: cronDelivery.ceo?.channel,
+      account: cronDelivery.ceo?.account,
+      to: cronDelivery.ceo?.to,
     },
     {
       name: 'security-scan',
@@ -2472,9 +2539,9 @@ async function main() {
       agent: `${AGENT_PREFIX}cao`,
       model: tiers.CAO,
       message: 'Run full security scan: verify SOUL.md integrity, check recent session logs for anomalies, validate security rules compliance. Produce security scan report. Do NOT use sessions_send (unavailable in cron). Report is delivered via cron announce.',
-      channel: caoCron.channel,
-      account: caoCron.account,
-      to: caoCron.to,
+      channel: cronDelivery.cao?.channel,
+      account: cronDelivery.cao?.account,
+      to: cronDelivery.cao?.to,
     },
     {
       name: 'cto-memory-cleanup',
