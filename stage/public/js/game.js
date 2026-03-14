@@ -4,12 +4,25 @@
   const configRes = await fetch('/api/config');
   const config = await configRes.json();
 
-  // Load theme manifest
-  const themeRes = await fetch('/api/theme');
+  // Override locale from ?lang= query parameter
+  const urlLang = new URLSearchParams(location.search).get('lang');
+  if (urlLang) config.locale = urlLang;
+
+  // Load theme manifest (with correct locale)
+  const themeRes = await fetch(`/api/theme?lang=${config.locale}`);
   const themeManifest = await themeRes.json();
 
   // Load i18n
   await I18n.load(config.locale, themeManifest.locale);
+
+  // Update UI elements with i18n
+  document.getElementById('panel-title').textContent = I18n.t('panel.title');
+  document.getElementById('panel-events-title').textContent = I18n.t('panel.events');
+  document.getElementById('lang-switch').textContent = I18n.t('lang.switch');
+  document.getElementById('lang-switch').onclick = () => {
+    const next = I18n.lang() === 'en' ? 'zh-TW' : 'en';
+    location.search = '?lang=' + next;
+  };
 
   // Phaser scene — shared references (assigned in create, used in handleEvent)
   let agentManager, interactionMgr, chairmanCtrl, dataPanel;

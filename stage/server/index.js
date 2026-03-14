@@ -118,7 +118,8 @@ function createServer(opts = {}) {
 
   app.get('/api/theme', (req, res) => {
     try {
-      const manifest = themeManager.getManifest(config.theme, config.locale);
+      const lang = req.query.lang || config.locale;
+      const manifest = themeManager.getManifest(config.theme, lang);
       res.json(manifest);
     } catch (e) {
       res.status(500).json({ error: e.message });

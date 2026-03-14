@@ -8,17 +8,15 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0f0f23; overflow: hidden; }
     #game-container { width: 100vw; height: 100vh; }
-    #lang-switch {
-      position: fixed; top: 10px; right: 10px; z-index: 1000;
+    #top-bar {
+      position: fixed; top: 10px; left: 10px; z-index: 1000;
+      display: flex; gap: 8px;
+    }
+    #top-bar button {
       background: #1e293b; color: #94a3b8; border: 1px solid #334155;
       padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;
     }
-    #lang-switch:hover { background: #334155; color: #e2e8f0; }
-    #panel-toggle {
-      position: fixed; top: 10px; right: 60px; z-index: 1000;
-      background: #1e293b; color: #94a3b8; border: 1px solid #334155;
-      padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 16px;
-    }
+    #top-bar button:hover { background: #334155; color: #e2e8f0; }
     #data-panel {
       position: fixed; top: 0; right: -320px; width: 320px; height: 100vh;
       background: #0f172aee; border-left: 1px solid #334155; z-index: 999;
@@ -37,16 +35,16 @@
   </style>
 </head>
 <body>
-  <button id="panel-toggle" title="Dashboard">📊</button>
+  <div id="top-bar">
+    <button id="panel-toggle">📊</button>
+    <button id="lang-switch">EN / 中文</button>
+  </div>
   <div id="data-panel">
-    <h3 id="panel-title">Dashboard</h3>
+    <h3 id="panel-title"></h3>
     <div id="panel-agents"></div>
-    <h4>Event Log</h4>
+    <h4 id="panel-events-title"></h4>
     <div id="panel-events"></div>
   </div>
-  <button id="lang-switch" onclick="location.search='?lang=' + (I18n.lang() === 'en' ? 'zh-TW' : 'en')">
-    EN / 中文
-  </button>
   <div id="game-container"></div>
 
   <!-- Load order matters: vendor → data → modules → entry -->
