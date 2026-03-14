@@ -7,6 +7,8 @@
     "area": "chairman-office",
     "sprite": "chairman",
     "color": "#e11d48",
+    "gender": "male",
+    "personality": { "mbti": "ENTP", "archetype": "lion" },
     "appearance": {
       "base": "default",
       "color": "#e11d48",
@@ -20,6 +22,8 @@
     "area": "ceo-zone",
     "sprite": "ceo",
     "color": "#3b82f6",
+    "gender": "male",
+    "personality": { "mbti": "ESTJ", "archetype": "tiger" },
     "appearance": {
       "base": "default",
       "color": "#3b82f6",
@@ -33,6 +37,8 @@
     "area": "cfo-zone",
     "sprite": null,
     "color": "#fbbf24",
+    "gender": "male",
+    "personality": { "mbti": "ISTJ", "archetype": "ox" },
     "appearance": {
       "base": "default",
       "color": "#fbbf24",
@@ -46,6 +52,8 @@
     "area": "cio-zone",
     "sprite": null,
     "color": "#a78bfa",
+    "gender": "male",
+    "personality": { "mbti": "INTJ", "archetype": "eagle" },
     "appearance": {
       "base": "default",
       "color": "#a78bfa",
@@ -59,6 +67,8 @@
     "area": "cto-zone",
     "sprite": null,
     "color": "#34d399",
+    "gender": "male",
+    "personality": { "mbti": "ISTP", "archetype": "wolf" },
     "appearance": {
       "base": "default",
       "color": "#34d399",
@@ -72,6 +82,8 @@
     "area": "coo-zone",
     "sprite": null,
     "color": "#fb923c",
+    "gender": "male",
+    "personality": { "mbti": "ESFJ", "archetype": "dog" },
     "appearance": {
       "base": "default",
       "color": "#fb923c",
@@ -85,6 +97,8 @@
     "area": "chro-zone",
     "sprite": null,
     "color": "#f472b6",
+    "gender": "male",
+    "personality": { "mbti": "ENFJ", "archetype": "crane" },
     "appearance": {
       "base": "default",
       "color": "#f472b6",
@@ -98,6 +112,8 @@
     "area": "cao-zone",
     "sprite": null,
     "color": "#facc15",
+    "gender": "male",
+    "personality": { "mbti": "INFJ", "archetype": "owl" },
     "appearance": {
       "base": "default",
       "color": "#facc15",
