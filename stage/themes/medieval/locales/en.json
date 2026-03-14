@@ -1,0 +1,8 @@
+{
+  "bubble.idle": ["Standing by", "Ready when you are", "All quiet on the front"],
+  "bubble.working": ["Deep focus mode", "On it", "Making progress"],
+  "bubble.error": ["Something's off...", "Investigating", "Found a bug"],
+  "bubble.dispatching": ["Sending orders", "Assigning task"],
+  "bubble.chairman.monitoring": ["Watching the team", "Everything under control"],
+  "bubble.chairman.idle": ["Nice and quiet", "Time for tea"]
+}

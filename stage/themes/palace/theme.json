@@ -1,0 +1,27 @@
+{
+  "name": "palace",
+  "displayName": { "en": "Chinese Palace", "zh-TW": "中國宮廷" },
+  "version": "1.0.0",
+  "background": "background.png",
+  "characterPattern": "sprites/characters/{gender}/{role}-{pose}.png",
+  "animationFps": 8,
+  "furniture": {
+    "desk": "sprites/furniture/desk.png",
+    "big-desk": "sprites/furniture/desk.png",
+    "monitor-wall": "sprites/furniture/desk.png",
+    "sofa": "sprites/furniture/sofa.png",
+    "coffee-machine": "sprites/furniture/desk.png",
+    "bookshelf": "sprites/furniture/desk.png",
+    "chair": "sprites/furniture/desk.png",
+    "phone": "sprites/furniture/desk.png",
+    "vending-machine": "sprites/furniture/desk.png"
+  },
+  "characters": {
+    "default": "sprites/characters/default.png"
+  },
+  "effects": {
+    "document": "sprites/effects/document.png",
+    "stamp": "sprites/effects/document.png",
+    "green-sparkle": "sprites/effects/document.png"
+  }
+}

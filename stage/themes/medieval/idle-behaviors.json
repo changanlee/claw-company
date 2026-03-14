@@ -1,0 +1,9 @@
+{
+  "chairman": [
+    { "action": "drink-coffee", "weight": 3, "duration": 5000 },
+    { "action": "look-window", "weight": 2, "duration": 4000 },
+    { "action": "read-paper", "weight": 2, "duration": 6000 },
+    { "action": "wander", "weight": 2, "duration": 3000 },
+    { "action": "nap", "weight": 1, "duration": 8000, "condition": "after-22:00" }
+  ]
+}
