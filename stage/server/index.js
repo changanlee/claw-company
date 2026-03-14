@@ -57,6 +57,23 @@ function createServer(opts = {}) {
     }
   }
 
+  // Load chairman identity from installed chairman.json (written by install.js)
+  const OPENCLAW_DIR = path.join(process.env.HOME || process.env.USERPROFILE, '.openclaw');
+  const chairmanJsonPath = path.join(OPENCLAW_DIR, 'claw-company', 'shared', 'chairman.json');
+  function loadChairmanIdentity() {
+    if (fs.existsSync(chairmanJsonPath)) {
+      try {
+        return JSON.parse(fs.readFileSync(chairmanJsonPath, 'utf-8'));
+      } catch (e) { /* ignore parse errors */ }
+    }
+    return null;
+  }
+  const chairmanId = loadChairmanIdentity();
+  if (chairmanId && agentDefs.chairman) {
+    agentDefs.chairman.name = chairmanId.name;
+    if (chairmanId.icon) agentDefs.chairman.icon = chairmanId.icon;
+  }
+
   const themesDir = path.join(__dirname, '..', 'themes');
   const themeManager = new ThemeManager(themesDir);
 
@@ -84,6 +101,12 @@ function createServer(opts = {}) {
           if (identity.icon) liveAgents[agentId].icon = identity.icon;
         }
       }
+    }
+    // Re-read chairman identity
+    const liveChairman = loadChairmanIdentity();
+    if (liveChairman && liveAgents.chairman) {
+      liveAgents.chairman.name = liveChairman.name;
+      if (liveChairman.icon) liveAgents.chairman.icon = liveChairman.icon;
     }
     res.json({
       agents: liveAgents,

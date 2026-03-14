@@ -1,6 +1,6 @@
 # 董事長資訊
 
-- 稱呼：Chairman
+- 稱呼：{{CHAIRMAN_NAME}}
 - 角色：董事長 — 唯一的人類決策者
 - 語言偏好：繁體中文
 - 溝通通道：Telegram（主要）、WhatsApp、Discord

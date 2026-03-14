@@ -1250,6 +1250,18 @@ async function main() {
   log('');
 
   // ----------------------------------------
+  // Step 1.5: Chairman name
+  // ----------------------------------------
+  const chairmanPrompt = langDir === 'zh'
+    ? '你的名字（董事長顯示名稱）: '
+    : 'Your name (Chairman display name): ';
+  const chairmanName = (await ask(rl, chairmanPrompt)).trim() || 'Chairman';
+  log(langDir === 'zh'
+    ? `[INFO] 董事長名稱：${chairmanName}`
+    : `[INFO] Chairman name: ${chairmanName}`);
+  log('');
+
+  // ----------------------------------------
   // Step 2: Prerequisites — openclaw CLI
   // ----------------------------------------
   const clawCheck = tryExec(['openclaw', '--version']);
@@ -2482,15 +2494,29 @@ async function main() {
     );
   }
 
-  // Back-fill {{TIMEZONE}} in deployed USER.md (detected after initial deployment)
+  // Back-fill {{TIMEZONE}} and {{CHAIRMAN_NAME}} in deployed USER.md
   const tzValue = (cronTz && cronTz !== 'UTC') ? cronTz : 'UTC';
   const userMdPath = path.join(INSTALL_DIR, 'shared', 'USER.md');
   if (fs.existsSync(userMdPath)) {
-    const content = fs.readFileSync(userMdPath, 'utf-8');
+    let content = fs.readFileSync(userMdPath, 'utf-8');
     if (content.includes('{{TIMEZONE}}')) {
-      fs.writeFileSync(userMdPath, content.replaceAll('{{TIMEZONE}}', tzValue));
+      content = content.replaceAll('{{TIMEZONE}}', tzValue);
     }
+    if (content.includes('{{CHAIRMAN_NAME}}')) {
+      content = content.replaceAll('{{CHAIRMAN_NAME}}', chairmanName);
+    }
+    fs.writeFileSync(userMdPath, content);
   }
+
+  // Write chairman identity for Stage and other consumers
+  const chairmanJsonPath = path.join(INSTALL_DIR, 'shared', 'chairman.json');
+  fs.writeFileSync(chairmanJsonPath, JSON.stringify({
+    name: chairmanName,
+    icon: '👑'
+  }, null, 2) + '\n');
+  log(langDir === 'zh'
+    ? `[INFO] 董事長身份已寫入 ${chairmanJsonPath}`
+    : `[INFO] Chairman identity written to ${chairmanJsonPath}`);
 
   // When adding a delivery-needing cron job for a new agent,
   // also add that agent to CRON_DELIVERY_AGENTS at the top of this file.

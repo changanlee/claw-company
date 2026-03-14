@@ -1,6 +1,6 @@
 # Chairman Information
 
-- Title: Chairman
+- Title: {{CHAIRMAN_NAME}}
 - Role: Board Director — the sole human decision-maker
 - Language preference: English
 - Communication channels: Telegram (primary), WhatsApp, Discord
