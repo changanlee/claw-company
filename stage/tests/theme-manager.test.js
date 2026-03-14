@@ -48,4 +48,20 @@ describe('ThemeManager', () => {
     assert.ok(locale['bubble.idle']);
     assert.ok(Array.isArray(locale['bubble.idle']));
   });
+
+  it('loads characterPattern for spritesheet themes', () => {
+    const tm = new ThemeManager(THEMES_DIR);
+    const theme = tm.load('modern-office');
+    assert.ok(theme.characterPattern, 'theme should have characterPattern');
+    assert.ok(theme.characterPattern.includes('{role}'), 'pattern should contain {role} placeholder');
+    assert.ok(theme.characterPattern.includes('{pose}'), 'pattern should contain {pose} placeholder');
+    assert.ok(theme.characterPattern.includes('{gender}'), 'pattern should contain {gender} placeholder');
+  });
+
+  it('has animationFps defined', () => {
+    const tm = new ThemeManager(THEMES_DIR);
+    const theme = tm.load('modern-office');
+    assert.strictEqual(typeof theme.animationFps, 'number');
+    assert.ok(theme.animationFps > 0 && theme.animationFps <= 30);
+  });
 });
