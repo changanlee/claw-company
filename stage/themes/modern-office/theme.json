@@ -3,6 +3,8 @@
   "displayName": { "en": "Modern Office", "zh-TW": "現代辦公室" },
   "version": "1.0.0",
   "background": "background.png",
+  "characterPattern": "sprites/characters/{gender}/{role}-{pose}.png",
+  "animationFps": 8,
   "furniture": {
     "desk": "sprites/furniture/desk.png",
     "big-desk": "sprites/furniture/desk.png",

@@ -2,6 +2,7 @@
   "mode": "simulator",
   "theme": "modern-office",
   "locale": "zh-TW",
+  "defaultGender": "male",
   "port": 19100,
   "dataDir": null,
   "pollInterval": 30,
