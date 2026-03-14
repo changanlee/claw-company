@@ -1,0 +1,9 @@
+{
+  "mode": "simulator",
+  "theme": "modern-office",
+  "locale": "zh-TW",
+  "port": 19100,
+  "dataDir": null,
+  "pollInterval": 30,
+  "easterEggs": true
+}

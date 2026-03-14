@@ -1,0 +1,106 @@
+{
+  "chairman": {
+    "id": "chairman",
+    "role": "chairman",
+    "area": "chairman-office",
+    "sprite": "chairman",
+    "color": "#e11d48",
+    "appearance": {
+      "base": "default",
+      "color": "#e11d48",
+      "accessory": null,
+      "outfit": "executive"
+    }
+  },
+  "cc-ceo": {
+    "id": "cc-ceo",
+    "role": "ceo",
+    "area": "ceo-zone",
+    "sprite": "ceo",
+    "color": "#3b82f6",
+    "appearance": {
+      "base": "default",
+      "color": "#3b82f6",
+      "accessory": "phone",
+      "outfit": "suit"
+    }
+  },
+  "cc-cfo": {
+    "id": "cc-cfo",
+    "role": "cfo",
+    "area": "cfo-zone",
+    "sprite": null,
+    "color": "#fbbf24",
+    "appearance": {
+      "base": "default",
+      "color": "#fbbf24",
+      "accessory": "calculator",
+      "outfit": "formal"
+    }
+  },
+  "cc-cio": {
+    "id": "cc-cio",
+    "role": "cio",
+    "area": "cio-zone",
+    "sprite": null,
+    "color": "#a78bfa",
+    "appearance": {
+      "base": "default",
+      "color": "#a78bfa",
+      "accessory": "chart",
+      "outfit": "formal"
+    }
+  },
+  "cc-cto": {
+    "id": "cc-cto",
+    "role": "cto",
+    "area": "cto-zone",
+    "sprite": null,
+    "color": "#34d399",
+    "appearance": {
+      "base": "default",
+      "color": "#34d399",
+      "accessory": "headphones",
+      "outfit": "hoodie"
+    }
+  },
+  "cc-coo": {
+    "id": "cc-coo",
+    "role": "coo",
+    "area": "coo-zone",
+    "sprite": null,
+    "color": "#fb923c",
+    "appearance": {
+      "base": "default",
+      "color": "#fb923c",
+      "accessory": null,
+      "outfit": "casual"
+    }
+  },
+  "cc-chro": {
+    "id": "cc-chro",
+    "role": "chro",
+    "area": "chro-zone",
+    "sprite": null,
+    "color": "#f472b6",
+    "appearance": {
+      "base": "default",
+      "color": "#f472b6",
+      "accessory": "clipboard",
+      "outfit": "formal"
+    }
+  },
+  "cc-cao": {
+    "id": "cc-cao",
+    "role": "cao",
+    "area": "cao-zone",
+    "sprite": null,
+    "color": "#facc15",
+    "appearance": {
+      "base": "default",
+      "color": "#facc15",
+      "accessory": "magnifying-glass",
+      "outfit": "formal"
+    }
+  }
+}
