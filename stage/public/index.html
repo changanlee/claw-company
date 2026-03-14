@@ -8,10 +8,26 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0f0f23; overflow: hidden; }
     #game-container { width: 100vw; height: 100vh; }
+    #lang-switch {
+      position: fixed; top: 10px; right: 10px; z-index: 1000;
+      background: #1e293b; color: #94a3b8; border: 1px solid #334155;
+      padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;
+    }
+    #lang-switch:hover { background: #334155; color: #e2e8f0; }
   </style>
 </head>
 <body>
+  <button id="lang-switch" onclick="location.search='?lang=' + (I18n.lang() === 'en' ? 'zh-TW' : 'en')">
+    EN / 中文
+  </button>
   <div id="game-container"></div>
-  <!-- Scripts loaded in Task 5+ -->
+
+  <!-- Load order matters: vendor → data → modules → entry -->
+  <script src="/js/vendor/phaser.min.js"></script>
+  <script src="/js/layout.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/agents.js"></script>
+  <!-- chairman.js, interactions.js, panel.js loaded in later tasks -->
+  <script src="/js/game.js"></script>
 </body>
 </html>
