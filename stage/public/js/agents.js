@@ -1,10 +1,42 @@
 // AgentManager — creates, updates, removes agent sprites in Phaser scene
+// Supports spritesheet animations with fallback to colored rectangles
+
+const POSES = ['idle','working','researching','executing','dispatching','awaiting','error'];
+
+const STATE_TO_POSE = {
+  idle: 'idle',
+  working: 'working',
+  researching: 'researching',
+  executing: 'executing',
+  dispatching: 'dispatching',
+  awaiting: 'awaiting',
+  error: 'error',
+  approving: 'executing'
+};
+
+const DOT_COLORS = {
+  idle: 0x22c55e,
+  working: 0x3b82f6,
+  researching: 0x8b5cf6,
+  executing: 0xf59e0b,
+  dispatching: 0x06b6d4,
+  awaiting: 0xfbbf24,
+  error: 0xef4444,
+  offline: 0x64748b,
+  approving: 0xf59e0b
+};
+
 class AgentManager {
-  constructor(scene, agentDefs, themeManifest) {
+  constructor(scene, agentDefs, themeManifest, defaultGender) {
     this.scene = scene;
     this.agentDefs = agentDefs;
     this.themeManifest = themeManifest;
-    this.sprites = {}; // agentId → { container, sprite, nameTag, statusDot, bubble }
+    this.defaultGender = defaultGender || 'male';
+    this.sprites = {}; // agentId → { container, sprite, nameTag, statusDot, bubble, state, role, gender, hasSpritesheet }
+  }
+
+  stateToPose(state) {
+    return STATE_TO_POSE[state] || 'idle';
   }
 
   createAgent(agentId) {
@@ -15,10 +47,37 @@ class AgentManager {
     const container = this.scene.add.container(pos.x, pos.y);
     container.setDepth(LAYOUT.depth.characters + (agentId === 'chairman' ? 100 : 0));
 
-    // Character sprite (placeholder: colored rectangle)
-    const color = parseInt((def.color || '#888888').replace('#', ''), 16);
-    const sprite = this.scene.add.rectangle(0, 0, 40, 60, color);
-    sprite.setOrigin(0.5, 1);
+    const gender = def.gender || this.defaultGender;
+    const fps = (this.themeManifest.theme && this.themeManifest.theme.animationFps) || 8;
+
+    // Check if spritesheet is available for this agent
+    const idleKey = `${def.role}-${gender}-idle`;
+    const hasSpritesheet = this.scene.textures.exists(idleKey);
+
+    let sprite;
+    if (hasSpritesheet) {
+      sprite = this.scene.add.sprite(0, 0, idleKey);
+      sprite.setOrigin(0.5, 1);
+
+      // Create animations for all available poses
+      for (const pose of POSES) {
+        const key = `${def.role}-${gender}-${pose}`;
+        if (this.scene.textures.exists(key) && !this.scene.anims.exists(key)) {
+          this.scene.anims.create({
+            key,
+            frames: this.scene.anims.generateFrameNumbers(key, { start: 0, end: 3 }),
+            frameRate: fps,
+            repeat: -1
+          });
+        }
+      }
+      sprite.play(idleKey);
+    } else {
+      // Fallback: colored rectangle (original behavior)
+      const color = parseInt((def.color || '#888888').replace('#', ''), 16);
+      sprite = this.scene.add.rectangle(0, 0, 40, 60, color);
+      sprite.setOrigin(0.5, 1);
+    }
 
     // Name tag: "Name (Role)" or just "Role" if no name
     const roleText = I18n.t(`role.${def.role}`);
@@ -50,7 +109,13 @@ class AgentManager {
     bubble.setVisible(false);
 
     container.add([sprite, nameTag, statusDot, bubble]);
-    this.sprites[agentId] = { container, sprite, nameTag, statusDot, bubble, state: 'idle' };
+    this.sprites[agentId] = {
+      container, sprite, nameTag, statusDot, bubble,
+      state: 'idle',
+      role: def.role,
+      gender,
+      hasSpritesheet
+    };
   }
 
   createAll() {
@@ -67,17 +132,16 @@ class AgentManager {
     entry.state = newState;
 
     // Update status dot color
-    const dotColors = {
-      idle: 0x22c55e,
-      working: 0x3b82f6,
-      researching: 0x8b5cf6,
-      executing: 0xf59e0b,
-      dispatching: 0x06b6d4,
-      awaiting: 0xfbbf24,
-      error: 0xef4444,
-      offline: 0x64748b
-    };
-    entry.statusDot.setFillStyle(dotColors[newState] || 0x64748b);
+    entry.statusDot.setFillStyle(DOT_COLORS[newState] || 0x64748b);
+
+    // Play spritesheet animation
+    if (entry.hasSpritesheet && newState !== 'offline') {
+      const pose = this.stateToPose(newState);
+      const key = `${entry.role}-${entry.gender}-${pose}`;
+      if (this.scene.anims.exists(key)) {
+        entry.sprite.play(key);
+      }
+    }
 
     // Offline: reduce alpha
     if (newState === 'offline') {
@@ -86,7 +150,7 @@ class AgentManager {
       entry.container.setAlpha(1);
     }
 
-    // Error: red tint flash
+    // Error: flash
     if (newState === 'error') {
       this.scene.tweens.add({
         targets: entry.sprite,
@@ -103,7 +167,6 @@ class AgentManager {
       const breakPos = LAYOUT.getSlotPosition('break-room', this._getBreakRoomSlot(agentId));
       this._moveTo(entry.container, breakPos.x, breakPos.y);
     } else if (prevState === 'idle' && newState !== 'idle' && agentId !== 'chairman') {
-      // Return to own desk
       const deskPos = LAYOUT.getSlotPosition(def.area, 0);
       this._moveTo(entry.container, deskPos.x, deskPos.y);
     }
@@ -135,7 +198,6 @@ class AgentManager {
 
   _breakRoomCounter = 0;
   _getBreakRoomSlot(agentId) {
-    // Simple round-robin slot assignment for break room
     return this._breakRoomCounter++ % LAYOUT.zones['break-room'].maxSlots;
   }
 }
