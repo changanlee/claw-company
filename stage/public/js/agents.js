@@ -35,8 +35,15 @@ class AgentManager {
     this.sprites = {}; // agentId → { container, sprite, nameTag, statusDot, bubble, state, role, gender, hasSpritesheet }
   }
 
-  stateToPose(state) {
-    return STATE_TO_POSE[state] || 'idle';
+  // Chairman is human — only has idle/working/dispatching/awaiting poses
+  static CHAIRMAN_POSES = new Set(['idle', 'working', 'dispatching', 'awaiting']);
+
+  stateToPose(state, agentId) {
+    const pose = STATE_TO_POSE[state] || 'idle';
+    if (agentId === 'chairman' && !AgentManager.CHAIRMAN_POSES.has(pose)) {
+      return 'idle';
+    }
+    return pose;
   }
 
   createAgent(agentId) {
@@ -108,13 +115,20 @@ class AgentManager {
     bubble.setOrigin(0.5, 1);
     bubble.setVisible(false);
 
+    // Flip characters on the right side of screen to face center
+    const zoneX = LAYOUT.zones[def.area] ? LAYOUT.zones[def.area].position.x : 960;
+    if (zoneX > 960) {
+      sprite.setFlipX(true);
+    }
+
     container.add([sprite, nameTag, statusDot, bubble]);
     this.sprites[agentId] = {
       container, sprite, nameTag, statusDot, bubble,
       state: 'idle',
       role: def.role,
       gender,
-      hasSpritesheet
+      hasSpritesheet,
+      faceLeft: zoneX > 960
     };
   }
 
@@ -136,7 +150,7 @@ class AgentManager {
 
     // Play spritesheet animation
     if (entry.hasSpritesheet && newState !== 'offline') {
-      const pose = this.stateToPose(newState);
+      const pose = this.stateToPose(newState, agentId);
       const key = `${entry.role}-${entry.gender}-${pose}`;
       if (this.scene.anims.exists(key)) {
         entry.sprite.play(key);
@@ -166,9 +180,13 @@ class AgentManager {
     if (newState === 'idle' && agentId !== 'chairman') {
       const breakPos = LAYOUT.getSlotPosition('break-room', this._getBreakRoomSlot(agentId));
       this._moveTo(entry.container, breakPos.x, breakPos.y);
+      // In break room: face right (default)
+      entry.sprite.setFlipX(false);
     } else if (prevState === 'idle' && newState !== 'idle' && agentId !== 'chairman') {
       const deskPos = LAYOUT.getSlotPosition(def.area, 0);
       this._moveTo(entry.container, deskPos.x, deskPos.y);
+      // Back at desk: restore original facing
+      entry.sprite.setFlipX(entry.faceLeft || false);
     }
 
     // Show bubble
